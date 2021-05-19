@@ -60,10 +60,11 @@ class Variable(Node):
         return self
 
     def __neg__(self):
-        from csdl.core.output import Output
-        op = ElementwiseMultiplication(self, -1)
-        op.dependencies.append(self)
-        return Output(operation=op)
+        from csdl.operations.linear_combination import linear_combination
+        op = linear_combination(self, coeffs=-1, constant=0)
+        for out in op.outs:
+            out.add_dependency_node(op)
+        return op.outs[0]
 
     def __add__(self, other):
         from csdl.operations.linear_combination import linear_combination

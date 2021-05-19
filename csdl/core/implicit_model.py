@@ -119,13 +119,6 @@ class ImplicitModel(metaclass=_ProblemBuilder):
 
     def __init__(self, maxiter=100, visualize=False, **kwargs):
         ImplicitModel._count += 1
-
-        # ???
-        self._inst_functs = {
-            name: getattr(self, name, None)
-            for name in
-            ['apply_linear', 'apply_multi_linear', 'solve_multi_linear']
-        }
         self._defined = False
         self._model = Model()
         self.all_inputs: Dict[Set[Input]] = dict()
@@ -138,6 +131,8 @@ class ImplicitModel(metaclass=_ProblemBuilder):
         self.out_in_map: Dict[str, List[Variable]] = dict()
         self.brackets_map: Tuple[Dict[str, np.ndarray],
                                  Dict[str, np.ndarray]] = (dict(), dict())
+        self.linear_solver = None
+        self.nonlinear_solver = None
 
     def define(self):
         pass

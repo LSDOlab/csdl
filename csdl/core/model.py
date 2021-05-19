@@ -182,6 +182,8 @@ class Model(metaclass=_ComponentBuilder):
         self.parameters = Parameters()
         self.initialize()
         self.submodels = []
+        self.linear_solver = None
+        self.nonlinear_solver = None
 
     def initialize(self):
         """

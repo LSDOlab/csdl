@@ -9,6 +9,10 @@ from csdl.core.variable import Variable
 from csdl.core.output import Output
 from csdl.core.subgraph import Subgraph
 from csdl.std import *
+from csdl.solvers import *
+# from csdl.solvers.linear import
+# from csdl.solvers.nonlinear import
+
 # from csdl.std.if_else import if_else
 # from csdl.std.arccos import arccos
 # from csdl.std.arcsin import arcsin

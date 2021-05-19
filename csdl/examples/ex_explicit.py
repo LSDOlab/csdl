@@ -1,5 +1,4 @@
-from openmdao.api import ScipyKrylov, NewtonSolver, NonlinearBlockGS
-from csdl import Model
+from csdl import Model, NonlinearBlockGS
 import csdl
 import numpy as np
 
