@@ -19,6 +19,7 @@ from csdl.core.output import Output
 from csdl.core.operation import Operation
 from csdl.core.custom_operation import CustomOperation
 from csdl.core.subgraph import Subgraph
+from csdl.operations.print_var import print_var
 from csdl.utils.gen_hex_name import gen_hex_name
 from csdl.utils.parameters import Parameters
 from warnings import warn
@@ -193,6 +194,28 @@ class Model(metaclass=_ComponentBuilder):
 
     def define(self):
         pass
+
+    def print_var(self, var: Variable):
+        if not isinstance(var, Variable):
+            raise TypeError(
+                "CSDL can only print information about Variable objects")
+        op = print_var(var)
+        out = Output(
+            var.name + '_print',
+            val=var.val,
+            shape=var.shape,
+            src_indices=var.src_indices,
+            flat_src_indices=var.flat_src_indices,
+            units=var.units,
+            desc=var.desc,
+            tags=var.tags,
+            shape_by_conn=var.shape_by_conn,
+            copy_shape=var.copy_shape,
+            distributed=var.distributed,
+            op=op,
+        )
+        out.add_dependency_node(op)
+        self.register_output(out.name, out)
 
     def add_objective(
         self,

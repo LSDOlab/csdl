@@ -131,6 +131,9 @@ def paper_topological_sort(registered_nodes: List[Variable]) -> List[Variable]:
     return sorted_nodes
 
 
+from csdl.operations.print_var import print_var
+
+
 def modified_topological_sort(
         registered_nodes: List[Variable]) -> List[Variable]:
     """
@@ -157,15 +160,21 @@ def modified_topological_sort(
         ``Group._root``, and the last will be an ``DocInput``,
         ``ExplicitOutput``, ``ImplicitOutput``, or ``IndepVar``.
     """
+    print_operations = []
     sorted_nodes = []
     stack = copy(registered_nodes)
     while stack != []:
         v = stack.pop()
         if v.get_num_dependents() == 0:
-            # registered outputs that have no dependent nodes
-            sorted_nodes.append(v)
-            for w in v.dependencies:
-                stack.append(w)
+            if isinstance(v, Variable) and isinstance(v.dependencies[0],
+                                                      print_var):
+                # ensure print_var operations are moved to end of model
+                print_operations.append(v.dependencies[0])
+            else:
+                # registered outputs that have no dependent nodes
+                sorted_nodes.append(v)
+                for w in v.dependencies:
+                    stack.append(w)
         elif v.times_visited < v.get_num_dependents():
             # all other nodes
             v.incr_times_visited()
@@ -178,8 +187,8 @@ def modified_topological_sort(
                     # program here
                     warn(
                         "{} is registered late."
-                        "This will result in unnecessary feedback in"
-                        "your model, and will require an iterative"
+                        "This will result in unnecessary feedback in "
+                        "your model, and will require an iterative "
                         "solver to finish evaluating the model.".format(
                             v.name), )
 
@@ -189,6 +198,9 @@ def modified_topological_sort(
 
             if v.times_visited == v.get_num_dependents():
                 sorted_nodes.append(v)
+    # ensure print_var operations are moved to end of model
+    for po in print_operations:
+        sorted_nodes.append(po)
     return sorted_nodes
 
 

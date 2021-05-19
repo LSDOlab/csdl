@@ -7,5 +7,5 @@ from typing import List, Tuple
 class StandardOperation(Operation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.outs: List[Output] = None
+        self.outs: List[Output] = []
         self.literals = dict()
