@@ -1,7 +1,5 @@
-import openmdao.api as om
 from csdl import Model
 import csdl
-import numpy as np
 
 
 class ExampleOTGroupWithinOTGroup(Model):

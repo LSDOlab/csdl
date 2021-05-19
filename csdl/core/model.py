@@ -2,8 +2,6 @@ from collections.abc import Iterable
 from contextlib import contextmanager
 from typing import Callable, Dict, Tuple, List, Union, Set
 
-from openmdao.api import NonlinearBlockGS
-
 # from csdl.core._group import _Group
 from csdl.core.explicit_output import ExplicitOutput
 from csdl.core.graph import (
@@ -140,26 +138,6 @@ class _ComponentBuilder(type):
 
 
 class Model(metaclass=_ComponentBuilder):
-    """
-    The ``csdl.Group`` class builds ``openmdao.Component`` objects
-    from Python-like expressions and adds their corresponding subsystems
-    by constructing stock ``openmdao.Component`` objects.
-
-    In ``self.setup``, first, the user declares inputs, writes
-    expressions, and registers outputs. After ``self.setup`` runs,
-    ``self`` builds a Directed Acyclic Graph (DAG) from registered
-    outputs, analyzes the DAG to determine execution order, and adds the
-    appropriate subsystems.
-
-    In addition to supporting an expression-based style of defining a
-    subsystem, ``csdl.Group`` also supports adding a subystem defined
-    using a subclass of ``csdl.Group`` or ``openmdao.System``.
-
-    The ``csdl.Group`` class only allows for expressions that define
-    explicit relationships.
-    For defining models that use implicit relationships and defining
-    residuals, see ``csdl.ImplicitGroup``.
-    """
     _count = -1
 
     def __init__(self, **kwargs):
@@ -175,7 +153,6 @@ class Model(metaclass=_ComponentBuilder):
         self.inputs: List[Input] = []
         self.registered_outputs: List[Union[Output, ExplicitOutput,
                                             Subgraph]] = []
-        self.nonlinear_solver = NonlinearBlockGS()
         self.objective = None
         self.constraints = dict()
         self.design_variables = dict()

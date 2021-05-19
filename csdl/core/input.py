@@ -1,8 +1,4 @@
-from openmdao.api import IndepVarComp
-
 from csdl.core.variable import Variable
-from csdl.utils.get_shape_val import get_shape_val
-import numpy as np
 
 
 class Input(Variable):
