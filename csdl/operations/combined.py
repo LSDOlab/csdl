@@ -6,6 +6,8 @@ class combined(StandardOperation):
         self.nouts = 1
         self.nargs = None
         super().__init__(*args, **kwargs)
+        self.properties['iterative'] = False
+        self.properties['elementwise'] = True
 
     def define_compute_strings(self):
         # defined by csdl.utils.combine_operations

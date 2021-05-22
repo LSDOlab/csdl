@@ -16,6 +16,7 @@ class power_combination(StandardOperation):
             if dep0.shape != dep.shape:
                 raise ValueError(
                     "Shapes of inputs to linear_combination do not match")
+        self.properties['elementwise'] = True
 
         self.outs = [
             Output(
@@ -36,16 +37,11 @@ class power_combination(StandardOperation):
         coeff = self.literals['coeff']
         # if isinstance(constant, np.ndarray):
         #     raise notimplementederror("constant must be a scalar constant")
-        self.compute_derivs = dict()
         if isinstance(powers, (int, float)):
             powers = [powers] * len(args)
         self.compute_string = '{}={}'.format(out_name, coeff)
         for arg, power in zip(args, powers):
             if not np.all(coeff == 0):
                 self.compute_string += '*{}**{}'.format(arg.name, power)
-                self.compute_derivs[arg.name] = '{}/{}'.format(
-                    '{}*({} + 1j*{})**{}'.format(coeff, arg.name, self.step,
-                                                 power), self.step)
             else:
                 self.compute_string = '0'
-                self.compute_derivs[arg.name] = '0'

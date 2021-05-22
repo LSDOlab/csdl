@@ -10,9 +10,9 @@ class StandardOperation(Operation):
         self.outs: List[Output] = []
         self.literals = dict()
         self.compute_string = ''
-        self.compute_derivs = dict()
-        self.properties = set()
         self.step = 1e-40
+        self.properties = dict()
+        self.properties['iterative'] = False
 
     def define_compute_strings(self):
         raise NotImplementedError(

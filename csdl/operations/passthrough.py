@@ -12,3 +12,6 @@ class passthrough(StandardOperation):
             raise ValueError("{} takes exactly {} arguments".format(
                 name, self.nargs))
         self.outs = [output]
+        self.iterative = True
+        self.properties['elementwise'] = True
+        self.properties['iterative'] = True

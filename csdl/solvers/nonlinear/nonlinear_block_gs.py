@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from openmdao.solvers.solver import NonlinearSolver
+from csdl.solvers.nonlinear_solver import NonlinearSolver
 from openmdao.utils.mpi import MPI
 
 
@@ -52,8 +52,9 @@ class NonlinearBlockGS(NonlinearSolver):
         rank = MPI.COMM_WORLD.rank if MPI is not None else 0
 
         if len(system._subsystems_allprocs) != len(system._subsystems_myproc):
-            raise RuntimeError('{}: Nonlinear Gauss-Seidel cannot be used on a '
-                               'parallel group.'.format(self.msginfo))
+            raise RuntimeError(
+                '{}: Nonlinear Gauss-Seidel cannot be used on a '
+                'parallel group.'.format(self.msginfo))
 
     def _declare_options(self):
         """
@@ -61,24 +62,39 @@ class NonlinearBlockGS(NonlinearSolver):
         """
         super()._declare_options()
 
-        self.options.declare('use_aitken', types=bool, default=False,
+        self.options.declare('use_aitken',
+                             types=bool,
+                             default=False,
                              desc='set to True to use Aitken relaxation')
-        self.options.declare('aitken_min_factor', default=0.1,
+        self.options.declare('aitken_min_factor',
+                             default=0.1,
                              desc='lower limit for Aitken relaxation factor')
-        self.options.declare('aitken_max_factor', default=1.5,
+        self.options.declare('aitken_max_factor',
+                             default=1.5,
                              desc='upper limit for Aitken relaxation factor')
-        self.options.declare('aitken_initial_factor', default=1.0,
+        self.options.declare('aitken_initial_factor',
+                             default=1.0,
                              desc='initial value for Aitken relaxation factor')
-        self.options.declare('cs_reconverge', types=bool, default=True,
-                             desc='When True, when this driver solves under a complex step, nudge '
-                             'the Solution vector by a small amount so that it reconverges.')
-        self.options.declare('use_apply_nonlinear', types=bool, default=False,
-                             desc="Set to True to always call apply_nonlinear on the solver's "
-                             "system after solve_nonlinear has been called.")
-        self.options.declare('reraise_child_analysiserror', types=bool, default=False,
-                             desc='When the option is true, a solver will reraise any '
-                             'AnalysisError that arises during subsolve; when false, it will '
-                             'continue solving.')
+        self.options.declare(
+            'cs_reconverge',
+            types=bool,
+            default=True,
+            desc=
+            'When True, when this driver solves under a complex step, nudge '
+            'the Solution vector by a small amount so that it reconverges.')
+        self.options.declare(
+            'use_apply_nonlinear',
+            types=bool,
+            default=False,
+            desc="Set to True to always call apply_nonlinear on the solver's "
+            "system after solve_nonlinear has been called.")
+        self.options.declare(
+            'reraise_child_analysiserror',
+            types=bool,
+            default=False,
+            desc='When the option is true, a solver will reraise any '
+            'AnalysisError that arises during subsolve; when false, it will '
+            'continue solving.')
 
     def _iter_initialize(self):
         """
@@ -101,7 +117,8 @@ class NonlinearBlockGS(NonlinearSolver):
         # to trigger reconvergence, so nudge the outputs slightly so that we always get at least
         # one iteration.
         if system.under_complex_step and self.options['cs_reconverge']:
-            system._outputs += np.linalg.norm(system._outputs.asarray()) * 1e-10
+            system._outputs += np.linalg.norm(
+                system._outputs.asarray()) * 1e-10
 
         # Execute guess_nonlinear if specified.
         system._guess_nonlinear()
@@ -177,7 +194,7 @@ class NonlinearBlockGS(NonlinearSolver):
                 else:
                     tddo = temp.dot(delta_outputs_n)
 
-                theta_n = theta_n_1 * (1 - tddo / temp_norm ** 2)
+                theta_n = theta_n_1 * (1 - tddo / temp_norm**2)
 
             else:
                 # keep the initial the relaxation factor
@@ -202,7 +219,8 @@ class NonlinearBlockGS(NonlinearSolver):
 
         if not self.options['use_apply_nonlinear']:
             # Residual is the change in the outputs vector.
-            with system._unscaled_context(outputs=[outputs], residuals=[residuals]):
+            with system._unscaled_context(outputs=[outputs],
+                                          residuals=[residuals]):
                 residuals.set_val(outputs.asarray() - outputs_n)
 
     def _run_apply(self):
@@ -213,7 +231,8 @@ class NonlinearBlockGS(NonlinearSolver):
         maxiter = self.options['maxiter']
         itercount = self._iter_count
 
-        if self.options['use_apply_nonlinear'] or (itercount < 1 and maxiter < 2):
+        if self.options['use_apply_nonlinear'] or (itercount < 1
+                                                   and maxiter < 2):
 
             # This option runs apply_nonlinear to calculate the residuals, and thus ends up
             # executing ExplicitComponents twice per iteration.

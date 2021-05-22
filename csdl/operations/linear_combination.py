@@ -15,7 +15,7 @@ class linear_combination(StandardOperation):
             if dep0.shape != dep.shape:
                 raise ValueError(
                     "Shapes of inputs to linear_combination do not match")
-        self.properties = set({'elementwise'})
+        self.properties['elementwise'] = True
 
         self.outs = [
             Output(
@@ -36,15 +36,9 @@ class linear_combination(StandardOperation):
         constant = self.literals['constant']
         # if isinstance(constant, np.ndarray):
         #     raise notimplementederror("constant must be a scalar constant")
-        self.compute_derivs = dict()
         if isinstance(coeffs, (int, float)):
             coeffs = [coeffs] * len(args)
         self.compute_string = '{}={}'.format(out_name, constant)
         for coeff, arg in zip(coeffs, args):
             if not np.all(coeff == 0):
                 self.compute_string += '+{}*{}'.format(coeff, arg.name)
-                self.compute_derivs[arg.name] = '{}/{}'.format(
-                    '{}*({} + 1j*{})'.format(coeff, arg.name, self.step),
-                    self.step)
-            else:
-                self.compute_derivs[arg.name] = '0'
