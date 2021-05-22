@@ -7,6 +7,7 @@ from csdl.operations.combined import combined
 
 
 def combine_operations(registered_outputs, out: Output):
+    repeat = False
     combined_op = combined()
     if isinstance(out, Output):
         op2 = out.dependencies[0]
@@ -30,12 +31,13 @@ def combine_operations(registered_outputs, out: Output):
                     if len(state.dependencies) == 0:
                         combined_op.compute_derivs[
                             state.name] = op2.compute_derivs[state.name]
-                print('{}, compute_derivs (before loops): {}'.format(
-                    combined_op.name, repr(combined_op.compute_derivs)))
+                # print('{}, compute_derivs (before loops): {}'.format(
+                #     combined_op.name, repr(combined_op.compute_derivs)))
 
                 # add derivatives wrt nonterminals
                 for state in op2.dependencies:
                     if len(state.dependencies) != 0:
+                        repeat = True
                         op1 = state.dependencies[0]
 
                         # TODO: support operations with multiple outputs
@@ -71,30 +73,31 @@ def combine_operations(registered_outputs, out: Output):
                                             state.
                                             name] + ')*(' + op1.compute_derivs[
                                                 depvar.name] + ')'
-                                print(
-                                    '{}, compute_derivs (within depvar loop): {}'
-                                    .format(combined_op.name,
-                                            repr(combined_op.compute_derivs)))
+                                # print(
+                                #     '{}, compute_derivs (within depvar loop): {}'
+                                #     .format(combined_op.name,
+                                #             repr(combined_op.compute_derivs)))
 
                                 # add combined_op to graph
                                 depvar.dependents.append(combined_op)
                                 depvar.dependents.remove(op1)
-                            print('{}, compute_derivs (after depvar loop): {}'.
-                                  format(combined_op.name,
-                                         repr(combined_op.compute_derivs)))
+                            # print('{}, compute_derivs (after depvar loop): {}'.
+                            #       format(combined_op.name,
+                            #              repr(combined_op.compute_derivs)))
 
                             # add depvars as dependencies of combined_op
                             combined_op.dependencies.extend(op1.dependencies)
                         else:
                             for depvar in op1.dependencies:
-                                combine_operations(registered_outputs, depvar)
+                                combine_operations(registered_outputs, state)
 
-                print('{}, compute_derivs (after state loop): {}'.format(
-                    combined_op.name, repr(combined_op.compute_derivs)))
+                # print('{}, compute_derivs (after state loop): {}'.format(
+                #     combined_op.name, repr(combined_op.compute_derivs)))
 
-                combined_op.compute_string += op2.compute_string
-                print('{}, compute_string (after state loop): {}'.format(
-                    combined_op.name, combined_op.compute_string))
+                combined_op.compute_string += op2.compute_string + '\n'
+                # print('{}, compute_string (after state loop): {}'.format(
+                #     combined_op.name, combined_op.compute_string))
         else:
             for state in op2.dependencies:
                 combine_operations(registered_outputs, state)
+    return repeat
