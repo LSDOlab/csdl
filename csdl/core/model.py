@@ -20,6 +20,7 @@ from csdl.core.subgraph import Subgraph
 from csdl.operations.print_var import print_var
 from csdl.utils.gen_hex_name import gen_hex_name
 from csdl.utils.parameters import Parameters
+from csdl.utils.combine_operations import combine_operations
 from warnings import warn
 
 
@@ -49,7 +50,9 @@ def _build_intermediate_representation(func: Callable) -> Callable:
             func(self)
 
             # Check if all design variables are inputs
-            input_names = set([inp.name for inp in self.inputs])
+            input_names = set(
+                filter(lambda x: isinstance(x, Input),
+                       [inp.name for inp in self.inputs]))
             for name in self.design_variables:
                 if name not in input_names:
                     raise KeyError(
@@ -96,6 +99,10 @@ def _build_intermediate_representation(func: Callable) -> Callable:
                 r.add_fwd_edges()
 
             # remove_duplicate_nodes(self.nodes, self.registered_outputs)
+
+            # combine elementwise operations and use complex step
+            for r in self.registered_outputs:
+                combine_operations(self.registered_outputs, r)
 
             # remove unused expressions
             keys = []
@@ -151,6 +158,7 @@ class Model(metaclass=_ComponentBuilder):
         self.brackets_map = None
         self.out_vals = dict()
         self.inputs: List[Input] = []
+        self.variables: List[Variable] = []
         self.registered_outputs: List[Union[Output, ExplicitOutput,
                                             Subgraph]] = []
         self.objective = None
@@ -348,6 +356,7 @@ class Model(metaclass=_ComponentBuilder):
         )
         if self._most_recently_added_subgraph is not None:
             v.add_dependency_node(self._most_recently_added_subgraph)
+        self.variables.append(v)
         return v
 
     def create_input(

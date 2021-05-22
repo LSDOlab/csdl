@@ -199,8 +199,7 @@ def modified_topological_sort(
             if v.times_visited == v.get_num_dependents():
                 sorted_nodes.append(v)
     # ensure print_var operations are moved to end of model
-    for po in print_operations:
-        sorted_nodes.append(po)
+    sorted_nodes = print_operations + sorted_nodes
     return sorted_nodes
 
 

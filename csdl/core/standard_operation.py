@@ -9,3 +9,12 @@ class StandardOperation(Operation):
         super().__init__(*args, **kwargs)
         self.outs: List[Output] = []
         self.literals = dict()
+        self.compute_string = ''
+        self.compute_derivs = dict()
+        self.properties = set()
+        self.step = 1e-40
+
+    def define_compute_strings(self):
+        raise NotImplementedError(
+            "Compute strings are not defined for operation {}".format(
+                type(self)))

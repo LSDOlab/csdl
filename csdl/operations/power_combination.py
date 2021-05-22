@@ -7,7 +7,7 @@ from csdl.utils.gen_hex_name import gen_hex_name
 
 
 class power_combination(StandardOperation):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, powers, coeff, **kwargs):
         self.nouts = 1
         self.nargs = None
         super().__init__(*args, **kwargs)
@@ -25,8 +25,27 @@ class power_combination(StandardOperation):
             )
         ]
 
-        for k, v in kwargs.items():
-            if k == 'powers':
-                self.literals[k] = v
-            if k == 'coeff':
-                self.literals[k] = v
+        self.literals['powers'] = powers
+        self.literals['coeff'] = coeff
+
+    def define_compute_strings(self):
+        out_name = self.outs[0].name
+        self.compute_string = '{}='.format(out_name)
+        args = self.dependencies
+        powers = self.literals['powers']
+        coeff = self.literals['coeff']
+        # if isinstance(constant, np.ndarray):
+        #     raise notimplementederror("constant must be a scalar constant")
+        self.compute_derivs = dict()
+        if isinstance(powers, (int, float)):
+            powers = [powers] * len(args)
+        self.compute_string = '{}={}'.format(out_name, coeff)
+        for arg, power in zip(args, powers):
+            if not np.all(coeff == 0):
+                self.compute_string += '*{}**{}'.format(arg.name, power)
+                self.compute_derivs[arg.name] = '{}/{}'.format(
+                    '{}*({} + 1j*{})**{}'.format(coeff, arg.name, self.step,
+                                                 power), self.step)
+            else:
+                self.compute_string = '0'
+                self.compute_derivs[arg.name] = '0'

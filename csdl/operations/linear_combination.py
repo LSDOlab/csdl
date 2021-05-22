@@ -6,7 +6,7 @@ from csdl.utils.gen_hex_name import gen_hex_name
 
 
 class linear_combination(StandardOperation):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, constant, coeffs, **kwargs):
         self.nouts = 1
         self.nargs = None
         super().__init__(*args, **kwargs)
@@ -15,6 +15,7 @@ class linear_combination(StandardOperation):
             if dep0.shape != dep.shape:
                 raise ValueError(
                     "Shapes of inputs to linear_combination do not match")
+        self.properties = set({'elementwise'})
 
         self.outs = [
             Output(
@@ -24,8 +25,26 @@ class linear_combination(StandardOperation):
             )
         ]
 
-        for k, v in kwargs.items():
-            if k == 'constant':
-                self.literals[k] = v
-            if k == 'coeffs':
-                self.literals[k] = v
+        self.literals['constant'] = constant
+        self.literals['coeffs'] = coeffs
+
+    def define_compute_strings(self):
+        out_name = self.outs[0].name
+        self.compute_string = '{}='.format(out_name)
+        args = self.dependencies
+        coeffs = self.literals['coeffs']
+        constant = self.literals['constant']
+        # if isinstance(constant, np.ndarray):
+        #     raise notimplementederror("constant must be a scalar constant")
+        self.compute_derivs = dict()
+        if isinstance(coeffs, (int, float)):
+            coeffs = [coeffs] * len(args)
+        self.compute_string = '{}={}'.format(out_name, constant)
+        for coeff, arg in zip(coeffs, args):
+            if not np.all(coeff == 0):
+                self.compute_string += '+{}*{}'.format(coeff, arg.name)
+                self.compute_derivs[arg.name] = '{}/{}'.format(
+                    '{}*({} + 1j*{})'.format(coeff, arg.name, self.step),
+                    self.step)
+            else:
+                self.compute_derivs[arg.name] = '0'

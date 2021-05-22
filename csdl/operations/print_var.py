@@ -11,3 +11,6 @@ class print_var(StandardOperation):
         if len(args) != self.nargs:
             raise ValueError("{} takes exactly {} arguments".format(
                 name, self.nargs))
+
+    def define_compute_strings(self):
+        pass
