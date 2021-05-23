@@ -10,7 +10,6 @@ class StandardOperation(Operation):
         self.outs: List[Output] = []
         self.literals = dict()
         self.compute_string = ''
-        self.step = 1e-40
         self.properties = dict()
         self.properties['iterative'] = False
 
