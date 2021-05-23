@@ -6,3 +6,9 @@ class sin(StandardOperation):
         self.nouts = 1
         self.nargs = 1
         super().__init__(*args, **kwargs)
+        self.properties = set({'elementwise'})
+
+    def define_compute_strings(self):
+        in_name = self.dependencies[0].name
+        out_name = self.outs[0].name
+        self.compute_string = '{}=sin({})'.format(out_name, in_name)
