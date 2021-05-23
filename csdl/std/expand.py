@@ -1,13 +1,12 @@
-from csdl.comps.array_expansion_comp import ArrayExpansionComp
-from csdl.comps.scalar_expansion_comp import ScalarExpansionComp
+import csdl.operations as ops
 from csdl.core.variable import Variable
+from csdl.core.output import Output
 from csdl.utils.decompose_shape_tuple import decompose_shape_tuple
 
 
-def expand(expr: Variable, shape: tuple, indices=None):
-
-    if not isinstance(expr, Variable):
-        raise TypeError(expr, " is not an Variable object")
+def expand(var: Variable, shape: tuple, indices=None):
+    if not isinstance(var, Variable):
+        raise TypeError(var, " is not an Variable object")
 
     if indices is not None:
         if not isinstance(indices, str):
@@ -25,11 +24,19 @@ def expand(expr: Variable, shape: tuple, indices=None):
             if index not in in_indices:
                 expand_indices.append(i)
 
-    out = Variable()
-    out.shape = shape
-    out.add_dependency_node(expr)
+    try:
+        op = ops.expand(var, expand_indices=expand_indices)
+    except:
+        op = ops.expand(var)
+    op.outs = (Output(
+        None,
+        op=op,
+        shape=shape,
+    ), )
+    for out in op.outs:
+        out.add_dependency_node(op)
 
-    if not expr.shape == (1, ):
+    if not var.shape == (1, ):
         if indices is None:
             raise ValueError('If expanding something other than a scalar ' +
                              'indices must be given')
@@ -39,23 +46,9 @@ def expand(expr: Variable, shape: tuple, indices=None):
             _,
             in_shape,
             _,
-            _,
         ) = decompose_shape_tuple(shape, expand_indices)
 
-        if in_shape != expr.shape:
+        if in_shape != var.shape:
             raise ValueError('Shape or indices is invalid')
 
-        out.build = lambda: ArrayExpansionComp(
-            shape=shape,
-            expand_indices=expand_indices,
-            in_name=expr.name,
-            out_name=out.name,
-            val=expr.val,
-        )
-    else:
-        out.build = lambda: ScalarExpansionComp(
-            shape=shape,
-            in_name=expr.name,
-            out_name=out.name,
-        )
-    return out
+    return op.outs[0]

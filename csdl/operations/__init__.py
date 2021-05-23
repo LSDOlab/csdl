@@ -20,3 +20,4 @@ from csdl.operations.sec import sec
 from csdl.operations.sech import sech
 from csdl.operations.cosec import cosec
 from csdl.operations.cosech import cosech
+from csdl.operations.expand import expand
