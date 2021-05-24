@@ -1,10 +1,11 @@
-from csdl.comps.transpose_comp import TransposeComp
 from csdl.core.variable import Variable
+from csdl.core.output import Output
+import csdl.operations as ops
 from typing import List
 import numpy as np
 
 
-def transpose(expr: Variable):
+def transpose(var: Variable):
     '''
     This function can perform the transpose of an input
 
@@ -14,16 +15,15 @@ def transpose(expr: Variable):
         The input which will be transposed
 
     '''
-    if not isinstance(expr, Variable):
-        raise TypeError(expr, " is not an Variable object")
-    out = Variable()
-    out.add_dependency_node(expr)
-    out.shape = expr.shape[::-1]
-    out.build = lambda: TransposeComp(
-        in_name=expr.name,
-        in_shape=expr.shape,
-        out_name=out.name,
-        out_shape=out.shape,
-        val=expr.val,
-    )
+    if not isinstance(var, Variable):
+        raise TypeError(var, " is not an Variable object")
+    op = ops.transpose(var)
+    op.outs = (Output(
+        None,
+        op=op,
+        shape=var.shape[::-1],
+    ), )
+    for out in op.outs:
+        out.add_dependency_node(op)
+
     return out
