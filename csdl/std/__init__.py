@@ -29,5 +29,6 @@ from csdl.std.outer import outer
 from csdl.std.einsum import einsum
 from csdl.std.dot import dot
 from csdl.std.cross import cross
+from csdl.std.rotmat import rotmat
 # from csdl.std.expand import expand
 # from csdl.std.einsum import einsum

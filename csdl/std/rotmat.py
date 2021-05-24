@@ -1,8 +1,9 @@
-from csdl.comps.rotation_matrix_comp import RotationMatrixComp
 from csdl.core.variable import Variable
+from csdl.core.output import Output
+import csdl.operations as ops
 
 
-def rotmat(expr: Variable, axis: str):
+def rotmat(var: Variable, axis: str):
     '''
     This function creates a rotation matrix depending on the input value and the axis.
 
@@ -16,22 +17,21 @@ def rotmat(expr: Variable, axis: str):
         with: 'x' , 'y' , or 'z'.
 
     '''
-    if not isinstance(expr, Variable):
-        raise TypeError(expr, " is not an Variable object")
-    out = Variable()
-    out.add_dependency_node(expr)
+    if not isinstance(var, Variable):
+        raise TypeError(var, " is not an Variable object")
+    op = ops.rotmat(var, axis=axis)
 
-    if expr.shape == (1, ):
-        out.shape = (3, 3)
-
+    if var.shape == (1, ):
+        shape = (3, 3)
     else:
-        out.shape = expr.shape + (3, 3)
+        shape = var.shape + (3, 3)
 
-    out.build = lambda: RotationMatrixComp(
-        shape=expr.shape,
-        in_name=expr.name,
-        out_name=out.name,
-        axis=axis,
-        val=expr.val,
-    )
-    return out
+    op.outs = (Output(
+        None,
+        op=op,
+        shape=shape,
+    ), )
+    for out in op.outs:
+        out.add_dependency_node(op)
+
+    return op.outs[0]
