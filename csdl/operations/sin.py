@@ -6,7 +6,7 @@ class sin(StandardOperation):
         self.nouts = 1
         self.nargs = 1
         super().__init__(*args, **kwargs)
-        self.properties = set({'elementwise'})
+        self.properties['elementwise'] = True
 
     def define_compute_strings(self):
         in_name = self.dependencies[0].name

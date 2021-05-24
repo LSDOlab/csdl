@@ -20,4 +20,7 @@ from csdl.std.sec import sec
 from csdl.std.sech import sech
 from csdl.std.cosec import cosec
 from csdl.std.cosech import cosech
-from csdl.std.expand import expand
+from csdl.std.matmat import matmat
+from csdl.std.matvec import matvec
+# from csdl.std.expand import expand
+# from csdl.std.einsum import einsum

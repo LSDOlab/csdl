@@ -12,6 +12,7 @@ class StandardOperation(Operation):
         self.compute_string = ''
         self.properties = dict()
         self.properties['iterative'] = False
+        self.properties['elementwise'] = False
 
     def define_compute_strings(self):
         raise NotImplementedError(
