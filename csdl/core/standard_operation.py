@@ -11,7 +11,7 @@ class StandardOperation(Operation):
         self.literals = dict()
         self.compute_string = ''
         self.properties = dict()
-        self.properties['iterative'] = False
+        self.properties['iterative'] = True
         self.properties['elementwise'] = False
 
     def define_compute_strings(self):

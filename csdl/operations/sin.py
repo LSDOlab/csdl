@@ -7,6 +7,7 @@ class sin(StandardOperation):
         self.nargs = 1
         super().__init__(*args, **kwargs)
         self.properties['elementwise'] = True
+        self.properties['iterative'] = False
 
     def define_compute_strings(self):
         in_name = self.dependencies[0].name

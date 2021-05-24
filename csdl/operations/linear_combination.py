@@ -15,6 +15,7 @@ class linear_combination(StandardOperation):
             if dep0.shape != dep.shape:
                 raise ValueError(
                     "Shapes of inputs to linear_combination do not match")
+        self.properties['iterative'] = False
         self.properties['elementwise'] = True
 
         self.outs = [

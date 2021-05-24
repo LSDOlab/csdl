@@ -9,3 +9,4 @@ class indexed_passthrough(StandardOperation):
         self.nouts = 1
         super().__init__(*args, **kwargs)
         self.outs = [output]
+        self.properties['iterative'] = False

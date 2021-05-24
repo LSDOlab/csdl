@@ -13,3 +13,4 @@ class decompose(StandardOperation):
         self.outs = []
         self._key_out_pairs: Dict[Tuple[Tuple[int]], Output] = dict()
         self.src_indices: Dict[Output, np.ndarray] = dict()
+        self.properties['iterative'] = False
