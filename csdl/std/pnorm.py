@@ -5,7 +5,7 @@ from typing import List
 import numpy as np
 
 
-def pnorm(expr, pnorm_type=2, axis=None):
+def pnorm(var, pnorm_type=2, axis=None):
     '''
     This function computes the pnorm
 
@@ -21,8 +21,8 @@ def pnorm(expr, pnorm_type=2, axis=None):
         Specifies the axis over which to take the pnorm
     '''
 
-    if not isinstance(expr, Variable):
-        raise TypeError(expr, " is not an Variable object")
+    if not isinstance(var, Variable):
+        raise TypeError(var, " is not an Variable object")
     if pnorm_type % 2 != 0 or pnorm_type <= 0:
         raise ValueError(
             "pnorm_type {} is not positive and even".format(pnorm_type))
@@ -32,7 +32,7 @@ def pnorm(expr, pnorm_type=2, axis=None):
         if isinstance(axis, int):
             axis = (axis, )
 
-    op = ops.pnorm(expr, pnorm_type=pnorm_type, axis=axis)
+    op = ops.pnorm(var, pnorm_type=pnorm_type, axis=axis)
     op.outs = (Output(
         None,
         op=op,
