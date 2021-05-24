@@ -7,7 +7,7 @@ from typing import List, Tuple
 class StandardOperation(Operation):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.outs: List[Output] = []
+        self.outs: Tuple[Output] = ()
         self.literals = dict()
         self.compute_string = ''
         self.properties = dict()

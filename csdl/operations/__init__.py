@@ -25,5 +25,6 @@ from csdl.operations.matvec import matvec
 from csdl.operations.pnorm import pnorm
 from csdl.operations.transpose import transpose
 from csdl.operations.inner import inner
+from csdl.operations.outer import outer
 # from csdl.operations.expand import expand
 # from csdl.operations.einsum import einsum
