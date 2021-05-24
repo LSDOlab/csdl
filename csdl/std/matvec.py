@@ -1,40 +1,45 @@
-from csdl.comps.matvec_comp import MatVecComp
 from csdl.core.variable import Variable
+from csdl.core.output import Output
+import csdl.operations as ops
 from typing import List
 import numpy as np
 
 
-def matvec(mat1, vec1):
+def matvec(mat, vec):
     '''
-    This function can compute a matrix-vector multiplication, similar to the
+    This function can compute a matrix-matrix multiplication, similar to the
     numpy counterpart.
 
     Parameters
     ----------
     mat1: Variable
-        The matrix needed for the matrix-vector multiplication
+        The first input for the matrix-matrix multiplication
 
-    vec1: Variable
-        The vector needed for the matrix-vector multiplication
+    mat2: Variable
+        The second input for the matrix-matrix multiplication
 
     '''
-    if not (isinstance(mat1, Variable) and isinstance(vec1, Variable)):
+
+    if not (isinstance(mat, Variable) and isinstance(vec, Variable)):
         raise TypeError("Arguments must both be Variable objects")
-    out = Variable()
-    out.add_dependency_node(mat1)
-    out.add_dependency_node(vec1)
+    if not (mat.shape[1] == vec.shape[0] and len(vec.shape) == 1):
+        raise ValueError(
+            "Arguments must both be a matrix with shape (n, m) and a vector with shape (m, ); {} has shape {}, and {} has shape {}"
+            .format(
+                mat.name,
+                mat.shape,
+                vec.name,
+                vec.shape,
+            ))
+    op = ops.matvec(mat, vec)
+    op.outs = [
+        Output(
+            None,
+            op=op,
+            shape=(mat.shape[0], ),
+        ),
+    ]
+    for out in op.outs:
+        out.add_dependency_node(op)
 
-    if mat1.shape[1] == vec1.shape[0] and len(vec1.shape) == 1:
-
-        out.shape = (mat1.shape[0], )
-
-        out.build = lambda: MatVecComp(
-            in_names=[mat1.name, vec1.name],
-            out_name=out.name,
-            in_shapes=[mat1.shape, vec1.shape],
-            in_vals=[mat1.val, vec1.val],
-        )
-
-    else:
-        raise Exception("Cannot multiply: ", mat1.shape, "by", vec1.shape)
-    return out
+    return op.outs[0]

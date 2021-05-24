@@ -1,5 +1,6 @@
-from csdl.comps.matmat_comp import MatMatComp
 from csdl.core.variable import Variable
+from csdl.core.output import Output
+import csdl.operations as ops
 from typing import List
 import numpy as np
 
@@ -21,32 +22,24 @@ def matmat(mat1, mat2):
 
     if not (isinstance(mat1, Variable) and isinstance(mat2, Variable)):
         raise TypeError("Arguments must both be Variable objects")
-    out = Variable()
-    out.add_dependency_node(mat1)
-    out.add_dependency_node(mat2)
+    if not (len(mat1.shape) == 2 and len(mat2.shape) == 2):
+        raise ValueError(
+            "Arguments must both be matrices (rank 2 tensors); {} has shape {}, and {} has shape {}"
+            .format(
+                mat1.name,
+                mat1.shape,
+                mat2.name,
+                mat2.shape,
+            ))
+    op = ops.matmat(mat1, mat2)
+    op.outs = [
+        Output(
+            None,
+            op=op,
+            shape=(mat1.shape[0], mat2.shape[1]),
+        ),
+    ]
+    for out in op.outs:
+        out.add_dependency_node(op)
 
-    if mat1.shape[1] == mat2.shape[0] and len(mat2.shape) == 2:
-        # Compute the output shape if both inputs are matrices
-        out.shape = (mat1.shape[0], mat2.shape[1])
-
-        out.build = lambda: MatMatComp(
-            in_names=[mat1.name, mat2.name],
-            out_name=out.name,
-            in_shapes=[mat1.shape, mat2.shape],
-            in_vals=[mat1.val, mat2.val],
-        )
-
-    elif mat1.shape[1] == mat2.shape[0] and len(mat2.shape) == 1:
-        out.shape = (mat1.shape[0], 1)
-
-        mat2_shape = (mat2.shape[0], 1)
-
-        out.build = lambda: MatMatComp(
-            in_names=[mat1.name, mat2.name],
-            out_name=out.name,
-            in_shapes=[mat1.shape, mat2_shape],
-            in_vals=[mat1.val, mat2.val.reshape(mat2_shape)],
-        )
-    else:
-        raise Exception("Cannot multiply: ", mat1.shape, "by", mat2.shape)
-    return out
+    return op.outs[0]
