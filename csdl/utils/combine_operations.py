@@ -20,6 +20,7 @@ def can_combine(op: StandardOperation):
     return cc
 
 
+# TODO: where to set step size for combining operations?
 def combine_operations(registered_outputs, out: Output):
     repeat = False
     combined_op = combined()
