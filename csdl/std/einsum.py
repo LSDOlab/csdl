@@ -1,7 +1,7 @@
-from csdl.comps.einsum_comp_dense_derivs import EinsumComp
-from csdl.comps.einsum_comp_sparse_derivs import SparsePartialEinsumComp
-from csdl.utils.einsum_utils import compute_einsum_shape, einsum_subscripts_tolist
+import csdl.operations as ops
 from csdl.core.variable import Variable
+from csdl.core.output import Output
+from csdl.utils.einsum_utils import compute_einsum_shape, einsum_subscripts_tolist
 from typing import List
 
 
@@ -21,34 +21,21 @@ def einsum(*operands: List[Variable], subscripts: str, partial_format='dense'):
         Denotes whether to compute 'dense' partials or 'sparse' partials
 
     '''
-    out = Variable()
     for expr in operands:
         if not isinstance(expr, Variable):
             raise TypeError(expr, " is not an Variable object")
-        out.add_dependency_node(expr)
+    if partial_format is not 'dense' and partial_format is not 'sparse':
+        raise ValueError("partial_format must be \'dense\' or \'sparse\'")
+
+    op = ops.einsum(*operands,
+                    subscripts=subscripts,
+                    partial_format=partial_format)
+
     operation_aslist = einsum_subscripts_tolist(subscripts)
     shape = compute_einsum_shape(operation_aslist,
                                  [expr.shape for expr in operands])
-    out.shape = shape
+    op.outs = (Output(None, op=op, shape=shape), )
+    for out in op.outs:
+        out.add_dependency_node(op)
 
-    if partial_format == 'dense':
-        out.build = lambda: EinsumComp(
-            in_names=[expr.name for expr in operands],
-            in_shapes=[expr.shape for expr in operands],
-            out_name=out.name,
-            operation=subscripts,
-            out_shape=shape,
-            in_vals=[expr.val for expr in operands],
-        )
-    elif partial_format == 'sparse':
-        out.build = lambda: SparsePartialEinsumComp(
-            in_names=[expr.name for expr in operands],
-            in_shapes=[expr.shape for expr in operands],
-            out_name=out.name,
-            operation=subscripts,
-            out_shape=shape,
-            in_vals=[expr.val for expr in operands],
-        )
-    else:
-        raise Exception('partial_format should be either dense or sparse')
-    return out
+    return op.outs[0]
