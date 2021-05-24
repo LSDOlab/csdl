@@ -22,5 +22,6 @@ from csdl.std.cosec import cosec
 from csdl.std.cosech import cosech
 from csdl.std.matmat import matmat
 from csdl.std.matvec import matvec
+from csdl.std.pnorm import pnorm
 # from csdl.std.expand import expand
 # from csdl.std.einsum import einsum

@@ -1,6 +1,6 @@
-from csdl.comps.vectorized_pnorm_comp import VectorizedPnormComp
-from csdl.comps.vectorized_axiswise_pnorm_comp import VectorizedAxisWisePnormComp
 from csdl.core.variable import Variable
+from csdl.core.output import Output
+import csdl.operations as ops
 from typing import List
 import numpy as np
 
@@ -23,35 +23,22 @@ def pnorm(expr, pnorm_type=2, axis=None):
 
     if not isinstance(expr, Variable):
         raise TypeError(expr, " is not an Variable object")
+    if pnorm_type % 2 != 0 or pnorm_type <= 0:
+        raise ValueError(
+            "pnorm_type {} is not positive and even".format(pnorm_type))
     if axis is not None:
         if not isinstance(axis, int) and not isinstance(axis, tuple):
-            raise TypeError("axis must be an integer or tuple of integers")
-    out = Variable()
-    out.add_dependency_node(expr)
+            raise ValueError("axis must be an integer or tuple of integers")
+        if isinstance(axis, int):
+            axis = (axis, )
 
-    if pnorm_type % 2 != 0 or pnorm_type <= 0:
-        raise Exception(pnorm_type, " is not positive OR is not even")
+    op = ops.pnorm(expr, pnorm_type=pnorm_type, axis=axis)
+    op.outs = (Output(
+        None,
+        op=op,
+        shape=op.dependencies[0].shape,
+    ), )
+    for out in op.outs:
+        out.add_dependency_node(op)
 
-    else:
-        if axis == None:
-            out.build = lambda: VectorizedPnormComp(
-                shape=expr.shape,
-                in_name=expr.name,
-                out_name=out.name,
-                pnorm_type=pnorm_type,
-                val=expr.val,
-            )
-        else:
-            output_shape = np.delete(expr.shape, axis)
-            out.shape = tuple(output_shape)
-
-            out.build = lambda: VectorizedAxisWisePnormComp(
-                shape=expr.shape,
-                in_name=expr.name,
-                out_shape=out.shape,
-                out_name=out.name,
-                pnorm_type=pnorm_type,
-                axis=axis if isinstance(axis, tuple) else (axis, ),
-                val=expr.val,
-            )
-    return out
+    return op.outs[0]
