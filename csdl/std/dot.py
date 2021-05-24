@@ -1,12 +1,11 @@
-from csdl.comps.tensor_dot_product_comp import TensorDotProductComp
-from csdl.comps.vector_inner_product_comp import VectorInnerProductComp
-
 from csdl.core.variable import Variable
-from csdl.core.operation import Operation
+from csdl.core.output import Output
+import csdl.operations as ops
+from typing import List
 import numpy as np
 
 
-def dot(expr1: Variable, expr2: Variable, axis=None):
+def dot(a: Variable, b: Variable, axis=None):
     '''
     This can the dot product between two inputs.
 
@@ -22,40 +21,30 @@ def dot(expr1: Variable, expr2: Variable, axis=None):
         The axis along which the dot product is taken. The axis must
         have an axis of 3.
     '''
-
-    if not (isinstance(expr1, Variable) and isinstance(expr2, Variable)):
+    if not (isinstance(a, Variable) and isinstance(b, Variable)):
         raise TypeError("Arguments must both be Variable objects")
-    out = Operation()
-    out.add_dependency_node(expr1)
-    out.add_dependency_node(expr2)
+    if a.shape != b.shape:
+        raise ValueError("The shapes of the inputs must match!")
 
-    if expr1.shape != expr2.shape:
-        raise Exception("The shapes of the inputs must match!")
-
-    print(len(expr1.shape))
-    print(len(expr2.shape))
-
-    if len(expr1.shape) == 1:
-        out.build = lambda: VectorInnerProductComp(
-            in_names=[expr1.name, expr2.name],
-            out_name=out.name,
-            in_shape=expr1.shape[0],
-            in_vals=[expr1.val, expr2.val],
-        )
+    op = ops.dot(a, b, axis=axis)
+    if len(a.shape) == 1:
+        shape = (1, )
     else:
-        if expr1.shape[axis] != 3:
-            raise Exception(
+        if axis is None:
+            raise ValueError(
+                "Axis required when first argument is a matrix or tensor")
+        if a.shape[axis] != 3:
+            raise ValueError(
                 "The specified axis must correspond to the value of 3 in shape"
             )
-        else:
-            out.shape = tuple(np.delete(list(expr1.shape), axis))
+        shape = tuple(np.delete(list(a.shape), axis))
 
-            out.build = lambda: TensorDotProductComp(
-                in_names=[expr1.name, expr2.name],
-                out_name=out.name,
-                in_shape=expr1.shape,
-                axis=axis,
-                out_shape=out.shape,
-                in_vals=[expr1.val, expr2.val],
-            )
-    return Variable(out)
+    op.outs = (Output(
+        None,
+        op=op,
+        shape=shape,
+    ), )
+    for out in op.outs:
+        out.add_dependency_node(op)
+
+    return op.outs[0]
