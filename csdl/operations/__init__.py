@@ -35,3 +35,4 @@ from csdl.operations.reshape import reshape
 from csdl.operations.reorder_axes import reorder_axes
 from csdl.operations.sum import sum
 from csdl.operations.average import average
+from csdl.operations.min import min
