@@ -36,3 +36,4 @@ from csdl.operations.reorder_axes import reorder_axes
 from csdl.operations.sum import sum
 from csdl.operations.average import average
 from csdl.operations.min import min
+from csdl.operations.max import max
