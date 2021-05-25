@@ -1,15 +1,23 @@
 from docstring_parser import parse
-import re, os, inspect, importlib
+import re
+import os
+import inspect
+import importlib
 
-# choose package
 import csdl
-pkg = csdl
+
+lang_pkg = csdl
+
+# choose package that implements CSDL
+import csdl_om
 
 # set paths
-examples_module_path = 'csdl.examples'
-examples_dir = 'examples/'
-test_examples_subdir = examples_dir + 'invalid/'
-doc_examples_subdir = examples_dir + 'valid/'
+lang_example_class_definition_directory = inspect.getfile(
+    lang_pkg)[:-len('__init__.py')] + 'examples/'
+lang_test_exceptions_directory = \
+     lang_example_class_definition_directory + 'invalid/'
+lang_test_computations_directory = \
+    lang_example_class_definition_directory + 'valid/'
 
 
 def camel_to_snake(name):
@@ -20,90 +28,79 @@ def camel_to_snake(name):
     ).lower()
 
 
-def write_setup(f, obj, options):
+def write_run_phase(example_script_string, obj, options):
+    # create simulator from model
+    example_script_string += 'sim = Simulator(' + obj.__name__ + '('
 
-    # setup and run problem
-    superclasses = [sc.__name__ for sc in inspect.getmro(obj)]
-    f.write('prob = Problem()\n')
-    if 'Group' in superclasses:
-        f.write('prob.model = ' + obj.__name__ + '(')
-        if len(options) > 0:
-            f.write('\n')
-        for opt in options:
-            f.write('    ' + opt + ',\n')
-        f.write(')\n')
-    elif 'Component' in superclasses:
-        f.write('prob.model = Model()\nprob.model.add(')
-        if len(options) > 0:
-            f.write('\n    ')
-        f.write('\'example\', ')
-        if len(options) > 0:
-            f.write('\n    ')
-        f.write(obj.__name__ + '(')
-        if len(options) > 0:
-            f.write('\n')
-        for opt in options:
-            f.write('    ' + opt + ',\n')
-        f.write('))\n')
-    else:
-        raise TypeError('Example class', obj.__name__,
-                        'is not a Component or Group')
-    f.write('prob.setup(force_alloc_complex=True)\nprob.run_model()')
-    f.write('\n')
+    if len(options) > 0:
+        example_script_string += '\n'
+    for opt in options:
+        example_script_string += '    ' + opt + ',\n'
+    example_script_string += '))\n'
+
+    # run simulation
+    example_script_string += 'sim.run()\n'
+    return example_script_string
 
 
 def get_example_file_name(obj, py_file_path):
     obj_name_snake_case = camel_to_snake(obj.__name__)
     prefix = ''
-    example_filename = ''
-    generate_example_script = False
+    example_filename = None
     if obj_name_snake_case[:len('error_')] == 'error_':
         prefix = 'error_'
-        generate_example_script = True
         example_filename = py_file_path.rsplit(
             '/', 1
         )[-1][:-len('.py')] + '_' + obj_name_snake_case[len(prefix):] + '.py'
     if obj_name_snake_case[:len('example_')] == 'example_':
         prefix = 'example_'
-        generate_example_script = True
         example_filename = py_file_path.rsplit(
             '/', 1
         )[-1][:-len('.py')] + '_' + obj_name_snake_case[len(prefix):] + '.py'
-    return generate_example_script, example_filename, prefix
+    return example_filename, prefix
 
 
-def export_examples():
+def export_examples(
+    pkg_with_example_class_definitions,
+    output_directory_example_exceptions,
+    output_directory_example_computations,
+):
     # Python 3.9: use removesuffix
-    package_path = inspect.getfile(pkg)[:-len('__init__.py')]
-    examples_path = package_path + examples_dir
-    test_examples_path = package_path + test_examples_subdir
-    doc_examples_path = package_path + doc_examples_subdir
-
-    for example in os.listdir(examples_path):
+    example_class_definition_module = pkg_with_example_class_definitions.__name__ + '.examples'
+    example_class_definition_directory = inspect.getfile(
+        pkg_with_example_class_definitions)[:-len('__init__.py')] + 'examples/'
+    for examples_file in os.listdir(example_class_definition_directory):
         suffix = '.py'
-        if example[-len(suffix):] == suffix:
-            py_file_path = (examples_path + example)
+        if examples_file[-len(suffix):] == suffix:
+            example_classes_file_path = (example_class_definition_directory +
+                                         examples_file)
 
             # gather imports
             import_statements = []
-            with open(py_file_path, 'r') as f:
+            with open(example_classes_file_path, 'r') as f:
                 import_statements = []
                 for line in f:
-                    l = line.lstrip()
-                    if re.match('import', l) or re.match('from', l):
-                        import_statements.append(l)
+                    line_text = line.lstrip()
+                    if re.match('import', line_text) or re.match(
+                            'from', line_text):
+                        import_statements.append(line_text)
 
             # Python 3.9: use removesuffix
-            py_module = importlib.import_module(examples_module_path + '.' +
-                                                example[:-len(suffix)])
-            members = inspect.getmembers(py_module)
+            lang_examples_module = importlib.import_module(
+                example_class_definition_module + '.' +
+                examples_file[:-len(suffix)])
+            members = inspect.getmembers(lang_examples_module)
             for obj in dict(members).values():
                 if inspect.isclass(obj):
-                    generate_example_script, example_filename, prefix = get_example_file_name(
-                        obj, py_file_path)
+                    print(
+                        'Generating example script for class {} from file {}'.
+                        format(obj.__name__, examples_file))
+                    example_run_file_name, prefix = \
+                        get_example_file_name(
+                            obj, example_classes_file_path,
+                        )
 
-                    if generate_example_script == True:
-
+                    if example_run_file_name is not None:
                         # collect params
                         docstring = parse(obj.__doc__)
                         var_names = []
@@ -114,39 +111,65 @@ def export_examples():
                             if param.arg_name == 'option':
                                 options.append(param.description)
 
-                        file_path = ''
+                        example_run_file_path = None
                         if prefix == 'error_':
-                            file_path = test_examples_path + example_filename
+                            example_run_file_path = \
+                                output_directory_example_exceptions \
+                                + example_run_file_name
                         elif prefix == 'example_':
-                            file_path = doc_examples_path + example_filename
-                        if file_path != '':
-                            print('writing to file', file_path)
-                            with open(file_path, 'w') as f:
+                            example_run_file_path = \
+                                output_directory_example_computations \
+                                + example_run_file_name
+                        print('generating code for file',
+                              example_run_file_path)
 
-                                # write import statements
-                                f.write('from openmdao.api import Problem\n')
-                                for stmt in import_statements:
-                                    f.write(stmt)
-                                f.write('\n\n')
+                        example_script_string = ''
+                        for stmt in import_statements:
+                            example_script_string += stmt
+                        example_script_string += '\n\n'
 
-                                # write example class
-                                source = re.sub('.*:param.*:.*\n', '',
-                                                inspect.getsource(obj))
-                                source = re.sub('\n.*"""\n.*"""', '', source)
-                                f.write(source)
-                                f.write('\n\n')
+                        # write example class
+                        source = re.sub('.*:param.*:.*\n', '',
+                                        inspect.getsource(obj))
+                        source = re.sub('\n.*"""\n.*"""', '', source)
+                        example_script_string += source
+                        example_script_string += '\n\n'
 
-                                write_setup(f, obj, options)
+                        example_script_string = write_run_phase(
+                            example_script_string, obj, options)
 
-                                # output values
-                                if len(var_names) > 0:
-                                    f.write('\n')
-                                for var in var_names:
-                                    f.write('print(\'' + var + '\', prob[\'' +
-                                            var + '\'].shape)\n')
-                                    f.write('print(prob[\'' + var + '\'])')
-                                    f.write('\n')
-                                f.close()
+                        # output values
+                        if len(var_names) > 0:
+                            example_script_string += '\n'
+                        for var in var_names:
+                            example_script_string += 'print(\'' + var + '\', sim[\'' + var + '\'].shape)\n'
+                            example_script_string += 'print(sim[\'' + var + '\'])'
+                            example_script_string += '\n'
+
+                        example_script_lines = ['def example(Simulator):'] + [
+                            ('    ' + line)
+                            for line in example_script_string.split('\n')
+                        ]
+                        if prefix == 'example_':
+                            example_script_lines += ['    return sim']
+                        with open(example_run_file_path, 'w') as f:
+                            print('writing to file', example_run_file_path)
+                            f.write('\n'.join(example_script_lines))
+                            f.close()
 
 
-export_examples()
+# export_examples(
+#     lang_pkg,
+#     lang_test_exceptions_directory,
+#     lang_test_computations_directory,
+# )
+
+# generate run scripts from examples in CSDL package using this
+# implementation of CSDL
+print('START: implementation-agnostic examples')
+export_examples(
+    lang_pkg,
+    lang_test_exceptions_directory,
+    lang_test_computations_directory,
+)
+print('END: implementation-agnostic examples')

@@ -1,5 +1,3 @@
-from openmdao.api import Problem
-from openmdao.api import ScipyKrylov, NewtonSolver, NonlinearBlockGS
 from csdl import Model, ImplicitModel
 import csdl
 import numpy as np
