@@ -101,7 +101,10 @@ def _build_intermediate_representation(func: Callable) -> Callable:
             # remove_duplicate_nodes(self.nodes, self.registered_outputs)
 
             # combine elementwise operations and use complex step
-            repeat = True
+            if len(self.registered_outputs) == 0:
+                repeat = False
+            else:
+                repeat = True
             while repeat is True:
                 for r in self.registered_outputs:
                     repeat = combine_operations(self.registered_outputs, r)
