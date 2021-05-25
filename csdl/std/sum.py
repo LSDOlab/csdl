@@ -1,6 +1,6 @@
-from csdl.comps.single_tensor_sum_comp import SingleTensorSumComp
-from csdl.comps.multiple_tensor_sum_comp import MultipleTensorSumComp
 from csdl.core.variable import Variable
+from csdl.core.output import Output
+import csdl.operations as ops
 from typing import List
 import numpy as np
 
@@ -19,49 +19,22 @@ def sum(*summands: List[Variable], axes=None):
         The axes along which the sum will be taken over
 
     '''
-
-    out = Variable()
-    for expr in summands:
-        if not isinstance(expr, Variable):
-            raise TypeError(expr, " is not an Variable object")
-        out.add_dependency_node(expr)
+    for summand in summands:
+        if not isinstance(summand, Variable):
+            raise TypeError(summand, " is not an Variable object")
 
     if axes == None:
-        if len(summands) == 1:
-            out.build = lambda: SingleTensorSumComp(
-                in_name=summands[0].name,
-                shape=summands[0].shape,
-                out_name=out.name,
-                val=summands[0].val,
-            )
-        else:
-            out.shape = expr.shape
-            out.build = lambda: MultipleTensorSumComp(
-                in_names=[expr.name for expr in summands],
-                shape=expr.shape,
-                out_name=out.name,
-                vals=[expr.val for expr in summands],
-            )
+        shape = summands[0].shape
     else:
-        output_shape = np.delete(expr.shape, axes)
-        out.shape = tuple(output_shape)
+        shape = tuple(np.delete(summands[0].shape, axes))
 
-        if len(summands) == 1:
-            out.build = lambda: SingleTensorSumComp(
-                in_name=expr.name,
-                shape=expr.shape,
-                out_name=out.name,
-                out_shape=out.shape,
-                axes=axes,
-                val=summands[0].val,
-            )
-        else:
-            out.build = lambda: MultipleTensorSumComp(
-                in_names=[expr.name for expr in summands],
-                shape=expr.shape,
-                out_name=out.name,
-                out_shape=out.shape,
-                axes=axes,
-                vals=[expr.val for expr in summands],
-            )
-    return out
+    op = ops.sum(*summands, axes=axes)
+    op.outs = (Output(
+        None,
+        op=op,
+        shape=shape,
+    ), )
+    for out in op.outs:
+        out.add_dependency_node(op)
+
+    return op.outs[0]

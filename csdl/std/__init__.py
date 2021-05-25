@@ -33,3 +33,4 @@ from csdl.std.rotmat import rotmat
 from csdl.std.expand import expand
 from csdl.std.reshape import reshape
 from csdl.std.reorder_axes import reorder_axes
+from csdl.std.sum import sum
