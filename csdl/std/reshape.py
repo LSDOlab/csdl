@@ -1,29 +1,34 @@
-from csdl.comps.reshape_comp import ReshapeComp
 from csdl.core.variable import Variable
+from csdl.core.output import Output
+import csdl.operations as ops
+import numpy as np
 
 
-def reshape(expr: Variable, new_shape: tuple):
+def reshape(var: Variable, new_shape: tuple):
     '''
     This function reshapes the input into a new shape.
 
     Parameters
     ----------
-    expr: Variable
+    var: Variable
         The Variable which you want to reshape
 
     new_shape: tuple[int]
         A tuple of ints specifying the new shape desired
     '''
-    if not isinstance(expr, Variable):
-        raise TypeError(expr, " is not an Variable object")
-    out = Variable()
-    out.shape = new_shape
-    out.add_dependency_node(expr)
-    out.build = lambda: ReshapeComp(
-        shape=expr.shape,
-        in_name=expr.name,
-        out_name=out.name,
-        new_shape=out.shape,
-        val=expr.val,
-    )
-    return out
+    if not isinstance(var, Variable):
+        raise TypeError(var, " is not an Variable object")
+    if np.prod(var.shape) != np.prod(new_shape):
+        raise ValueError(
+            "Cannot reshape variable of shape {} into shape {}".format(
+                var.shape, new_shape))
+    op = ops.reshape(var)
+    op.outs = (Output(
+        None,
+        op=op,
+        shape=new_shape,
+    ), )
+    for out in op.outs:
+        out.add_dependency_node(op)
+
+    return op.outs[0]

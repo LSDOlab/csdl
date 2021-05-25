@@ -31,3 +31,4 @@ from csdl.operations.dot import dot
 from csdl.operations.cross import cross
 from csdl.operations.rotmat import rotmat
 from csdl.operations.expand import expand
+from csdl.operations.reshape import reshape
