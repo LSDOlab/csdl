@@ -32,3 +32,4 @@ from csdl.std.cross import cross
 from csdl.std.rotmat import rotmat
 from csdl.std.expand import expand
 from csdl.std.reshape import reshape
+from csdl.std.reorder_axes import reorder_axes
