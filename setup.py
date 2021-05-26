@@ -1,8 +1,7 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='csdl',
-    version='1',
     packages=[
         'csdl',
     ],
