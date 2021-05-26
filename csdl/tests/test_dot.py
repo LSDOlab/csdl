@@ -1,4 +1,3 @@
-from openmdao.utils.assert_utils import assert_check_partials
 import numpy as np
 import pytest
 
@@ -25,7 +24,7 @@ def test_vector_vector_dot(name):
                                         out_stream=None,
                                         compact_print=True,
                                         method='cs')
-    assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
+    sim.assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
 
 
 def test_tensor_tensor_first_dot(name):
@@ -55,7 +54,7 @@ def test_tensor_tensor_first_dot(name):
                                         out_stream=None,
                                         compact_print=True,
                                         method='cs')
-    assert_check_partials(partials_error, atol=1.e-4, rtol=1.e-4)
+    sim.assert_check_partials(partials_error, atol=1.e-4, rtol=1.e-4)
 
 
 def test_tensor_tensor_last_dot(name):
@@ -85,7 +84,7 @@ def test_tensor_tensor_last_dot(name):
                                         out_stream=None,
                                         compact_print=True,
                                         method='cs')
-    assert_check_partials(partials_error, atol=1.e-4, rtol=1.e-4)
+    sim.assert_check_partials(partials_error, atol=1.e-4, rtol=1.e-4)
 
 
 def test_dot_vec_different_shapes(name):

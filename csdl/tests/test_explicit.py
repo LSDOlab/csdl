@@ -1,4 +1,3 @@
-from openmdao.utils.assert_utils import assert_check_partials
 import numpy as np
 import pytest
 
@@ -11,7 +10,7 @@ def test_literals(name):
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='cs')
-    assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+    sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
 def test_simple_binary(name):
@@ -33,7 +32,7 @@ def test_simple_binary(name):
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='cs')
-    assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+    sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
 def test_no_registered_outputs(name):
@@ -44,7 +43,7 @@ def test_no_registered_outputs(name):
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='cs')
-    assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+    sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
     assert len(sim.prob.model._subgroups_myproc) == 1
 
 
@@ -75,7 +74,7 @@ def test_unary_exprs(name):
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='cs')
-    # assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+    # sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
 def test_explicit_with_subsystems(name):
@@ -94,7 +93,7 @@ def test_explicit_with_subsystems(name):
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='cs')
-    assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+    sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
 def test_explicit_cycles(name):
@@ -113,4 +112,4 @@ def test_explicit_cycles(name):
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='cs')
-    assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+    sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)

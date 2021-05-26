@@ -1,4 +1,3 @@
-from openmdao.utils.assert_utils import assert_check_partials
 import numpy as np
 import pytest
 

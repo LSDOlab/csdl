@@ -1,4 +1,3 @@
-from openmdao.utils.assert_utils import assert_check_partials
 import numpy as np
 import pytest
 
@@ -11,4 +10,4 @@ def test_indep_var(name):
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='cs')
-    assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+    sim.assert_check_partials(result, atol=1.e-8, rtol=1.e-8)

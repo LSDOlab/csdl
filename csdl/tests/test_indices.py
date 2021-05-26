@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from openmdao.utils.assert_utils import assert_check_partials
 
 
 def test_integer_index_assignement_overlap(name):
@@ -28,7 +27,7 @@ def test_integer_index_assignement(name):
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='cs')
-    assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+    sim.assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
 
 
 def test_integer_index_integer_reuse(name):
@@ -80,7 +79,7 @@ def test_one_dimensional_index_assignement(name):
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='cs')
-    assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+    sim.assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
 
 
 def test_multidimensional_dimensional_index_assignement_overlap(name):
@@ -136,4 +135,4 @@ def test_multidimensional_dimensional_index_assignement(name):
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='cs')
-    assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+    sim.assert_check_partials(result, atol=1.e-8, rtol=1.e-8)

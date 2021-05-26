@@ -1,4 +1,3 @@
-from openmdao.utils.assert_utils import assert_check_partials
 import numpy as np
 import pytest
 
@@ -19,7 +18,7 @@ def test_expand_scalar2array(name):
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='cs')
-    assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+    sim.assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
 
 
 def test_expand_array2higherarray(name):
@@ -42,7 +41,7 @@ def test_expand_array2higherarray(name):
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='cs')
-    assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+    sim.assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
 
 
 def test_scalar_incorrect_order(name):

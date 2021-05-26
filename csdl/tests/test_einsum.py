@@ -1,4 +1,3 @@
-from openmdao.utils.assert_utils import assert_check_partials
 import numpy as np
 
 shape1 = (4, )
@@ -23,7 +22,7 @@ def test_einsum_inner_vector_vector(name):
                                          out_stream=None,
                                          compact_print=True,
                                          method='cs')
-    assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
 
 
 def test_einsum_inner_tensor_vector(name):
@@ -39,7 +38,7 @@ def test_einsum_inner_tensor_vector(name):
                                          out_stream=None,
                                          compact_print=True,
                                          method='cs')
-    assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
 
 
 def test_einsum_outer_vector_vector(name):
@@ -55,7 +54,7 @@ def test_einsum_outer_vector_vector(name):
                                          out_stream=None,
                                          compact_print=True,
                                          method='cs')
-    assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
 
 
 def test_einsum_outer_tensor_vector(name):
@@ -71,7 +70,7 @@ def test_einsum_outer_tensor_vector(name):
                                          out_stream=None,
                                          compact_print=True,
                                          method='cs')
-    assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
 
 
 def test_einsum_reorder_matrix(name):
@@ -88,7 +87,7 @@ def test_einsum_reorder_matrix(name):
                                          out_stream=None,
                                          compact_print=True,
                                          method='cs')
-    assert_check_partials(partials_error1, atol=1.e-6, rtol=1.e-6)
+    sim.assert_check_partials(partials_error1, atol=1.e-6, rtol=1.e-6)
 
 
 def test_einsum_reorder_tensor(name):
@@ -105,7 +104,7 @@ def test_einsum_reorder_tensor(name):
                                          out_stream=None,
                                          compact_print=True,
                                          method='cs')
-    assert_check_partials(partials_error2, atol=1.e-6, rtol=1.e-6)
+    sim.assert_check_partials(partials_error2, atol=1.e-6, rtol=1.e-6)
 
 
 def test_einsum_vector_summation(name):
@@ -121,7 +120,7 @@ def test_einsum_vector_summation(name):
                                          out_stream=None,
                                          compact_print=True,
                                          method='cs')
-    assert_check_partials(partials_error1, atol=1.e-6, rtol=1.e-6)
+    sim.assert_check_partials(partials_error1, atol=1.e-6, rtol=1.e-6)
 
 
 def test_einsum_tensor_summation(name):
@@ -137,7 +136,7 @@ def test_einsum_tensor_summation(name):
                                          out_stream=None,
                                          compact_print=True,
                                          method='cs')
-    assert_check_partials(partials_error2, atol=1.e-6, rtol=1.e-6)
+    sim.assert_check_partials(partials_error2, atol=1.e-6, rtol=1.e-6)
 
 
 def test_einsum_multiplication_sum(name):
@@ -154,7 +153,7 @@ def test_einsum_multiplication_sum(name):
                                          out_stream=None,
                                          compact_print=True,
                                          method='cs')
-    assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
 
 
 def test_einsum_special(name):
@@ -171,7 +170,7 @@ def test_einsum_special(name):
                                          out_stream=None,
                                          compact_print=True,
                                          method='cs')
-    assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
 
 
 def test_einsum_sparse_inner_vector_vector(name):
@@ -189,7 +188,7 @@ def test_einsum_sparse_inner_vector_vector(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
 
 
 def test_einsum_sparse_inner_tensor_vector(name):
@@ -207,7 +206,7 @@ def test_einsum_sparse_inner_tensor_vector(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
 
 
 def test_einsum_sparse_outer_vector_vector(name):
@@ -225,7 +224,7 @@ def test_einsum_sparse_outer_vector_vector(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
 
 
 def test_einsum_sparse_outer(name):
@@ -243,7 +242,7 @@ def test_einsum_sparse_outer(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
 
 
 def test_einsum_sparse_reorder_matrix(name):
@@ -261,7 +260,7 @@ def test_einsum_sparse_reorder_matrix(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error1, atol=1.e-6, rtol=1.e-6)
+    sim.assert_check_partials(partials_error1, atol=1.e-6, rtol=1.e-6)
 
 
 def test_einsum_sparse_reorder(name):
@@ -279,7 +278,7 @@ def test_einsum_sparse_reorder(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error2, atol=1.e-6, rtol=1.e-6)
+    sim.assert_check_partials(partials_error2, atol=1.e-6, rtol=1.e-6)
 
 
 def test_einsum_sparse_vector_summation(name):
@@ -297,7 +296,7 @@ def test_einsum_sparse_vector_summation(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error1, atol=1.e-6, rtol=1.e-6)
+    sim.assert_check_partials(partials_error1, atol=1.e-6, rtol=1.e-6)
 
 
 def test_einsum_sparse_tensor_summation(name):
@@ -315,7 +314,7 @@ def test_einsum_sparse_tensor_summation(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error2, atol=1.e-6, rtol=1.e-6)
+    sim.assert_check_partials(partials_error2, atol=1.e-6, rtol=1.e-6)
 
 
 def test_einsum_sparse_multiplication_sum(name):
@@ -333,7 +332,7 @@ def test_einsum_sparse_multiplication_sum(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
 
 
 def test_einsum_sparse_special(name):
@@ -351,4 +350,4 @@ def test_einsum_sparse_special(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)

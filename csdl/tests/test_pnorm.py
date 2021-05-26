@@ -1,4 +1,3 @@
-from openmdao.utils.assert_utils import assert_check_partials
 import numpy as np
 import pytest
 
@@ -24,7 +23,7 @@ def test_pnorm_axisfree_norm(name):
                                         out_stream=None,
                                         compact_print=True,
                                         method='fd')
-    assert_check_partials(partials_error, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error, atol=1.e-5, rtol=1.e-5)
 
 
 def test_pnorm_axiswise(name):
@@ -50,7 +49,7 @@ def test_pnorm_axiswise(name):
                                         out_stream=None,
                                         compact_print=True,
                                         method='cs')
-    assert_check_partials(partials_error, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error, atol=1.e-5, rtol=1.e-5)
 
 
 def test_pnorm_type_not_positive(name):

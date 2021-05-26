@@ -1,4 +1,3 @@
-from openmdao.utils.assert_utils import assert_check_partials
 import numpy as np
 import pytest
 
@@ -23,9 +22,9 @@ def test_average_single_vector(name):
         compact_print=True,
         method='cs')
 
-    assert_check_partials(partials_error_vector_average,
-                          atol=1.e-6,
-                          rtol=1.e-6)
+    sim.assert_check_partials(partials_error_vector_average,
+                              atol=1.e-6,
+                              rtol=1.e-6)
 
 
 def test_average_single_matrix(name):
@@ -48,9 +47,9 @@ def test_average_single_matrix(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error_matrix_average,
-                          atol=1.e-6,
-                          rtol=1.e-6)
+    sim.assert_check_partials(partials_error_matrix_average,
+                              atol=1.e-6,
+                              rtol=1.e-6)
 
 
 def test_average_single_tensor(name):
@@ -75,9 +74,9 @@ def test_average_single_tensor(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error_tensor_average,
-                          atol=1.e-5,
-                          rtol=1.e-5)
+    sim.assert_check_partials(partials_error_tensor_average,
+                              atol=1.e-5,
+                              rtol=1.e-5)
 
 
 def test_average_multiple_vector(name):
@@ -100,9 +99,9 @@ def test_average_multiple_vector(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error_vector_average,
-                          atol=1.e-6,
-                          rtol=1.e-6)
+    sim.assert_check_partials(partials_error_vector_average,
+                              atol=1.e-6,
+                              rtol=1.e-6)
 
 
 def test_average_multiple_matrix(name):
@@ -126,9 +125,9 @@ def test_average_multiple_matrix(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error_matrix_average,
-                          atol=1.e-6,
-                          rtol=1.e-6)
+    sim.assert_check_partials(partials_error_matrix_average,
+                              atol=1.e-6,
+                              rtol=1.e-6)
 
 
 def test_average_multiple_tensor(name):
@@ -154,9 +153,9 @@ def test_average_multiple_tensor(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error_tensor_average,
-                          atol=1.e-5,
-                          rtol=1.e-5)
+    sim.assert_check_partials(partials_error_tensor_average,
+                              atol=1.e-5,
+                              rtol=1.e-5)
 
 
 def test_single_matrix_along0(name):
@@ -179,9 +178,9 @@ def test_single_matrix_along0(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error_single_matrix_axis_0,
-                          atol=1.e-6,
-                          rtol=1.e-6)
+    sim.assert_check_partials(partials_error_single_matrix_axis_0,
+                              atol=1.e-6,
+                              rtol=1.e-6)
 
 
 def test_single_matrix_along1(name):
@@ -203,9 +202,9 @@ def test_single_matrix_along1(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error_single_matrix_axis_1,
-                          atol=1.e-6,
-                          rtol=1.e-6)
+    sim.assert_check_partials(partials_error_single_matrix_axis_1,
+                              atol=1.e-6,
+                              rtol=1.e-6)
 
 
 def test_average_multiple_matrix_along0(name):
@@ -229,9 +228,9 @@ def test_average_multiple_matrix_along0(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error_multiple_matrix_axis_0,
-                          atol=1.e-6,
-                          rtol=1.e-6)
+    sim.assert_check_partials(partials_error_multiple_matrix_axis_0,
+                              atol=1.e-6,
+                              rtol=1.e-6)
 
 
 def test_average_multiple_matrix_along1(name):
@@ -255,6 +254,6 @@ def test_average_multiple_matrix_along1(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error_multiple_matrix_axis_1,
-                          atol=1.e-6,
-                          rtol=1.e-6)
+    sim.assert_check_partials(partials_error_multiple_matrix_axis_1,
+                              atol=1.e-6,
+                              rtol=1.e-6)

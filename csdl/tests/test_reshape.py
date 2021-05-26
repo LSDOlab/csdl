@@ -1,4 +1,3 @@
-from openmdao.utils.assert_utils import assert_check_partials
 import numpy as np
 import pytest
 
@@ -27,7 +26,7 @@ def test_reshape_tensor2vector(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
+    sim.assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
 
 
 def test_reshape_vector2tensor(name):
@@ -55,4 +54,4 @@ def test_reshape_vector2tensor(name):
         out_stream=None,
         compact_print=True,
         method='cs')
-    assert_check_partials(partials_error, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error, atol=1.e-5, rtol=1.e-5)
