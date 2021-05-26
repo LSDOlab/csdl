@@ -41,5 +41,11 @@ class linear_combination(StandardOperation):
             coeffs = [coeffs] * len(args)
         self.compute_string = '{}={}'.format(out_name, constant)
         for coeff, arg in zip(coeffs, args):
-            if not np.all(coeff == 0):
-                self.compute_string += '+{}*{}'.format(coeff, arg.name)
+            if isinstance(coeff, (int, float)):
+                if coeff > 0:
+                    self.compute_string += '+{}*{}'.format(coeff, arg.name)
+                elif coeff < 0:
+                    self.compute_string += '{}*{}'.format(coeff, arg.name)
+            else:
+                if not np.all(coeff == 0):
+                    self.compute_string += '+{}*{}'.format(coeff, arg.name)

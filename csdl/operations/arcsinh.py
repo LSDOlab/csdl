@@ -8,3 +8,8 @@ class arcsinh(StandardOperation):
         super().__init__(*args, **kwargs)
         self.properties['iterative'] = False
         self.properties['elementwise'] = True
+
+    def define_compute_strings(self):
+        in_name = self.dependencies[0].name
+        out_name = self.outs[0].name
+        self.compute_string = '{}=np.arcsinh({})'.format(out_name, in_name)

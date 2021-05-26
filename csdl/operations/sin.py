@@ -12,4 +12,4 @@ class sin(StandardOperation):
     def define_compute_strings(self):
         in_name = self.dependencies[0].name
         out_name = self.outs[0].name
-        self.compute_string = '{}=sin({})'.format(out_name, in_name)
+        self.compute_string = '{}=np.sin({})'.format(out_name, in_name)

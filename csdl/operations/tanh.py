@@ -8,3 +8,8 @@ class tanh(StandardOperation):
         super().__init__(*args, **kwargs)
         self.properties['elementwise'] = True
         self.properties['iterative'] = False
+
+    def define_compute_strings(self):
+        in_name = self.dependencies[0].name
+        out_name = self.outs[0].name
+        self.compute_string = '{}=np.tanh({})'.format(out_name, in_name)
