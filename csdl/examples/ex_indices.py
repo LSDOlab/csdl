@@ -121,9 +121,9 @@ class ExampleMultidimensional(Model):
             shape=(1, 20),
             val=np.arange(20).reshape((1, 20)),
         )
-        r = self.create_output('r', shape=(2, 20))
-        r[0, :] = vec
-        r[1, :] = 2 * vec
+        s = self.create_output('s', shape=(2, 20))
+        s[0, :] = vec
+        s[1, :] = 2 * vec
 
         # Negative indices
         t = self.create_output('t', shape=(5, 3, 3), val=0)
