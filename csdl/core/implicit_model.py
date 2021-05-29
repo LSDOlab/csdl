@@ -85,8 +85,7 @@ def _build_internal_simulator(func: Callable) -> Callable:
                 # outputs)
                 for in_var in in_vars:
                     in_name = in_var.name
-                    if in_name not in self._model.design_variables.keys():
-                        self._model.add_design_variable(in_name)
+                    self._model.add_design_variable(in_name)
                 if implicit_output_name not in self._model.design_variables.keys(
                 ):
                     self._model.add_design_variable(implicit_output_name)
