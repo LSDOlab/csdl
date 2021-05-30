@@ -2,15 +2,12 @@ import numpy as np
 import pytest
 
 
-def test_vector_vector_dot(name):
+def test_vector_vector_dot(backend):
     from csdl.examples.valid.ex_dot_vector_vector import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     m = 3
-
-    # Shape of the vectors
-    vec_shape = (m, )
 
     # Values for the two vectors
     vec1 = np.arange(m)
@@ -27,9 +24,9 @@ def test_vector_vector_dot(name):
     sim.assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
 
 
-def test_tensor_tensor_first_dot(name):
+def test_tensor_tensor_first_dot(backend):
     from csdl.examples.valid.ex_dot_tensor_tensor_first import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     m = 3
@@ -57,9 +54,9 @@ def test_tensor_tensor_first_dot(name):
     sim.assert_check_partials(partials_error, atol=1.e-4, rtol=1.e-4)
 
 
-def test_tensor_tensor_last_dot(name):
+def test_tensor_tensor_last_dot(backend):
     from csdl.examples.valid.ex_dot_tensor_tensor_last import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     m = 2
@@ -87,22 +84,22 @@ def test_tensor_tensor_last_dot(name):
     sim.assert_check_partials(partials_error, atol=1.e-4, rtol=1.e-4)
 
 
-def test_dot_vec_different_shapes(name):
-    with pytest.raises(Exception):
-        from csdl.examples.invalid.ex_dot_vec_different_shapes import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+def test_dot_vec_different_shapes(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_dot_vec_different_shapes import example
+    with pytest.raises(ValueError):
+        example(eval('Simulator'))
 
 
-def test_dot_ten_different_shapes(name):
-    with pytest.raises(Exception):
-        from csdl.examples.invalid.ex_dot_ten_different_shapes import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+def test_dot_ten_different_shapes(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_dot_ten_different_shapes import example
+    with pytest.raises(ValueError):
+        example(eval('Simulator'))
 
 
-def test_dot_wrong_axis(name):
-    with pytest.raises(Exception):
-        from csdl.examples.invalid.ex_dot_ten_different_shapes import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+def test_dot_wrong_axis(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_dot_wrong_axis import example
+    with pytest.raises(ValueError):
+        example(eval('Simulator'))
