@@ -7,16 +7,25 @@ from csdl.operations.combined import combined
 # op2.dependencies
 
 
+def check_property(b, op, prop, truthy):
+    try:
+        if truthy:
+            b = b and op.properties[prop]
+        else:
+            b = b and not op.properties[prop]
+    except:
+        pass
+    return b
+
+
 def can_combine(op: StandardOperation):
     if not isinstance(op, StandardOperation):
         return False
     if len(op.outs) != 1:
         return False
     cc = True
-    if 'elementwise' in op.properties.keys():
-        cc = cc and op.properties['elementwise']
-    if 'iterative' in op.properties.keys():
-        cc = cc and not op.properties['iterative']
+    cc = check_property(cc, op, 'elementwise', True)
+    cc = check_property(cc, op, 'iterative', False)
     return cc
 
 
@@ -39,7 +48,6 @@ def combine_operations(registered_outputs, out: Output):
                     break
 
             if combine is True:
-                # add derivatives wrt nonterminals
                 for state in op2.dependencies:
                     if len(state.dependencies) != 0:
                         repeat = True
@@ -54,7 +62,7 @@ def combine_operations(registered_outputs, out: Output):
                             combined_op.compute_string += op1.compute_string + '\n'
 
                             # add combined_op as a dependency of output
-                            combined_op.outs = [out]
+                            combined_op.outs = (out, )
                             combined_op.dependents = [out]
                             out.dependencies = [combined_op]
 
@@ -70,8 +78,6 @@ def combine_operations(registered_outputs, out: Output):
                                 combine_operations(registered_outputs, state)
 
                 combined_op.compute_string += op2.compute_string + '\n'
-                print('{}, compute_string (after state loop): {}'.format(
-                    combined_op.name, combined_op.compute_string))
         else:
             for state in op2.dependencies:
                 combine_operations(registered_outputs, state)

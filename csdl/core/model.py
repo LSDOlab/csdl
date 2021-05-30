@@ -102,12 +102,15 @@ def _build_intermediate_representation(func: Callable) -> Callable:
             # remove_duplicate_nodes(self.nodes, self.registered_outputs)
 
             # combine elementwise operations and use complex step
-            # repeat = True
-            # if len(self.registered_outputs) == 0:
-            #     repeat = False
-            # while repeat is True:
-            #     for r in self.registered_outputs:
-            #         repeat = combine_operations(self.registered_outputs, r)
+            # KLUDGE: this is false for internal model for implicit
+            # model; operations will not be combined
+            if self.combine_operations is True:
+                repeat = True
+                if len(self.registered_outputs) == 0:
+                    repeat = False
+                while repeat is True:
+                    for r in self.registered_outputs:
+                        repeat = combine_operations(self.registered_outputs, r)
 
             # remove unused expressions
             keys = []
@@ -177,6 +180,8 @@ class Model(metaclass=_ComponentBuilder):
         self.initialize()
         self.linear_solver = None
         self.nonlinear_solver = None
+        # KLUDGE: only combine operations in models, not implicit models
+        self.combine_operations = True
 
     def initialize(self):
         """
