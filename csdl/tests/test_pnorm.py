@@ -22,8 +22,8 @@ def test_pnorm_axisfree_norm(backend):
     partials_error = sim.check_partials(includes=['comp_axis_free_pnorm'],
                                         out_stream=None,
                                         compact_print=True,
-                                        method='fd')
-    sim.assert_check_partials(partials_error, atol=1.e-5, rtol=1.e-5)
+                                        method='cs')
+    sim.assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
 
 
 def test_pnorm_axiswise(backend):
@@ -49,7 +49,7 @@ def test_pnorm_axiswise(backend):
                                         out_stream=None,
                                         compact_print=True,
                                         method='cs')
-    sim.assert_check_partials(partials_error, atol=1.e-5, rtol=1.e-5)
+    sim.assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
 
 
 def test_pnorm_type_not_positive(backend):
