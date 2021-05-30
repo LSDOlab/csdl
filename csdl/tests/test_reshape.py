@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 
 
-def test_reshape_tensor2vector(name):
+def test_reshape_tensor2vector(backend):
     from csdl.examples.valid.ex_reshape_tensor2_vector import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     i = 2
@@ -29,9 +29,9 @@ def test_reshape_tensor2vector(name):
     sim.assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
 
 
-def test_reshape_vector2tensor(name):
+def test_reshape_vector2tensor(backend):
     from csdl.examples.valid.ex_reshape_vector2_tensor import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     i = 2

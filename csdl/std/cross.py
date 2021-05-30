@@ -23,9 +23,9 @@ def cross(in1, in2, axis: int):
     if not (isinstance(in1, Variable) and isinstance(in2, Variable)):
         raise TypeError("Arguments must both be Variable objects")
     if in1.shape != in2.shape:
-        raise Exception("The shapes of the inputs must match!")
+        raise ValueError("The shapes of the inputs must match!")
     if in1.shape[axis] != 3:
-        raise Exception(
+        raise ValueError(
             "The specified axis must correspond to the value of 3 in shape")
 
     op = ops.cross(in1, in2, axis=axis)

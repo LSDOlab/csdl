@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 
 
-def test_sum_single_vector(name):
+def test_sum_single_vector(backend):
     from csdl.examples.valid.ex_sum_single_vector import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     n = 3
@@ -26,9 +26,9 @@ def test_sum_single_vector(name):
                               rtol=1.e-6)
 
 
-def test_sum_single_matrix(name):
+def test_sum_single_matrix(backend):
     from csdl.examples.valid.ex_sum_single_matrix import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     n = 3
@@ -51,9 +51,9 @@ def test_sum_single_matrix(name):
                               rtol=1.e-6)
 
 
-def test_sum_single_tensor(name):
+def test_sum_single_tensor(backend):
     from csdl.examples.valid.ex_sum_single_tensor import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     n = 3
@@ -78,9 +78,9 @@ def test_sum_single_tensor(name):
                               rtol=1.e-5)
 
 
-def test_sum_multiple_vector(name):
+def test_sum_multiple_vector(backend):
     from csdl.examples.valid.ex_sum_multiple_vector import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     n = 3
@@ -103,9 +103,9 @@ def test_sum_multiple_vector(name):
                               rtol=1.e-6)
 
 
-def test_sum_multiple_matrix(name):
+def test_sum_multiple_matrix(backend):
     from csdl.examples.valid.ex_sum_multiple_matrix import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     n = 3
@@ -129,9 +129,9 @@ def test_sum_multiple_matrix(name):
                               rtol=1.e-6)
 
 
-def test_sum_multiple_tensor(name):
+def test_sum_multiple_tensor(backend):
     from csdl.examples.valid.ex_sum_multiple_tensor import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     n = 3
@@ -157,9 +157,9 @@ def test_sum_multiple_tensor(name):
                               rtol=1.e-5)
 
 
-def test_sum_single_matrix_along0(name):
+def test_sum_single_matrix_along0(backend):
     from csdl.examples.valid.ex_sum_single_matrix_along0 import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     n = 3
@@ -182,9 +182,9 @@ def test_sum_single_matrix_along0(name):
                               rtol=1.e-6)
 
 
-def test_sum_single_matrix_along1(name):
+def test_sum_single_matrix_along1(backend):
     from csdl.examples.valid.ex_sum_single_matrix_along1 import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     n = 3
@@ -207,9 +207,9 @@ def test_sum_single_matrix_along1(name):
                               rtol=1.e-6)
 
 
-def test_sum_multiple_matrix_along0(name):
+def test_sum_multiple_matrix_along0(backend):
     from csdl.examples.valid.ex_sum_multiple_matrix_along0 import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     n = 3
@@ -233,9 +233,9 @@ def test_sum_multiple_matrix_along0(name):
                               rtol=1.e-6)
 
 
-def test_sum_multiple_matrix_along1(name):
+def test_sum_multiple_matrix_along1(backend):
     from csdl.examples.valid.ex_sum_multiple_matrix_along1 import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     n = 3

@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 
 
-def test_rotmat_scalar_rotX(name):
+def test_rotmat_scalar_rotX(backend):
     from csdl.examples.valid.ex_rotmat_scalar_rot_x import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     c = np.cos(np.pi / 3)
@@ -23,9 +23,9 @@ def test_rotmat_scalar_rotX(name):
     sim.assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
 
 
-def test_rotmat_scalar_rotY(name):
+def test_rotmat_scalar_rotY(backend):
     from csdl.examples.valid.ex_rotmat_scalar_rot_y import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     c = np.cos(np.pi / 3)
@@ -37,9 +37,9 @@ def test_rotmat_scalar_rotY(name):
     np.testing.assert_almost_equal(sim['scalar_Rot_y'], desired_outputy)
 
 
-def test_rotmat_same_radian_tensor_rotX(name):
+def test_rotmat_same_radian_tensor_rotX(backend):
     from csdl.examples.valid.ex_rotmat_same_radian_tensor_rot_x import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     # Shape of a random tensor rotation matrix
@@ -67,9 +67,9 @@ def test_rotmat_same_radian_tensor_rotX(name):
     sim.assert_check_partials(partials_error, atol=1.e-5, rtol=1.e-5)
 
 
-def test_rotmat_same_radian_tensor_rotX(name):
+def test_rotmat_same_radian_tensor_rotX(backend):
     from csdl.examples.valid.ex_rotmat_same_radian_tensor_rot_x import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     # Shape of a random tensor rotation matrix
@@ -97,9 +97,9 @@ def test_rotmat_same_radian_tensor_rotX(name):
     sim.assert_check_partials(partials_error, atol=1.e-5, rtol=1.e-5)
 
 
-def test_rotmat_diff_radian_tensor_rotX(name):
+def test_rotmat_diff_radian_tensor_rotX(backend):
     from csdl.examples.valid.ex_rotmat_diff_radian_tensor_rot_x import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     # Shape of a random tensor rotation matrix

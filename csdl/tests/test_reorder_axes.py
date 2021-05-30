@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 
 
-def test_reorder_axes_matrix(name):
+def test_reorder_axes_matrix(backend):
     from csdl.examples.valid.ex_reorder_axes_matrix import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     val = np.arange(4 * 2).reshape((4, 2))
@@ -21,9 +21,9 @@ def test_reorder_axes_matrix(name):
     sim.assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
 
 
-def test_reorder_axes_tensor(name):
+def test_reorder_axes_tensor(backend):
     from csdl.examples.valid.ex_reorder_axes_tensor import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     val = np.arange(4 * 3 * 5 * 2).reshape((4, 3, 5, 2))

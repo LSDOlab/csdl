@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 
 
-def test_pnorm_axisfree_norm(name):
+def test_pnorm_axisfree_norm(backend):
     from csdl.examples.valid.ex_pnorm_axis_free import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     i = 2
@@ -26,9 +26,9 @@ def test_pnorm_axisfree_norm(name):
     sim.assert_check_partials(partials_error, atol=1.e-5, rtol=1.e-5)
 
 
-def test_pnorm_axiswise(name):
+def test_pnorm_axiswise(backend):
     from csdl.examples.valid.ex_pnorm_axis_wise import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     i = 2
@@ -52,15 +52,15 @@ def test_pnorm_axiswise(name):
     sim.assert_check_partials(partials_error, atol=1.e-5, rtol=1.e-5)
 
 
-def test_pnorm_type_not_positive(name):
+def test_pnorm_type_not_positive(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_pnorm_type_not_positive import example
     with pytest.raises(Exception):
-        from csdl.examples.invalid.ex_pnorm_type_not_positive import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+        example(eval('Simulator'))
 
 
-def test_pnorm_type_not_even(name):
+def test_pnorm_type_not_even(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_pnorm_type_not_even import example
     with pytest.raises(Exception):
-        from csdl.examples.invalid.ex_pnorm_type_not_even import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+        example(eval('Simulator'))
