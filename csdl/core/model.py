@@ -21,6 +21,7 @@ from csdl.operations.print_var import print_var
 from csdl.utils.gen_hex_name import gen_hex_name
 from csdl.utils.parameters import Parameters
 from csdl.utils.combine_operations import combine_operations
+from csdl.utils.set_default_values import set_default_values
 from warnings import warn
 
 
@@ -101,13 +102,12 @@ def _build_intermediate_representation(func: Callable) -> Callable:
             # remove_duplicate_nodes(self.nodes, self.registered_outputs)
 
             # combine elementwise operations and use complex step
-            if len(self.registered_outputs) == 0:
-                repeat = False
-            else:
-                repeat = True
-            while repeat is True:
-                for r in self.registered_outputs:
-                    repeat = combine_operations(self.registered_outputs, r)
+            # repeat = True
+            # if len(self.registered_outputs) == 0:
+            #     repeat = False
+            # while repeat is True:
+            #     for r in self.registered_outputs:
+            #         repeat = combine_operations(self.registered_outputs, r)
 
             # remove unused expressions
             keys = []
@@ -139,7 +139,7 @@ def _build_intermediate_representation(func: Callable) -> Callable:
             for subgraph in self.subgraphs:
                 subgraph.submodel.define()
 
-            _, _ = self.set_default_values()
+            _, _ = set_default_values(self)
 
     return _sort_nodes
 
@@ -177,53 +177,6 @@ class Model(metaclass=_ComponentBuilder):
         self.initialize()
         self.linear_solver = None
         self.nonlinear_solver = None
-
-    # TODO: ensure explicit output values are not reassigned
-    def set_default_values(self, promotes=[], promotes_inputs=[]):
-        variables_promoted_from_children = []
-        inputs_promoted_from_children = []
-        # gather all variables promoted to this level
-        for subgraph in self.subgraphs:
-            inputs, variables = subgraph.submodel.set_default_values(
-                promotes=subgraph.promotes,
-                promotes_inputs=subgraph.promotes_inputs,
-            )
-            inputs_promoted_from_children.extend(inputs)
-            variables_promoted_from_children.extend(variables)
-
-        # set default values for children based on parent values
-        for var in self.inputs + self.variables:
-            for child_var in variables_promoted_from_children:
-                if var.name == child_var.name:
-                    child_var.val = var.val
-
-        # set default values for inputs created in children
-        for var in self.variables:
-            for child_var in inputs_promoted_from_children:
-                if var.name == child_var.name:
-                    var.val = child_var.val
-
-        # gather variables promoted to parent
-        inputs_promoted_to_parent = []
-        variables_promoted_to_parent = []
-        if promotes is None and promotes_inputs is None:
-            return inputs_promoted_to_parent, variables_promoted_to_parent
-        if promotes == ['*'] or promotes_inputs == ['*']:
-            variables_promoted_to_parent = self.variables + variables_promoted_from_children
-            inputs_promoted_to_parent = self.inputs + inputs_promoted_from_children
-        else:
-            for name in promotes_inputs:
-                variables_promoted_to_parent.extend(
-                    list(
-                        filter(lambda var: var.name == name,
-                               self.variables_promoted_from_children)))
-            for name in promotes:
-                variables_promoted_to_parent.extend(
-                    list(
-                        filter(lambda var: var.name == name,
-                               self.variables_promoted_from_children)))
-
-        return inputs_promoted_to_parent, variables_promoted_to_parent
 
     def initialize(self):
         """
@@ -593,9 +546,11 @@ class Model(metaclass=_ComponentBuilder):
         System
             Subsystem to add to `Group`
         """
-        if not isinstance(submodel, (Model, CustomOperation)):
+        from csdl.core.implicit_model import ImplicitModel
+        if not isinstance(submodel, (Model, ImplicitModel, CustomOperation)):
             raise TypeError(
-                "{} is not a Model or a CustomOperation".format(submodel))
+                "{} is not a Model, ImplicitModel, or CustomOperation".format(
+                    submodel))
 
         if name == '':
             name = gen_hex_name(Model._count),
@@ -613,7 +568,7 @@ class Model(metaclass=_ComponentBuilder):
             self._most_recently_added_subgraph.add_dependency_node(r)
 
         # Add subystem to DAG
-        self.registered_outputs.append(self._most_recently_added_subgraph)
+        self.registered_outputs.append(subgraph)
 
         return submodel
 
