@@ -281,7 +281,7 @@ class Variable(Node):
 
         # return output if reusing key
         if key in self._decomp._key_out_pairs.keys():
-            return self._decomp._k_key_out_pairs[key]
+            return self._decomp._key_out_pairs[key]
 
         # Get flat indices from key to define corresponding component
         slices = [slice_to_list(s[0], s[1], s[2]) for s in list(key)]

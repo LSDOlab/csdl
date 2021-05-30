@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 
 
-def test_vector_vector_inner(name):
+def test_vector_vector_inner(backend):
     from csdl.examples.valid.ex_inner_vector_vector import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     m = 3
@@ -27,9 +27,9 @@ def test_vector_vector_inner(name):
     sim.assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
 
 
-def test_tensor_vector_inner(name):
+def test_tensor_vector_inner(backend):
     from csdl.examples.valid.ex_inner_tensor_vector import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     m = 3
@@ -63,9 +63,9 @@ def test_tensor_vector_inner(name):
     sim.assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
 
 
-def test_tensor_tensor_inner(name):
+def test_tensor_tensor_inner(backend):
     from csdl.examples.valid.ex_inner_tensor_tensor import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     m = 3

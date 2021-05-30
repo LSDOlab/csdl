@@ -2,23 +2,23 @@ import numpy as np
 import pytest
 
 
-def test_integer_index_assignement_overlap(name):
+def test_integer_index_assignement_overlap(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_indices_integer_overlap import example
     with pytest.raises(ValueError):
-        from csdl.examples.invalid.ex_indices_integer_overlap import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+        example(eval('Simulator'))
 
 
-def test_integer_index_assignement_out_of_range(name):
+def test_integer_index_assignement_out_of_range(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_indices_integer_out_of_range import example
     with pytest.raises(ValueError):
-        from csdl.examples.invalid.ex_indices_integer_out_of_range import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+        example(eval('Simulator'))
 
 
-def test_integer_index_assignement(name):
+def test_integer_index_assignement(backend):
     from csdl.examples.valid.ex_indices_integer import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
     x = np.array([0, 1, 2, 7.4, np.pi, 9, np.pi + 9])
     np.testing.assert_array_equal(sim['x'], x)
@@ -30,37 +30,37 @@ def test_integer_index_assignement(name):
     sim.assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
 
 
-def test_integer_index_integer_reuse(name):
+def test_integer_index_integer_reuse(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_indices_integer_reuse import example
     with pytest.raises(KeyError):
-        from csdl.examples.invalid.ex_indices_integer_reuse import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+        example(eval('Simulator'))
 
 
-def test_one_dimensional_index_reuse(name):
+def test_one_dimensional_index_reuse(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_indices_one_dimensional_reuse import example
     with pytest.raises(KeyError):
-        from csdl.examples.invalid.ex_indices_one_dimensional_reuse import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+        example(eval('Simulator'))
 
 
-def test_one_dimensional_index_assignement_overlap(name):
+def test_one_dimensional_index_assignement_overlap(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_indices_one_dimensional_overlap import example
     with pytest.raises(ValueError):
-        from csdl.examples.invalid.ex_indices_one_dimensional_overlap import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+        example(eval('Simulator'))
 
 
-def test_one_dimensional_index_assignement_out_of_range(name):
+def test_one_dimensional_index_assignement_out_of_range(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_indices_one_dimensional_out_of_range import example
     with pytest.raises(ValueError):
-        from csdl.examples.invalid.ex_indices_one_dimensional_out_of_range import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+        example(eval('Simulator'))
 
 
-def test_one_dimensional_index_assignement(name):
+def test_one_dimensional_index_assignement(backend):
     from csdl.examples.valid.ex_indices_one_dimensional import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
     np.testing.assert_array_equal(sim['u'], np.arange(20))
     np.testing.assert_array_equal(sim['v'], np.arange(16))
@@ -82,23 +82,23 @@ def test_one_dimensional_index_assignement(name):
     sim.assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
 
 
-def test_multidimensional_dimensional_index_assignement_overlap(name):
+def test_multidimensional_dimensional_index_assignement_overlap(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_indices_multidimensional_overlap import example
     with pytest.raises(KeyError):
-        from csdl.examples.invalid.ex_indices_multidimensional_overlap import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+        example(eval('Simulator'))
 
 
-def test_multidimensional_index_assignement_out_of_range(name):
+def test_multidimensional_index_assignement_out_of_range(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_indices_multidimensional_out_of_range import example
     with pytest.raises(ValueError):
-        from csdl.examples.invalid.ex_indices_multidimensional_out_of_range import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+        example(eval('Simulator'))
 
 
-def test_multidimensional_dimensional_index_assignement(name):
+def test_multidimensional_dimensional_index_assignement(backend):
     from csdl.examples.valid.ex_indices_multidimensional import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
     np.testing.assert_array_equal(
         sim['z'],

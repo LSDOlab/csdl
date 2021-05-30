@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 
 
-def test_max_scalar(name):
+def test_max_scalar(backend):
     from csdl.examples.valid.ex_max_scalar import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     m = 2
@@ -28,9 +28,9 @@ def test_max_scalar(name):
     sim.assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
 
 
-def test_max_axiswise(name):
+def test_max_axiswise(backend):
     from csdl.examples.valid.ex_max_axiswise import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     m = 2
@@ -54,9 +54,9 @@ def test_max_axiswise(name):
     sim.assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
 
 
-def test_max_elementwise(name):
+def test_max_elementwise(backend):
     from csdl.examples.valid.ex_max_elementwise import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     tensor1 = np.array([[1, 5, -8], [10, -3, -5]])
@@ -72,15 +72,15 @@ def test_max_elementwise(name):
     sim.assert_check_partials(partials_error, atol=1.e-6, rtol=1.e-6)
 
 
-def test_max_multi_inputs_and_axis(name):
+def test_max_multi_inputs_and_axis(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_max_multi_inputs_and_axis import example
     with pytest.raises(Exception):
-        from csdl.examples.invalid.ex_max_multi_inputs_and_axis import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+        example(eval('Simulator'))
 
 
-def test_max_inputs_not_same_size(name):
+def test_max_inputs_not_same_size(backend):
+    exec('from {} import Simulator'.format(backend))
+    from csdl.examples.invalid.ex_max_inputs_not_same_size import example
     with pytest.raises(Exception):
-        from csdl.examples.invalid.ex_max_inputs_not_same_size import example
-    exec('from {} import Simulator'.format(name))
-    sim = example(eval('Simulator'))
+        example(eval('Simulator'))
