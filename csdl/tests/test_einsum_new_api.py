@@ -9,9 +9,9 @@ mat = np.arange(20).reshape(shape2)
 tens = np.arange(24).reshape(shape3)
 
 
-def test_new_einsum_inner_vector_vector(name):
+def test_new_einsum_inner_vector_vector(backend):
     from csdl.examples.valid.ex_einsum_new_inner_vector_vector import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output1 = np.einsum('i,i->', vec, vec)
@@ -25,9 +25,9 @@ def test_new_einsum_inner_vector_vector(name):
     sim.assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
 
 
-def test_new_einsum_inner_tensor_vector(name):
+def test_new_einsum_inner_tensor_vector(backend):
     from csdl.examples.valid.ex_einsum_new_inner_tensor_vector import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output2 = np.einsum('ijk,j->ik', tens, vec)
@@ -41,9 +41,9 @@ def test_new_einsum_inner_tensor_vector(name):
     sim.assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
 
 
-def test_new_einsum_outer_vector_vector(name):
+def test_new_einsum_outer_vector_vector(backend):
     from csdl.examples.valid.ex_einsum_new_outer_vector_vector import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output1 = np.einsum('i,j->ij', vec, vec)
@@ -57,9 +57,9 @@ def test_new_einsum_outer_vector_vector(name):
     sim.assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
 
 
-def test_new_einsum_outer_tensor_vector(name):
+def test_new_einsum_outer_tensor_vector(backend):
     from csdl.examples.valid.ex_einsum_new_outer_tensor_vector import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output2 = np.einsum('hij,k->hijk', tens, vec)
@@ -73,9 +73,9 @@ def test_new_einsum_outer_tensor_vector(name):
     sim.assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
 
 
-def test_new_einsum_reorder_matrix(name):
+def test_new_einsum_reorder_matrix(backend):
     from csdl.examples.valid.ex_einsum_new_reorder_matrix import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output1 = np.einsum('ij->ji', mat)
@@ -90,9 +90,9 @@ def test_new_einsum_reorder_matrix(name):
     sim.assert_check_partials(partials_error1, atol=1.e-6, rtol=1.e-6)
 
 
-def test_new_einsum_reorder_tensor(name):
+def test_new_einsum_reorder_tensor(backend):
     from csdl.examples.valid.ex_einsum_new_reorder_tensor import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output2 = np.einsum('ijk->kji', tens)
@@ -107,9 +107,9 @@ def test_new_einsum_reorder_tensor(name):
     sim.assert_check_partials(partials_error2, atol=1.e-6, rtol=1.e-6)
 
 
-def test_new_einsum_vector_summation(name):
+def test_new_einsum_vector_summation(backend):
     from csdl.examples.valid.ex_einsum_new_vector_summation import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output1 = np.einsum('i->', vec)
@@ -123,9 +123,9 @@ def test_new_einsum_vector_summation(name):
     sim.assert_check_partials(partials_error1, atol=1.e-6, rtol=1.e-6)
 
 
-def test_new_einsum_tensor_summation(name):
+def test_new_einsum_tensor_summation(backend):
     from csdl.examples.valid.ex_einsum_new_tensor_summation import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output2 = np.einsum('ijk->', tens)
@@ -139,9 +139,9 @@ def test_new_einsum_tensor_summation(name):
     sim.assert_check_partials(partials_error2, atol=1.e-6, rtol=1.e-6)
 
 
-def test_new_einsum_multiplication_sum(name):
+def test_new_einsum_multiplication_sum(backend):
     from csdl.examples.valid.ex_einsum_new_multiplication_sum import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output1 = np.einsum('i,j->j', vec, vec)
@@ -156,9 +156,9 @@ def test_new_einsum_multiplication_sum(name):
     sim.assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
 
 
-def test_new_einsum_multiple_vector_sum(name):
+def test_new_einsum_multiple_vector_sum(backend):
     from csdl.examples.valid.ex_einsum_new_multiple_vector_sum import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output2 = np.einsum('i,j->', vec, vec)
@@ -173,9 +173,9 @@ def test_new_einsum_multiple_vector_sum(name):
     sim.assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
 
 
-def test_new_einsum_sparse_inner_vector_vector(name):
+def test_new_einsum_sparse_inner_vector_vector(backend):
     from csdl.examples.valid.ex_einsum_new_inner_vector_vector_sparse import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output1 = np.einsum('i,i->', vec, vec)
@@ -191,9 +191,9 @@ def test_new_einsum_sparse_inner_vector_vector(name):
     sim.assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
 
 
-def test_new_einsum_sparse_inner_tensor_vector(name):
+def test_new_einsum_sparse_inner_tensor_vector(backend):
     from csdl.examples.valid.ex_einsum_new_inner_tensor_vector_sparse import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output2 = np.einsum('ijk,j->ik', tens, vec)
@@ -209,9 +209,9 @@ def test_new_einsum_sparse_inner_tensor_vector(name):
     sim.assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
 
 
-def test_new_einsum_sparse_outer_vector_vector(name):
+def test_new_einsum_sparse_outer_vector_vector(backend):
     from csdl.examples.valid.ex_einsum_new_outer_vector_vector_sparse import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output1 = np.einsum('i,j->ij', vec, vec)
@@ -227,9 +227,9 @@ def test_new_einsum_sparse_outer_vector_vector(name):
     sim.assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
 
 
-def test_new_einsum_sparse_outer_tensor_vector(name):
+def test_new_einsum_sparse_outer_tensor_vector(backend):
     from csdl.examples.valid.ex_einsum_new_outer_tensor_vector_sparse import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output2 = np.einsum('hij,k->hijk', tens, vec)
@@ -245,9 +245,9 @@ def test_new_einsum_sparse_outer_tensor_vector(name):
     sim.assert_check_partials(partials_error2, atol=1.e-5, rtol=1.e-5)
 
 
-def test_new_einsum_sparse_reorder_matrix(name):
+def test_new_einsum_sparse_reorder_matrix(backend):
     from csdl.examples.valid.ex_einsum_new_reorder_matrix_sparse import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output1 = np.einsum('ij->ji', mat)
@@ -263,9 +263,9 @@ def test_new_einsum_sparse_reorder_matrix(name):
     sim.assert_check_partials(partials_error1, atol=1.e-6, rtol=1.e-6)
 
 
-def test_new_einsum_sparse_tranpose_tensor(name):
+def test_new_einsum_sparse_tranpose_tensor(backend):
     from csdl.examples.valid.ex_einsum_new_reorder_tensor_sparse import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output2 = np.einsum('ijk->kji', tens)
@@ -281,9 +281,9 @@ def test_new_einsum_sparse_tranpose_tensor(name):
     sim.assert_check_partials(partials_error2, atol=1.e-6, rtol=1.e-6)
 
 
-def test_new_einsum_sparse_summation_vector(name):
+def test_new_einsum_sparse_summation_vector(backend):
     from csdl.examples.valid.ex_einsum_new_vector_summation_sparse import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output1 = np.einsum('i->', vec)
@@ -299,9 +299,9 @@ def test_new_einsum_sparse_summation_vector(name):
     sim.assert_check_partials(partials_error1, atol=1.e-6, rtol=1.e-6)
 
 
-def test_new_einsum_sparse_summation_tensor(name):
+def test_new_einsum_sparse_summation_tensor(backend):
     from csdl.examples.valid.ex_einsum_new_tensor_summation_sparse import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output2 = np.einsum('ijk->', tens)
@@ -317,9 +317,9 @@ def test_new_einsum_sparse_summation_tensor(name):
     sim.assert_check_partials(partials_error2, atol=1.e-6, rtol=1.e-6)
 
 
-def test_new_einsum_sparse_multiplication_sum(name):
+def test_new_einsum_sparse_multiplication_sum(backend):
     from csdl.examples.valid.ex_einsum_new_multiplication_sum_sparse import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output1 = np.einsum('i,j->j', vec, vec)
@@ -335,9 +335,9 @@ def test_new_einsum_sparse_multiplication_sum(name):
     sim.assert_check_partials(partials_error1, atol=1.e-5, rtol=1.e-5)
 
 
-def test_new_einsum_sparse_multiple_vector_sum(name):
+def test_new_einsum_sparse_multiple_vector_sum(backend):
     from csdl.examples.valid.ex_einsum_new_multiple_vector_sum_sparse import example
-    exec('from {} import Simulator'.format(name))
+    exec('from {} import Simulator'.format(backend))
     sim = example(eval('Simulator'))
 
     desired_output2 = np.einsum('i,j->', vec, vec)

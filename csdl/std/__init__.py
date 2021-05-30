@@ -27,6 +27,7 @@ from csdl.std.transpose import transpose
 from csdl.std.inner import inner
 from csdl.std.outer import outer
 from csdl.std.einsum import einsum
+from csdl.std.einsum_new_api import einsum_new_api
 from csdl.std.dot import dot
 from csdl.std.cross import cross
 from csdl.std.rotmat import rotmat
