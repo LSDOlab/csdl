@@ -1,0 +1,19 @@
+# appveyor.yml
+---
+environment:
+  matrix:
+  - TOXENV: py35
+  - TOXENV: py36
+  - TOXENV: py37
+  - TOXENV: py38
+  - TOXENV: py39
+
+build: off
+
+install:
+- pip install tox
+- pip install git+https://github.com/lsdolab/csdl.git@master
+- pip install git+https://github.com/lsdolab/csdl_om.git@master
+
+test_script:
+- tox
