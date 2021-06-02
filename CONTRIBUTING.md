@@ -2,7 +2,7 @@
 
 ## Configuration Management
 
-The `omtools` repository is hosted on GitHub and uses Git as its Source
+The `csdl` repository is hosted on GitHub and uses Git as its Source
 Control Manager.
 
 It is recommended to create a username on GitHub and
@@ -17,7 +17,7 @@ Please begin all commit messages with a verb in the present tense, e.g.
 After working on a feature, push your changes to your fork, and then
 issue a
 [pull request](https://docs.github.com/en/free-pro-team@latest/desktop/contributing-and-collaborating-using-github-desktop/creating-an-issue-or-pull-request#creating-a-pull-request)
-for `omtools`.
+for `csdl`.
 
 ### Recommended Git Workflow
 
@@ -25,14 +25,14 @@ for `omtools`.
 2. Clone repository
 
 ```sh
-git clone https://gihub.com/your_username/omtools.git
-cd omtools
+git clone https://gihub.com/your_username/csdl.git
+cd csdl
 # You don't have to rename your remote repository or name it
 # anything in particular, but this helps to avoid confusion
 git remote rename origin fork
 # You don't have to name the upstream repository anything in
 # particular, but we will name it upstream in this guide
-git remote add upstream https://https://gihub.com/lsdolab/omtools.git
+git remote add upstream https://https://gihub.com/lsdolab/csdl.git
 ```
 
 3. Make a branch for a new feature and make changes
@@ -73,11 +73,11 @@ git push fork master
 6. Issue [Pull
    Request](https://docs.github.com/en/free-pro-team@latest/desktop/contributing-and-collaborating-using-github-desktop/creating-an-issue-or-pull-request#creating-a-pull-request)
    on GitHub.
-7. Review/Approve Pull Request if you are an `omtools` Maintainer.
+7. Review/Approve Pull Request if you are an `csdl` Maintainer.
 
 ## Contribute to Docs
 
-`omtools` uses [Sphinx](https://www.sphinx-doc.org/en/master/) to
+`csdl` uses [Sphinx](https://www.sphinx-doc.org/en/master/) to
 generate documentation automatically.
 Sphinx uses `.rst` files to generate documentation.
 
@@ -106,9 +106,12 @@ To generate the docs, run `make html` in the `docs/` directory.
 
 All example class definitions are located in the `examples/` directory.
 Each example script by convention uses the `ex_` prefix.
+Each example script contains one function that accepts the `Simulator`
+class as an argument and returns an object of class `Simulator`.
+The `Simulator` class is implemented in the compiler back end.
 
-`omtools` provides `utils/generate_exaple_scripts.py` for generating
-example run files from `ot.Model` or `ot.ImplicitComponent` class
+`csdl` provides `utils/generate_exaple_scripts.py` for generating
+example run files from `csdl.Model` or `csdl.ImplicitModel` class
 definitions in the `examples/` directory.
 The resulting run scripts are written to `examples/documented/` to make
 a distinction between files defining example classes to be used in
@@ -122,7 +125,7 @@ appropriately.
 
 ## Writing Tests
 
-`omtools` uses [pytest](https://docs.pytest.org/en/latest/) to run
+`csdl` uses [pytest](https://docs.pytest.org/en/latest/) to run
 tests.
 Tests for `Expression` subclasses are located in `tests/` and tests for
 stock `Component` subclasses are located in `comps/tests/`.
@@ -146,25 +149,26 @@ import pytest
 # Do not import an example script at the start of the file for a
 # test suite
 
-def test_example_with_valid_output():
-    import omtools.examples.valid.ex_name_of_example as example
+def test_example_with_valid_output(backend):
+    from csdl.examples.valid.ex_name_of_example import example
+    exec('from {} import Simulator'.format(backend))
+    sim = example(eval('Simulator'))
 
     # Test values
-    np.testing.assert_approx_equal(example.prob['var.abs.name'], desired_val)
-    np.testing.assert_almost_equal(example.prob['var.abs.name'], desired_val)
+    np.testing.assert_approx_equal(sim['var.abs.name'], desired_val)
+    np.testing.assert_almost_equal(sim['var.abs.name'], desired_val)
 
     # Test partials
-    result = example.prob.check_partials(out_stream=None, compact_print=True)
-    assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+    result = sim.check_partials(out_stream=None, compact_print=True)
+    sim.assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
 
-def test_example_that_raises_error():
-    with pytest.raises(TypeError):
-        import omtools.examples.invalid.ex_name_of_example
+def test_example_that_raises_error(backend):
+    from csdl.examples.invalid.ex_name_of_example import example
+    exec('from {} import Simulator'.format(backend))
+    # choose your own Exception type
+    with pytest.raises(ValueError):
+        sim = example(eval('Simulator'))
 ```
-
-> NOTE: The example script defines a `Problem`, and runs the model upon
-> import. There is no `if __name__ == "__main__"` clause in the example
-> script.
 
 Tests (functions with the `test_` prefix) are designed so that importing
 a generated example script runs the example.
@@ -178,41 +182,28 @@ To test values, use
 or
 [numpy.assert_almost_equal](https://numpy.org/doc/stable/reference/generated/numpy.testing.assert_almost_equal.html).
 
-To test partial derivatives, use
-`openmdao.utils.assert_utils.assert_check_partials` and
-`openmdao.utils.assert_utils.assert_no_approx_partials`.
+## Defining Standard Functions
 
-## Defining Stock Components
-
-Stock `Component` subclasses are located in the `comps/` directory.
-
-Stock components must provide an API that can define inputs and outputs,
-including their names.
-
-To get a feel for what's required, take a look at the `Expression`
-subclasses and `Component` subclasses in `std/` and `comps/`,
-respectively.
-
-## Defining Expression Subclasses
+- [ ] TO DO
 
 All expressions inherit from the `Expression` class.
-`Expression` subclasses are stored in the `std/` directory of `omtools`.
+`Expression` subclasses are stored in the `std/` directory of `csdl`.
 
 The `Expression` class is stored as a node on a Directed Acyclic Graph
-(DAG), which `omtools` uses to determine which `Component` objects to
+(DAG), which `csdl` uses to determine which `Component` objects to
 construct in `openmdao`, and in which order.
 
 The two objectives when defining an `Expression` subclass are
 
 - Establish dependence on other Expression objects
 - Extract options for the corresponding stock `Component` to construct
-  after ther user-defined `omtools.Model.setup` runs
+  after ther user-defined `csdl.Model.setup` runs
 - Define function that constructs
 
 Defining an `Expression` subclass is done as folows:
 
 ```py
-from omtools.core.expressin import Expression
+from csdl.core.expressin import Expression
 
 # use snake case to make the Expression look like a function to the user
 class snake_case_expression(Expression):
@@ -252,3 +243,7 @@ class snake_case_expression(Expression):
 
 For more details, take a look at the Expression subclasses already
 defined in `std/`.
+
+## Defining Operations
+
+- [ ] TO DO

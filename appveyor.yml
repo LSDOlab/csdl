@@ -12,6 +12,8 @@ build: off
 
 install:
 - pip install tox
+- pip install git+https://github.com/lsdolab/csdl.git@master
+- pip install git+https://github.com/lsdolab/csdl_om.git@master
 
 test_script:
 - tox
