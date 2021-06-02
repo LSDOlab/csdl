@@ -142,4 +142,7 @@ cython_debug/
 .idea
 
 # File systems
-.DS_Store
+**/*.DS_Store
+
+# Output
+**/*.out
