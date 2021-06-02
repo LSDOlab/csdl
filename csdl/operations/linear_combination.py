@@ -39,13 +39,33 @@ class linear_combination(StandardOperation):
         #     raise notimplementederror("constant must be a scalar constant")
         if isinstance(coeffs, (int, float)):
             coeffs = [coeffs] * len(args)
-        self.compute_string = '{}={}'.format(out_name, constant)
+        if np.all(constant == 0):
+            self.compute_string = '{}='.format(out_name, constant)
+        else:
+            self.compute_string = '{}={}'.format(out_name, constant)
+        first = True
         for coeff, arg in zip(coeffs, args):
             if isinstance(coeff, (int, float)):
-                if coeff > 0:
-                    self.compute_string += '+{}*{}'.format(coeff, arg.name)
-                elif coeff < 0:
+                if coeff > 1:
+                    if first and np.all(constant == 0):
+                        self.compute_string += '{}*{}'.format(coeff, arg.name)
+                        first = False
+                    else:
+                        self.compute_string += '+{}*{}'.format(coeff, arg.name)
+                elif coeff > 0:
+                    if first and np.all(constant == 0):
+                        self.compute_string += '{}'.format(arg.name)
+                        first = False
+                    else:
+                        self.compute_string += '+{}'.format(arg.name)
+                elif coeff < -1:
                     self.compute_string += '{}*{}'.format(coeff, arg.name)
+                elif coeff < 0:
+                    self.compute_string += '-{}'.format(arg.name)
             else:
                 if not np.all(coeff == 0):
-                    self.compute_string += '+{}*{}'.format(coeff, arg.name)
+                    if first and np.all(constant == 0):
+                        self.compute_string += '{}*{}'.format(coeff, arg.name)
+                        first = False
+                    else:
+                        self.compute_string += '+{}*{}'.format(coeff, arg.name)

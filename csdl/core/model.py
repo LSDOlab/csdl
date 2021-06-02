@@ -105,12 +105,14 @@ def _build_intermediate_representation(func: Callable) -> Callable:
             # KLUDGE: this is false for internal model for implicit
             # model; operations will not be combined
             if self.combine_operations is True:
-                repeat = True
+                terminate = False
                 if len(self.registered_outputs) == 0:
-                    repeat = False
-                while repeat is True:
+                    terminate = True
+                while terminate is False:
                     for r in self.registered_outputs:
-                        repeat = combine_operations(self.registered_outputs, r)
+                        terminate = combine_operations(self.registered_outputs,
+                                                       r)
+                    terminate = True
 
             # remove unused expressions
             keys = []
