@@ -40,9 +40,6 @@ def _build_internal_simulator(func: Callable) -> Callable:
             self._defined = True
             func(self)
 
-            # KLUDGE: combining elementwise operations within implicit
-            # models doesn't work for some reason
-            self._model.combine_operations = False
             self._model.define()
 
             # After this runs, the internal model only computes residuals;

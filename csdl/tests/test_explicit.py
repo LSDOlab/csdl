@@ -9,7 +9,7 @@ def test_literals(backend):
     np.testing.assert_approx_equal(sim['y'], -3.)
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
-                                method='fd')
+                                method='cs')
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
@@ -31,7 +31,7 @@ def test_simple_binary(backend):
     np.testing.assert_array_almost_equal(sim['y12'], np.arange(7)**2)
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
-                                method='fd')
+                                method='cs')
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
@@ -92,7 +92,7 @@ def test_explicit_with_subsystems(backend):
     np.testing.assert_approx_equal(sim['y6'], 196.)
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
-                                method='fd')
+                                method='cs')
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
@@ -111,5 +111,5 @@ def test_explicit_cycles(backend):
     np.testing.assert_almost_equal(sim['cycle_3.x'], 0.)
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
-                                method='fd')
+                                method='cs')
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
