@@ -16,4 +16,6 @@ setup(
         'jupyter-sphinx',
         'numpydoc',
     ],
+    version_config=True,
+    setup_requires=['setuptools-git-versioning'],
 )
