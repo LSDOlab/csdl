@@ -12,4 +12,4 @@ class cotan(StandardOperation):
     def define_compute_strings(self):
         in_name = self.dependencies[0].name
         out_name = self.outs[0].name
-        self.compute_string = '{}=np.cotan({})'.format(out_name, in_name)
+        self.compute_string = '{}=1/np.tan({})'.format(out_name, in_name)
