@@ -28,7 +28,7 @@ backend, as they may require different versions of `csdl`.
 Below is a list of backend implementations available.
 
 - [csdl_om](https://github.com/lsdolab/csdl_om), which compiles CSDL
-  code to an [OpenMDAO](openmdo.org) problem.  No additional knowledge
+  code to an [OpenMDAO](https://openmdao.org) problem.  No additional knowledge
   of the OpenMDAO API is required.
 
 ## Testing
