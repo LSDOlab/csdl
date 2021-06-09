@@ -9,6 +9,7 @@ from csdl.core.model import Model
 from csdl.core.input import Input
 from csdl.core.output import Output
 from csdl.utils.collect_terminals import collect_terminals
+from csdl.utils.parameters import Parameters
 
 
 def _remove_nonresiduals(model):
@@ -130,6 +131,12 @@ class ImplicitModel(metaclass=_ProblemBuilder):
                                  Dict[str, np.ndarray]] = (dict(), dict())
         self.linear_solver = None
         self.nonlinear_solver = None
+        self.parameters = Parameters()
+        self.initialize()
+        self.parameters.update(kwargs)
+
+    def initialize(self):
+        pass
 
     def define(self):
         pass

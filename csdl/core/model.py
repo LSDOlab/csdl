@@ -176,6 +176,7 @@ class Model(metaclass=_ComponentBuilder):
         self.connections: List[Tuple[str, str]] = []
         self.parameters = Parameters()
         self.initialize()
+        self.parameters.update(kwargs)
         self.linear_solver = None
         self.nonlinear_solver = None
 
