@@ -24,7 +24,7 @@ def remove_indirect_dependencies(node: Variable):
             if index is not None:
                 remove.append(index)
     # remove duplicate indices
-    remove = list(set(remove))
+    remove = sorted(list(set(remove)))
     terminal_index = 0
     # children form cycle
     # TODO: explain better

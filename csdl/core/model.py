@@ -4,7 +4,7 @@ from typing import Callable, Dict, Tuple, List, Union, Set
 
 # from csdl.core._group import _Group
 from csdl.core.explicit_output import ExplicitOutput
-from csdl.core.graph import (
+from csdl.utils.graph import (
     remove_indirect_dependencies,
     modified_topological_sort,
     # remove_duplicate_nodes,
@@ -23,6 +23,31 @@ from csdl.utils.parameters import Parameters
 from csdl.utils.combine_operations import combine_operations
 from csdl.utils.set_default_values import set_default_values
 from warnings import warn
+import networkx as nx
+import matplotlib.pyplot as plt
+
+
+def register_nodes(nodes, node):
+    for n in node.dependencies:
+        nodes[n._id] = n
+        register_nodes(nodes, n)
+
+
+def build_clean_dag(registered_outputs):
+    nodes = dict()
+    for r in registered_outputs:
+        nodes[r._id] = r
+    for r in registered_outputs:
+        register_nodes(nodes, r)
+
+    # Clean up graph, removing dependencies that do not constrain
+    # execution order
+    for node in nodes.values():
+        remove_indirect_dependencies(node)
+        if isinstance(node, Operation):
+            if len(node.dependencies) < 1:
+                raise ValueError(
+                    "Operation objects must have at least one dependency")
 
 
 # TODO: collect all inputs from all models to ensure that the entire
@@ -81,20 +106,6 @@ def _build_intermediate_representation(func: Callable) -> Callable:
             #             "No input named {} for connection from {} to {}".format(
             #                 b, a, b))
 
-            # Create a record of all nodes in DAG
-            for r in self.registered_outputs:
-                r.register_nodes(self.nodes)
-
-            # Clean up graph, removing dependencies that do not constrain
-            # execution order
-            for node in self.nodes.values():
-                remove_indirect_dependencies(node)
-                if isinstance(node, Operation):
-                    if len(node.dependencies) < 1:
-                        raise ValueError(
-                            "Operation objects must have at least one dependency"
-                        )
-
             # add forward edges
             for r in self.registered_outputs:
                 r.add_fwd_edges()
@@ -110,13 +121,11 @@ def _build_intermediate_representation(func: Callable) -> Callable:
                     terminate = combine_operations(self.registered_outputs, r)
                 terminate = True
 
-            # remove unused expressions
-            keys = []
-            for name, node in self.nodes.items():
-                if len(node.dependents) == 0:
-                    keys.append(name)
-            for name in keys:
-                del self.nodes[name]
+            # Create record of all nodes in DAG
+            for r in self.registered_outputs:
+                self.nodes[r._id] = r
+            for r in self.registered_outputs:
+                register_nodes(self.nodes, r)
 
             if True:
                 # Use modified Kahn's algorithm to sort nodes, reordering
@@ -127,7 +136,8 @@ def _build_intermediate_representation(func: Callable) -> Callable:
             # Use Kahn's algorithm to sort nodes, reordering
             # expressions without regard for the order in which user
             # registers outputs
-            # self.sorted_expressions = topological_sort(self.registered_outputs)
+            # self.sorted_expressions =
+            # topological_sort(self.registered_outputs)
 
             # Check that all outputs are defined
             for output in self.sorted_expressions:
@@ -568,6 +578,8 @@ class Model(metaclass=_ComponentBuilder):
         self._most_recently_added_subgraph = subgraph
         for r in self.registered_outputs:
             self._most_recently_added_subgraph.add_dependency_node(r)
+        for i in self.inputs:
+            self._most_recently_added_subgraph.add_dependency_node(i)
 
         # Add subystem to DAG
         self.registered_outputs.append(subgraph)
@@ -600,3 +612,41 @@ class Model(metaclass=_ComponentBuilder):
         finally:
             # m.define()
             pass
+
+    def visualize_graph(self):
+
+        G = nx.DiGraph()
+
+        names = [node.name for node in self.nodes.values()]
+
+        G.add_nodes_from(names)
+        G.add_node('BEGIN')
+        G.add_node('END')
+
+        edge_tuples = []
+        for r in self.registered_outputs:
+            edge_tuples.append((r.name, 'END', 1))
+        for i in self.inputs:
+            edge_tuples.append(('BEGIN', i.name, 1))
+        for node in self.nodes.values():
+            for dep in node.dependencies:
+                edge_tuples.append((dep.name, node.name, 1))
+        G.add_weighted_edges_from(edge_tuples)
+
+        variables = [
+            node for node in list(
+                filter(lambda x: isinstance(x, Variable), self.nodes.values()))
+        ]
+        operations = [
+            node for node in list(
+                filter(lambda x: isinstance(x, (Operation, Subgraph)),
+                       self.nodes.values()))
+        ]
+
+        pos = dict()
+        pos.update((n.name, (1, i)) for i, n in enumerate(variables))
+        pos.update((n.name, (2, i + 1)) for i, n in enumerate(operations))
+        pos['BEGIN'] = (2, 0)
+        pos['END'] = (2, len(operations) + 1)
+        nx.draw(G, pos=pos, with_labels=True, font_weight='bold')
+        plt.show()

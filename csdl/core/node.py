@@ -67,6 +67,14 @@ class Node():
         nodes: dict[Variable]
             Dictionary of nodes registered so far
         """
+        # nodes = set()
+        # for r in m.registered_outputs:
+        #     nodes.union(gather_nodes(r, nodes))
+        # print('gathered nodes:', [node.name for node in list(nodes)])
+        # for r in self.registered_outputs:
+        #     self.nodes.update(gather_nodes(r, self.nodes))
+        # print('gathered nodes:', [node.name for node in list(nodes)])
+
         for node in self.dependencies:
             # Check for name collisions
             if node._id in nodes.keys():
