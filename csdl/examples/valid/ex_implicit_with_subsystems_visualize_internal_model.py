@@ -38,11 +38,12 @@ def example(Simulator):
             y = self.create_implicit_output('y')
             z = a * y**2 + b * y + c - r
             y.define_residual(z)
-            # self.linear_solver = ScipyKrylov()
-            # self.nonlinear_solver = NewtonSolver(
-            #     solve_subsystems=False,
-            #     maxiter=100,
-            # )
+    
+            self.linear_solver = ScipyKrylov()
+            self.nonlinear_solver = NewtonSolver(
+                solve_subsystems=False,
+                maxiter=100,
+            )
     
     
     sim = Simulator(ExampleWithSubsystemsVisualizeInternalModel())

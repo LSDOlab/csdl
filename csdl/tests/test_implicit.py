@@ -97,3 +97,22 @@ def test_implicit_nonlinear_with_subsystems_bracketed_array(backend):
                                 compact_print=True,
                                 method='cs')
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
+
+
+def test_implicit_composite_residual(backend):
+    from csdl.examples.valid.ex_implicit_composite_residual import example
+    exec('from {} import Simulator'.format(backend))
+    sim = example(eval('Simulator'))
+    np.testing.assert_almost_equal(
+        sim['x'],
+        np.array([np.sqrt(3)]),
+    )
+    np.testing.assert_almost_equal(
+        sim['y'],
+        np.array([1.]),
+    )
+
+    result = sim.check_partials(out_stream=None,
+                                compact_print=True,
+                                method='cs')
+    sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
