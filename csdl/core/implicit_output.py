@@ -132,7 +132,7 @@ class ImplicitOutput(Output):
         residual.is_residual = True
 
         # Replace leaf nodes of residual Variable object that
-        # correspond to this ImplicitOutput node with DocInput objects;
+        # correspond to this ImplicitOutput node with Variable objects;
         replace_output_leaf_nodes(
             self,
             residual,

@@ -163,9 +163,8 @@ class ExplicitOutput(Output):
 
         # Check that source and target shapes match
         if np.array(tgt_indices).shape != var.shape:
-            print(np.array(tgt_indices).shape, var.shape)
-            raise ValueError(
-                "Shape of expression and assignment indices do not match")
+            raise ValueError("Shape of LHS {} and RHS {} do not match".format(
+                np.array(tgt_indices).shape, var.shape))
         tgt_indices = np.array(tgt_indices).flatten()
 
         # Check that indices are in range
