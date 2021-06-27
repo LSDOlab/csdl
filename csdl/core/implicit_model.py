@@ -71,13 +71,17 @@ def _build_internal_simulator(func: Callable) -> Callable:
                 # Store inputs for this implicit output
                 self.out_in_map[implicit_output_name] = in_vars
 
-                # Make sure user isn't manually setting input and response
-                # variables for internal model
-                if len(self._model.constraints) > 0 or len(
-                        self._model.design_variables) > 0:
-                    raise ValueError(
-                        "Manually setting input and response variables to the internal model of an ImplicitModel is not supported."
-                    )
+            # Make sure user isn't manually setting input and response
+            # variables for internal model
+            if len(self._model.constraints) > 0 or len(
+                    self._model.design_variables) > 0:
+                raise ValueError(
+                    "Manually setting input and response variables to the internal model of an ImplicitModel is not supported."
+                )
+
+            for implicit_output in self.res_out_map.values():
+                implicit_output_name = implicit_output.name
+                residual = self.out_res_map[implicit_output_name]
 
                 # set response variables for internal model (residuals)
                 self._model.add_constraint(residual.name)
@@ -86,10 +90,8 @@ def _build_internal_simulator(func: Callable) -> Callable:
                 # outputs)
                 for in_var in in_vars:
                     in_name = in_var.name
-                    self._model.add_design_variable(in_name)
-                if implicit_output_name not in self._model.design_variables.keys(
-                ):
-                    self._model.add_design_variable(implicit_output_name)
+                    if in_name not in self._model.design_variables.keys():
+                        self._model.add_design_variable(in_name)
 
     return _build_simulator
 
