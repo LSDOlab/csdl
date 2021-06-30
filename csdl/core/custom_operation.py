@@ -4,7 +4,10 @@ from csdl.utils.parameters import Parameters
 
 class CustomOperation(Operation):
     def __init__(self, *args, **kwargs):
+        self.nargs = 0
+        self.nouts = 1
         super().__init__(*args, **kwargs)
+        self.nouts = 0
         self.input_meta = dict()
         self.output_meta = dict()
         self.derivatives_meta = dict()
@@ -50,6 +53,7 @@ class CustomOperation(Operation):
         self.input_meta[name]['tags'] = tags
         self.input_meta[name]['shape_by_conn'] = shape_by_conn
         self.input_meta[name]['copy_shape'] = copy_shape
+        self.nargs += 1
 
     def add_output(
         self,
@@ -74,9 +78,9 @@ class CustomOperation(Operation):
         self.output_meta[name] = dict()
         self.output_meta[name]['val'] = val
         if isinstance(shape, int):
-            self.input_meta[name]['shape'] = tuple(shape)
+            self.output_meta[name]['shape'] = tuple(shape)
         else:
-            self.input_meta[name]['shape'] = shape
+            self.output_meta[name]['shape'] = shape
         self.output_meta[name]['units'] = units
         self.output_meta[name]['res_units'] = res_units
         self.output_meta[name]['desc'] = desc
@@ -89,6 +93,7 @@ class CustomOperation(Operation):
         self.output_meta[name]['tags'] = tags
         self.output_meta[name]['shape_by_conn'] = shape_by_conn
         self.output_meta[name]['copy_shape'] = copy_shape
+        self.nouts += 1
 
     def declare_derivative(
         self,
