@@ -297,7 +297,6 @@ class Variable(Node):
 
         # Create and store expression to return
         # TODO: clean up _decomp member names
-        # TODO: Decompose (CSDL-OM)
         val = self.val[tuple([slice(s[0], s[1], s[2]) for s in list(key)])]
         out = Output(None, op=self._decomp, shape=val.shape, val=val)
         self._decomp.outs.append(out)

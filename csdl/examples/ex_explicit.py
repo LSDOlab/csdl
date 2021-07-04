@@ -162,25 +162,25 @@ class ExampleWithSubsystems(Model):
     :param var: y6
     """
     def define(self):
-        # Create independent variable
+        # Create input to main model
         x1 = self.create_input('x1', val=40)
 
         # Powers
         y4 = x1**2
 
         # Create subsystem that depends on previously created
-        # independent variable
-        subgroup = Model()
+        # input to main model
+        m = Model()
 
         # This value is overwritten by connection from the main model
-        a = subgroup.declare_variable('x1', val=2)
-        b = subgroup.create_input('x2', val=12)
-        subgroup.register_output('prod', a * b)
-        self.add(subgroup, name='subsystem', promotes=['*'])
+        a = m.declare_variable('x1', val=2)
+        b = m.create_input('x2', val=12)
+        m.register_output('prod', a * b)
+        self.add(m, name='subsystem', promotes=['*'])
 
         # declare inputs with default values
         # This value is overwritten by connection
-        # from the subgroup
+        # from the submodel
         x2 = self.declare_variable('x2', val=3)
 
         # Simple addition
