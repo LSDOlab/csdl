@@ -10,11 +10,11 @@ pip3 install git+https://github.com/lsdolab/csdl_om.git
 pip3 install -e .
 
 # build docs
+make -C docs clean
 here=`pwd`
 mkdir -p ${here}/docs/_build/html/examples
 python3 ${here}/docs/utils/clean_examples.py ${here}
 ls ${here}/docs/_build/html/examples
-make -C docs clean
 make -C docs html
 ls ${here}/docs/_build/html/
 
