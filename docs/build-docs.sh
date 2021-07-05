@@ -6,7 +6,8 @@ pip3 install redbaron
 # install yapf to format examples for docs
 pip3 install yapf
 # install backend to run examples in docs
-pip3 install git+https://github.com/lsdolab/csdl_om.git
+git clone --depth=1 https://github.com/lsdolab/csdl_om.git
+pip3 install -e csdl_om
 pip3 install -e .
 
 # build docs
