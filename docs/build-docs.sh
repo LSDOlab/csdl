@@ -40,6 +40,7 @@ EOF
 # commit changes
 git config --global user.name "${GITHUB_ACTOR}"
 git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+ls -a
 git add .
 export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
 msg="Updating Docs for commit ${GITHUB_SHA} from ${GITHUB_REF} by ${GITHUB_ACTOR}"

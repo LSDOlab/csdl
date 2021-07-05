@@ -36,7 +36,7 @@ extensions = [
     # 'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'numpydoc',
-    'embed_n2',
+    # 'embed_n2',
     # 'embed_options',
     'sphinx_rtd_theme',
     'jupyter_sphinx',
