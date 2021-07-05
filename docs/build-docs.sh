@@ -13,8 +13,12 @@ pip3 install -e .
 here=`pwd`
 mkdir -p ${here}/docs/_build/html/examples
 python3 ${here}/docs/utils/clean_examples.py ${here}
+ls ${here}/docs/_build/html/examples
 make -C docs clean
 make -C docs html
+ls ${here}/docs/_build/html/
+
+echo "DOCS BUILT"
 
 docroot=`mktemp -d`
 # copy docs to temporary directory
