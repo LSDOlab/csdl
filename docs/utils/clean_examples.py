@@ -1,4 +1,5 @@
 import os
+import sys
 from yapf.yapflib.yapf_api import FormatCode
 
 
@@ -19,7 +20,7 @@ def trimlines(l):
         _ = l.pop()
 
 
-CSDLPATH = '/Users/victor/packages/csdl/'
+CSDLPATH = sys.argv[1]
 examples_directory = CSDLPATH + 'csdl/examples/valid/'
 clean_examples_directory = CSDLPATH + 'docs/_build/html/examples/'
 for filename in os.listdir(examples_directory):

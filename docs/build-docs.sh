@@ -15,7 +15,8 @@ docroot=`mktemp -d`
 here=`pwd`
 # generate clean example scripts for docs
 mkdir -p ${here}/docs/_build/html/examples
-python ${here}/docs/utils/clean_examples.py
+python3 ${here}/docs/utils/clean_examples.py ${here}
+ls ${here}/docs/_build/html/examples
 # copy docs to temporary directory
 rsync -av "${here}/docs/_build/html/" "${docroot}"
 
