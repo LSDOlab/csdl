@@ -3,6 +3,8 @@
 # install package and dependencies
 apt-get -y install python3-pip
 pip3 install redbaron
+# install yapf to format examples for docs
+pip3 install yapf
 # install backend to run examples in docs
 pip3 install git+https://github.com/lsdolab/csdl_om.git
 pip3 install -e .
