@@ -10,13 +10,13 @@ pip3 install git+https://github.com/lsdolab/csdl_om.git
 pip3 install -e .
 
 # build docs
+here=`pwd`
 mkdir -p ${here}/docs/_build/html/examples
 python3 ${here}/docs/utils/clean_examples.py ${here}
 make -C docs clean
 make -C docs html
 
 docroot=`mktemp -d`
-here=`pwd`
 # copy docs to temporary directory
 rsync -av "${here}/docs/_build/html/" "${docroot}"
 
