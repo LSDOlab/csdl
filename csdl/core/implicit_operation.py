@@ -10,9 +10,16 @@ class ImplicitOperation(CustomOperation):
         discrete_inputs=None,
         discrete_outputs=None,
     ):
+        """
+        User defined method to evaluate residuals
+        """
         pass
 
     def solve_residual_equations(self, inputs, outputs):
+        """
+        User defined method to solve residual equations, converging
+        residuals to compute outputs.
+        """
         pass
 
     def apply_inverse_jacobian(

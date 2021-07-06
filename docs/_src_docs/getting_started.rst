@@ -26,3 +26,4 @@ To run the examples using a different backend, simply replace
    :titlesonly:
 
    examples/getting_started/basic_user_guide.rst
+   examples/getting_started/additional_examples.rst

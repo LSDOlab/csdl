@@ -16,7 +16,7 @@ def collect_terminals2(
     op: Operation,
 ) -> List[Variable]:
     """
-    Collect input nodes so that the resulting ``ImplicitComponent`` has
+    Collect input nodes so that the resulting ``ImplicitModel`` has
     access to inputs outside of itself.
     """
     for var in op.dependencies:
@@ -35,7 +35,7 @@ def collect_terminals(
     var: Variable,
 ) -> List[Variable]:
     """
-    Collect input nodes so that the resulting ``ImplicitComponent`` has
+    Collect input nodes so that the resulting ``ImplicitModel`` has
     access to inputs outside of itself.
     """
     for op in var.dependencies:

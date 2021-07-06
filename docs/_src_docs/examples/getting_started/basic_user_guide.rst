@@ -10,4 +10,5 @@ simple models in CSDL.
 
    input.rst
    simple_explicit.rst
+   ignored_outputs.rst
    simple_explicit_with_subsystems.rst

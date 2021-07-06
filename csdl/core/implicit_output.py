@@ -8,12 +8,6 @@ def replace_input_leaf_nodes(
     node: Variable,
     leaves: Dict[str, Variable],
 ):
-    """
-    Replace ``DocInput`` objects that depend on previous subsystems
-    with ``DocInput`` objects that do not. This is required for defining
-    graphs for residuals so that ``ImplicitComponent`` objects do
-    not include subsystems.
-    """
     for dependency in node.dependencies:
         if isinstance(dependency,
                       Variable) and not isinstance(dependency, Output):
@@ -128,7 +122,7 @@ class ImplicitOutput(Output):
                 "Shapes for implicit output {} and residual {} do not match".
                 format(self.name, residual.name))
         # set flag so that this expression is a residual and not an
-        # output of an ImplicitComponent
+        # output of an ImplicitModel
         residual.is_residual = True
 
         # Replace leaf nodes of residual Variable object that
@@ -175,8 +169,7 @@ class ImplicitOutput(Output):
                 "Shapes for implicit output {} and residual {} do not match".
                 format(self.name, residual.name))
 
-        # set flag so that this expression is a residual and not an
-        # output of an ImplicitComponent
+        # set flag so that this expression is a residual
         residual.is_residual = True
 
         # Replace leaf nodes of residual Variable object that

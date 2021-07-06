@@ -23,3 +23,4 @@ the variable value may be accessed using the name given in the call to
 
 .. jupyter-execute::
   ../../../../docs/_build/html/examples/ex_input_simple.py
+  :linenos:

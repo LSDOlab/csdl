@@ -23,10 +23,6 @@ class Node():
     The ``Node`` class is a base type for nodes in a Directed
     Acyclic Graph (DAG) that represents the computation to be performed
     during model evaluation.
-
-    Each ``Node`` object stores a function that constructs an
-    OpenMDAO ``Component`` object corresponding to the computation that
-    the ``Node`` object represents.
     """
 
     # A counter for all Node objects created so far

@@ -27,3 +27,4 @@ only the name provided in methods like ``Model.create_input``,
 
 .. jupyter-execute::
   ../../../../docs/_build/html/examples/ex_explicit_binary_operations.py
+  :linenos:

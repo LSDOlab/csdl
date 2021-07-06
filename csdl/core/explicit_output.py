@@ -74,7 +74,7 @@ class ExplicitOutput(Output):
         """
         Define expression (in terms of ``self``) that computes value for
         this output. This method defines a cyclic relationship, which
-        requires an iterative solver to converge using OpenMDAO.
+        requires an iterative solver to converge.
 
         Parameters
         ----------

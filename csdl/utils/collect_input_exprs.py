@@ -9,7 +9,7 @@ def collect_input_exprs(
     expr: Variable,
 ) -> List[Variable]:
     """
-    Collect input nodes so that the resulting ``ImplicitComponent`` has
+    Collect input nodes so that the resulting ``ImplicitModel`` has
     access to inputs outside of itself.
     """
     for dependency in expr.dependencies:

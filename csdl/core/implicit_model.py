@@ -138,9 +138,16 @@ class ImplicitModel(metaclass=_ProblemBuilder):
         self.parameters.update(kwargs)
 
     def initialize(self):
+        """
+        User defined method to set parameters
+        """
         pass
 
     def define(self):
+        """
+        User defined method to define numerical model that defines
+        residual computation
+        """
         pass
 
     @contextmanager
@@ -268,8 +275,7 @@ class ImplicitModel(metaclass=_ProblemBuilder):
         Parameters
         ----------
         name: str
-            Name of variable in OpenMDAO to be computed by an
-            ``ImplicitModel``
+            Name of variable in CSDL
         shape: Tuple[int]
             Shape of variable
     """

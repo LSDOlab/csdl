@@ -16,12 +16,22 @@ class CustomOperation(Operation):
         self.parameters.update(kwargs)
 
     def initialize(self):
+        """
+        User defined method to set parameters
+        """
         pass
 
     def define(self):
+        """
+        User defined method to define custom operation
+        """
         pass
 
     def compute_derivatives(self, inputs, derivatives):
+        """
+        User defined method to compute partial derivatives for this
+        operation
+        """
         pass
 
     def add_input(

@@ -59,12 +59,7 @@ def _build_intermediate_representation(func: Callable) -> Callable:
     execution order and construct and add the appropriate subsystems.
 
     The new method is the core of the ``csdl`` package. This function
-    analyzes the Directed Acyclic Graph (DAG), sorts expressions, and
-    directs OpenMDAO to add the corresponding ``Component`` objects.
-
-    This function ensures an execution order that is free of unnecessary
-    feedback regardless of the order in which the user registers
-    outputs.
+    analyzes the Directed Acyclic Graph (DAG) and sorts expressions.
     """
     def _sort_nodes(self):
         """
@@ -192,11 +187,14 @@ class Model(metaclass=_ComponentBuilder):
 
     def initialize(self):
         """
-        User defined method to set options
+        User defined method to set parameters
         """
         pass
 
     def define(self):
+        """
+        User defined method to define numerical model
+        """
         pass
 
     def print_var(self, var: Variable):
@@ -348,8 +346,9 @@ class Model(metaclass=_ComponentBuilder):
         Parameters
         ----------
         name: str
-            Name of variable in OpenMDAO to be used as an input in
-            generated ``Component`` objects
+            Name of variable in CSDL to be used as a local input that
+            takes a value from a parent model, child model, or
+            previously registered output within the model.
         shape: Tuple[int]
             Shape of variable
         val: Number or ndarray
@@ -391,14 +390,13 @@ class Model(metaclass=_ComponentBuilder):
         distributed=None,
     ) -> Input:
         """
-        Create a value that is constant during model evaluation
+        Create an input to the main model, whose value remains constant
+        during model evaluation.
 
         Parameters
         ----------
         name: str
-            Name of variable in OpenMDAO to be computed by
-            ``ExplicitComponent`` objects connected in a cycle, or by an
-            ``ExplicitComponent`` that concatenates variables
+            Name of variable in CSDL
         shape: Tuple[int]
             Shape of variable
         val: Number or ndarray
@@ -447,14 +445,13 @@ class Model(metaclass=_ComponentBuilder):
         distributed=None,
     ) -> ExplicitOutput:
         """
-        Create a value that is computed explicitly
+        Create a value that is computed explicitly, either through
+        indexed assignment, or as a fixed point iteration.
 
         Parameters
         ----------
         name: str
-            Name of variable in OpenMDAO to be computed by
-            ``ExplicitComponent`` objects connected in a cycle, or by an
-            ``ExplicitComponent`` that concatenates variables
+            Name of variable in CSDL
         shape: Tuple[int]
             Shape of variable
 
@@ -495,7 +492,7 @@ class Model(metaclass=_ComponentBuilder):
         Parameters
         ----------
         name: str
-            Name of variable in OpenMDAO
+            Name of variable in CSDL
 
         expr: Variable
             Variable that computes output

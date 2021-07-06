@@ -117,8 +117,7 @@ class ExampleNoRegisteredOutput(Model):
         model.register_output('prod', a * b)
         self.add(model, name='sys', promotes=['*'])
 
-        # These expressions do not lead to constructing any Component
-        # objects
+        # These expressions are not passed to the compiler backend
         x1 = self.declare_variable('x1')
         x2 = self.declare_variable('x2')
         y1 = x2 + x1
