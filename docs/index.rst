@@ -10,8 +10,7 @@ CSDL enables users to define and run numerical models for engineering
 systems for use in multidisciplinary design optimization problems.
 
 The source code for ``csdl`` is hosted on
-`GitHub <https://github.com/lsdolab/csdl>`_, and installation
-instructions are located in the README.
+`GitHub <https://github.com/lsdolab/csdl>`_.
 
 Note that this package requires an implementation of the CSDL compiler
 backend to run.
