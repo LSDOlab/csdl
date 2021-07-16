@@ -24,6 +24,14 @@ class ImplicitOperation(CustomOperation):
 
     def apply_inverse_jacobian(
         self,
+        d_outputs,
+        d_residuals,
+        mode,
+    ):
+        pass
+
+    def compute_jacvec_product(
+        self,
         inputs,
         outputs,
         d_inputs,
