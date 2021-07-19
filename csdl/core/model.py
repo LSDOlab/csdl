@@ -626,7 +626,6 @@ class Model(metaclass=_ComponentBuilder):
         # populate diagonals to indicate nodes
         indices = dict()
         for i, node in enumerate(reversed(self.sorted_expressions)):
-            print(node.name)
             indices[node] = i
             A[i, i] = 1
 
