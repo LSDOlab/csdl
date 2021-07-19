@@ -164,7 +164,7 @@ class Model(metaclass=_ComponentBuilder):
         self._defined = False
         self.nodes: dict = {}
         self.input_vals: dict = {}
-        self.sorted_builders = []
+        self.sorted_expressions = []
         self.reverse_branch_sorting: bool = False
         self._most_recently_added_subgraph: Subgraph = None
         self.brackets_map = None
@@ -572,9 +572,12 @@ class Model(metaclass=_ComponentBuilder):
             promotes_outputs=promotes_outputs,
         )
         self.subgraphs.append(subgraph)
+        if self._most_recently_added_subgraph is not None:
+            subgraph.add_dependency_node(self._most_recently_added_subgraph)
         self._most_recently_added_subgraph = subgraph
         for r in self.registered_outputs:
-            self._most_recently_added_subgraph.add_dependency_node(r)
+            if not isinstance(r, Subgraph):
+                self._most_recently_added_subgraph.add_dependency_node(r)
         for i in self.inputs:
             self._most_recently_added_subgraph.add_dependency_node(i)
 
@@ -609,6 +612,32 @@ class Model(metaclass=_ComponentBuilder):
         finally:
             # m.define()
             pass
+
+    def visualize_sparsity(self):
+        import matplotlib.pylab as plt
+        import scipy.sparse as sparse
+
+        self.define()
+
+        # initialize sparse matrix
+        n = len(self.sorted_expressions)
+        A = sparse.lil_matrix((n, n))
+
+        # populate diagonals to indicate nodes
+        indices = dict()
+        for i, node in enumerate(reversed(self.sorted_expressions)):
+            print(node.name)
+            indices[node] = i
+            A[i, i] = 1
+
+        # populate diagonals to indicate connections
+        for i, node in enumerate(reversed(self.sorted_expressions)):
+            for dep in node.dependencies:
+                if dep in indices.keys():
+                    A[indices[dep], i] = 1
+
+        plt.spy(A.tocoo())
+        plt.show()
 
     def visualize_graph(self):
 
