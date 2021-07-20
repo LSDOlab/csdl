@@ -310,7 +310,7 @@ class Model(metaclass=_ComponentBuilder):
                 indices=indices,
                 linear=linear,
                 parallel_deriv_color=parallel_deriv_color,
-                vectorize_derivs=vectorize_derivs,
+                # vectorize_derivs=vectorize_derivs, # NOTE: removed from OpenMDAO
                 cache_linear_solution=cache_linear_solution,
             )
 
