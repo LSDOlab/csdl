@@ -143,7 +143,8 @@ def _build_intermediate_representation(func: Callable) -> Callable:
 
             # Define child models recursively
             for subgraph in self.subgraphs:
-                subgraph.submodel.define()
+                if not isinstance(subgraph.submodel, CustomOperation):
+                    subgraph.submodel.define()
 
             _, _ = set_default_values(self)
 
