@@ -53,7 +53,7 @@ class CustomOperation(Operation):
         self.input_meta[name] = dict()
         self.input_meta[name]['val'] = val
         if isinstance(shape, int):
-            self.input_meta[name]['shape'] = tuple(shape)
+            self.input_meta[name]['shape'] = (shape, )
         else:
             self.input_meta[name]['shape'] = shape
         self.input_meta[name]['src_indices'] = src_indices
@@ -88,7 +88,7 @@ class CustomOperation(Operation):
         self.output_meta[name] = dict()
         self.output_meta[name]['val'] = val
         if isinstance(shape, int):
-            self.output_meta[name]['shape'] = tuple(shape)
+            self.output_meta[name]['shape'] = (shape, )
         else:
             self.output_meta[name]['shape'] = shape
         self.output_meta[name]['units'] = units
