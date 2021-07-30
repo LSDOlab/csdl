@@ -17,7 +17,7 @@ class CustomOperation(Operation):
 
     def initialize(self):
         """
-        User defined method to set parameters
+        Optional user defined method to set parameters
         """
         pass
 
@@ -105,7 +105,8 @@ class CustomOperation(Operation):
         self.output_meta[name]['copy_shape'] = copy_shape
         self.nouts += 1
 
-    def declare_derivative(
+    # TODO: of, wrt can be lists and '*'
+    def declare_derivatives(
         self,
         of,
         wrt,
@@ -118,6 +119,20 @@ class CustomOperation(Operation):
         form=None,
         step_calc=None,
     ):
+        if of == '*':
+            raise NotImplementedError(
+                "declare_derivatives does not yet support wildcards")
+        if wrt == '*':
+            raise NotImplementedError(
+                "declare_derivatives does not yet support wildcards")
+        if isinstance(of, list):
+            raise NotImplementedError(
+                "declare_derivatives does not yet support declaring multiple derivatives at once"
+            )
+        if isinstance(wrt, list):
+            raise NotImplementedError(
+                "declare_derivatives does not yet support declaring multiple derivatives at once"
+            )
         if (of, wrt) in self.derivatives_meta.keys():
             raise KeyError("Derivative {} wrt {}"
                            " already declared for this Operation".format(
