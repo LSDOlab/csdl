@@ -49,7 +49,7 @@ class CustomOperation(Operation):
     ):
         if name in self.input_meta.keys():
             raise KeyError(name +
-                           " was already declared an input of this Operation")
+                           ' was already declared an input of this Operation')
         self.input_meta[name] = dict()
         self.input_meta[name]['val'] = val
         if isinstance(shape, int):
@@ -84,7 +84,7 @@ class CustomOperation(Operation):
     ):
         if name in self.input_meta.keys():
             raise KeyError(name +
-                           " was already declared an input of this Operation")
+                           ' was already declared an input of this Operation')
         self.output_meta[name] = dict()
         self.output_meta[name]['val'] = val
         if isinstance(shape, int):
@@ -119,30 +119,88 @@ class CustomOperation(Operation):
         form=None,
         step_calc=None,
     ):
-        if of == '*':
-            raise NotImplementedError(
-                "declare_derivatives does not yet support wildcards")
-        if wrt == '*':
-            raise NotImplementedError(
-                "declare_derivatives does not yet support wildcards")
-        if isinstance(of, list):
-            raise NotImplementedError(
-                "declare_derivatives does not yet support declaring multiple derivatives at once"
-            )
-        if isinstance(wrt, list):
-            raise NotImplementedError(
-                "declare_derivatives does not yet support declaring multiple derivatives at once"
-            )
-        if (of, wrt) in self.derivatives_meta.keys():
-            raise KeyError("Derivative {} wrt {}"
-                           " already declared for this Operation".format(
-                               of, wrt))
-        self.derivatives_meta[of, wrt] = dict()
-        self.derivatives_meta[of, wrt]['dependent'] = dependent
-        self.derivatives_meta[of, wrt]['rows'] = rows
-        self.derivatives_meta[of, wrt]['cols'] = cols
-        self.derivatives_meta[of, wrt]['val'] = val
-        self.derivatives_meta[of, wrt]['method'] = method
-        self.derivatives_meta[of, wrt]['step'] = step
-        self.derivatives_meta[of, wrt]['form'] = form
-        self.derivatives_meta[of, wrt]['step_calc'] = step_calc
+        # check argument types
+        if not isinstance(of, (str, list)):
+            raise TypeError('of must be a string or list; {} given'.format(
+                type(of)))
+        if not isinstance(wrt, (str, list)):
+            raise TypeError('wrt must be a string or list; {} given'.format(
+                type(wrt)))
+
+        # user-provided lists of variables of wildcards
+        of_list = []
+        wrt_list = []
+        if isinstance(of, str):
+            if of == '*':
+                of_list = list(self.output_meta.keys())
+        elif isinstance(of, list):
+            if any(x == '*' for x in of):
+                of_list = list(self.output_meta.keys())
+            else:
+                of_list = of
+        if isinstance(wrt, str):
+            if wrt == '*':
+                wrt_list = list(self.input_meta.keys())
+        elif isinstance(wrt, list):
+            if any(x == '*' for x in wrt):
+                wrt_list = list(self.input_meta.keys())
+            else:
+                wrt_list = wrt
+
+        # declare each derivative one by one
+        if len(of_list) > 0 and len(wrt_list) > 0:
+            for a in of_list:
+                for b in wrt_list:
+                    self.declare_derivatives(
+                        a,
+                        b,
+                        dependent,
+                        rows,
+                        cols,
+                        val,
+                        method,
+                        step,
+                        form,
+                        step_calc,
+                    )
+        elif len(of_list) > 0:
+            for a in of_list:
+                self.declare_derivatives(
+                    a,
+                    wrt,
+                    dependent,
+                    rows,
+                    cols,
+                    val,
+                    method,
+                    step,
+                    form,
+                    step_calc,
+                )
+        elif len(wrt_list) > 0:
+            for b in wrt_list:
+                self.declare_derivatives(
+                    of,
+                    b,
+                    dependent,
+                    rows,
+                    cols,
+                    val,
+                    method,
+                    step,
+                    form,
+                    step_calc,
+                )
+        else:
+            if (of, wrt) in self.derivatives_meta.keys():
+                raise KeyError('Derivative {} wrt {} already declared'.format(
+                    of, wrt))
+            self.derivatives_meta[of, wrt] = dict()
+            self.derivatives_meta[of, wrt]['dependent'] = dependent
+            self.derivatives_meta[of, wrt]['rows'] = rows
+            self.derivatives_meta[of, wrt]['cols'] = cols
+            self.derivatives_meta[of, wrt]['val'] = val
+            self.derivatives_meta[of, wrt]['method'] = method
+            self.derivatives_meta[of, wrt]['step'] = step
+            self.derivatives_meta[of, wrt]['form'] = form
+            self.derivatives_meta[of, wrt]['step_calc'] = step_calc
