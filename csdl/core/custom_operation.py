@@ -154,42 +154,42 @@ class CustomOperation(Operation):
                     self.declare_derivatives(
                         a,
                         b,
-                        dependent,
-                        rows,
-                        cols,
-                        val,
-                        method,
-                        step,
-                        form,
-                        step_calc,
+                        dependent=dependent,
+                        rows=rows,
+                        cols=cols,
+                        val=val,
+                        method=method,
+                        step=step,
+                        form=form,
+                        step_calc=step_calc,
                     )
         elif len(of_list) > 0:
             for a in of_list:
                 self.declare_derivatives(
                     a,
-                    wrt,
-                    dependent,
-                    rows,
-                    cols,
-                    val,
-                    method,
-                    step,
-                    form,
-                    step_calc,
+                    wrt=wrt,
+                    dependent=dependent,
+                    rows=rows,
+                    cols=cols,
+                    val=val,
+                    method=method,
+                    step=step,
+                    form=form,
+                    step_calc=step_calc,
                 )
         elif len(wrt_list) > 0:
             for b in wrt_list:
                 self.declare_derivatives(
                     of,
                     b,
-                    dependent,
-                    rows,
-                    cols,
-                    val,
-                    method,
-                    step,
-                    form,
-                    step_calc,
+                    dependent=dependent,
+                    rows=rows,
+                    cols=cols,
+                    val=val,
+                    method=method,
+                    step=step,
+                    form=form,
+                    step_calc=step_calc,
                 )
         else:
             if (of, wrt) in self.derivatives_meta.keys():
@@ -203,4 +203,4 @@ class CustomOperation(Operation):
             self.derivatives_meta[of, wrt]['method'] = method
             self.derivatives_meta[of, wrt]['step'] = step
             self.derivatives_meta[of, wrt]['form'] = form
-            self.derivatives_meta[of, wrt]['step_calc'] = step_calc
+            self.derivatives_meta[of, wrt]['step_calc'] = step_cal
