@@ -203,4 +203,4 @@ class CustomOperation(Operation):
             self.derivatives_meta[of, wrt]['method'] = method
             self.derivatives_meta[of, wrt]['step'] = step
             self.derivatives_meta[of, wrt]['form'] = form
-            self.derivatives_meta[of, wrt]['step_calc'] = step_cal
+            self.derivatives_meta[of, wrt]['step_calc'] = step_calc
