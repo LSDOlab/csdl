@@ -197,3 +197,20 @@ class ErrorMultidimensionalOverlap(Model):
         x[0:2, 0:3] = z
         # This triggers an error
         x[0:2, 0:3] = z
+
+
+class ExampleMesh(Model):
+    """
+    :param var: def_mesh
+    :param var: b_pts
+    """
+    def define(self):
+        nx = 3
+        ny = 4
+        mesh = np.zeros((nx, ny, 3))
+        mesh[:, :, 0] = np.outer(np.arange(nx), np.ones(ny))
+        mesh[:, :, 1] = np.outer(np.arange(ny), np.ones(nx)).T
+        mesh[:, :, 2] = 0.
+        def_mesh = self.declare_variable('def_mesh', val=mesh)
+        b_pts = def_mesh[:-1, :, :] * .75 + def_mesh[1:, :, :] * .25
+        self.register_output('b_pts', b_pts)

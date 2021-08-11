@@ -136,3 +136,27 @@ def test_multidimensional_dimensional_index_assignement(backend):
                                 compact_print=True,
                                 method='cs')
     sim.assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
+
+
+def test_mesh(backend):
+    from csdl.examples.valid.ex_indices_mesh import example
+    exec('from {} import Simulator'.format(backend))
+    nx = 3
+    ny = 4
+    mesh = np.zeros((nx, ny, 3))
+    mesh[:, :, 0] = np.outer(np.arange(nx), np.ones(ny))
+    mesh[:, :, 1] = np.outer(np.arange(ny), np.ones(nx)).T
+    mesh[:, :, 2] = 0.
+    sim = example(eval('Simulator'))
+    np.testing.assert_array_equal(
+        sim['def_mesh'],
+        mesh,
+    )
+    np.testing.assert_array_equal(
+        sim['b_pts'],
+        mesh[:-1, :, :] * .75 + mesh[1:, :, :] * .25,
+    )
+    result = sim.check_partials(out_stream=None,
+                                compact_print=True,
+                                method='cs')
+    sim.assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
