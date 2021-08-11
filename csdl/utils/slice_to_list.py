@@ -15,8 +15,10 @@ def slice_to_list(
             stop = size
     elif stop is not None:
         if stop < 0:
+            if size is None:
+                raise ValueError(
+                    "size required when using negative stop index")
             stop = size + stop
-            print('stop', stop)
             if stop < 0:
                 raise ValueError("negative stop index out of range")
     l = list(

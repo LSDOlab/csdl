@@ -284,7 +284,10 @@ class Variable(Node):
             return self._decomp._key_out_pairs[key]
 
         # Get flat indices from key to define corresponding component
-        slices = [slice_to_list(s[0], s[1], s[2]) for s in list(key)]
+        slices = [
+            slice_to_list(s[0], s[1], s[2], size=self.shape[i])
+            for i, s in enumerate(list(key))
+        ]
         src_indices = np.ravel_multi_index(
             tuple(np.array(np.meshgrid(*slices, indexing='ij'))),
             self.shape,
