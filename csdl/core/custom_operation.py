@@ -27,13 +27,6 @@ class CustomOperation(Operation):
         """
         pass
 
-    def compute_derivatives(self, inputs, derivatives):
-        """
-        User defined method to compute partial derivatives for this
-        operation
-        """
-        pass
-
     def add_input(
         self,
         name,
@@ -105,7 +98,6 @@ class CustomOperation(Operation):
         self.output_meta[name]['copy_shape'] = copy_shape
         self.nouts += 1
 
-    # TODO: of, wrt can be lists and '*'
     def declare_derivatives(
         self,
         of,

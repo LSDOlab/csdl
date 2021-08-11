@@ -7,11 +7,16 @@ class ImplicitOperation(CustomOperation):
         inputs,
         outputs,
         residuals,
-        discrete_inputs=None,
-        discrete_outputs=None,
     ):
         """
         User defined method to evaluate residuals
+        """
+        pass
+
+    def compute_derivatives(self, inputs, outputs, derivatives):
+        """
+        User defined method to evaluate derivatives of residuals wrt
+        inputs and outputs
         """
         pass
 
@@ -28,6 +33,11 @@ class ImplicitOperation(CustomOperation):
         d_residuals,
         mode,
     ):
+        """
+        Optional. Solve linear system. Invoked when solving coupled
+        linear system; i.e. when solving Newton system to update
+        implicit state variables, and when computing total derivatives
+        """
         pass
 
     def compute_jacvec_product(
@@ -39,4 +49,7 @@ class ImplicitOperation(CustomOperation):
         d_residuals,
         mode,
     ):
+        """
+        Optional.
+        """
         pass

@@ -8,6 +8,13 @@ class ExplicitOperation(CustomOperation):
         """
         pass
 
+    def compute_derivatives(self, inputs, derivatives):
+        """
+        User defined method to compute partial derivatives for this
+        operation
+        """
+        pass
+
     def compute_jacvec_product(
         self,
         inputs,
