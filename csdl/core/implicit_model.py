@@ -185,7 +185,7 @@ class ImplicitModel(metaclass=_ProblemBuilder):
         )
 
     def connect(self, a: str, b: str):
-        self._model.connections.append((a, b))
+        self._model.connect(a, b)
 
     def declare_variable(
         self,
