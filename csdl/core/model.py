@@ -562,11 +562,24 @@ class Model(metaclass=_ComponentBuilder):
                 "{} is not a Model, ImplicitModel, or CustomOperation".format(
                     submodel))
 
-        if name == '':
-            name = gen_hex_name(Model._count),
+        # promote by default
+        if promotes == [] and (promotes_inputs
+                               is not None) or (promotes_outputs is not None):
+            raise ValueError(
+                "cannot selectively promote inputs and outputs if promotes=[]")
+        if promotes == ['*'] and (promotes_inputs is not None) or (
+                promotes_outputs is not None):
+            raise ValueError(
+                "cannot selectively promote inputs and outputs if promoting all variables"
+            )
+        if promotes is None and (promotes_inputs is None) and (promotes_outputs
+                                                               is None):
+            promotes = ['*']
+        if promotes == []:
+            promotes_inputs = []
 
         subgraph = Subgraph(
-            name,
+            gen_hex_name(Node._count + 1) if name == '' else name,
             submodel,
             promotes=promotes,
             promotes_inputs=promotes_inputs,
