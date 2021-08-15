@@ -40,7 +40,8 @@ def pnorm(var, pnorm_type=2, axis=None):
     op.outs = (Output(
         None,
         op=op,
-        shape=tuple(np.delete(op.dependencies[0].shape, axis)),
+        shape=tuple(np.delete(op.dependencies[0].shape, axis))
+        if axis is not None else (1, ),
     ), )
     for out in op.outs:
         out.add_dependency_node(op)
