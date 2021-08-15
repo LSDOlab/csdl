@@ -30,13 +30,17 @@ def pnorm(var, pnorm_type=2, axis=None):
         if not isinstance(axis, int) and not isinstance(axis, tuple):
             raise ValueError("axis must be an integer or tuple of integers")
         if isinstance(axis, int):
+            if axis > len(var.shape):
+                raise IndexError(
+                    'index {} is out of bounds for size {}'.format(
+                        axis, len(var.shape)))
             axis = (axis, )
 
     op = ops.pnorm(var, pnorm_type=pnorm_type, axis=axis)
     op.outs = (Output(
         None,
         op=op,
-        shape=op.dependencies[0].shape,
+        shape=tuple(np.delete(op.dependencies[0].shape, axis)),
     ), )
     for out in op.outs:
         out.add_dependency_node(op)
