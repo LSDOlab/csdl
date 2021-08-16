@@ -1,6 +1,7 @@
 from csdl import Model
 import csdl
 import numpy as np
+from scipy.sparse import csc_matrix
 
 
 class ExampleMatVecProduct(Model):
@@ -8,6 +9,7 @@ class ExampleMatVecProduct(Model):
     :param var: mat1
     :param var: vec1
     :param var: MatVec
+    :param var: SparseMatVec
     """
     def define(self):
         m = 3
@@ -29,6 +31,9 @@ class ExampleMatVecProduct(Model):
 
         # Creating the output for matrix-vector multiplication
         self.register_output('MatVec', csdl.matvec(mat1, vec1))
+
+        sp = csc_matrix(mat1.val)
+        self.register_output('SparseMatVec', csdl.matvec(sp, vec1))
 
 
 class ErrorMatrixVectorIncompatibleShapes(Model):

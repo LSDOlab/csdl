@@ -25,6 +25,7 @@ def test_matrix_vector_multiplication(backend):
     # MATRIX VECTOR MULTIPLICATION
     desired_output = np.matmul(mat1, vec1)
     np.testing.assert_almost_equal(sim['MatVec'], desired_output)
+    np.testing.assert_almost_equal(sim['SparseMatVec'], desired_output)
 
     partials_error = sim.check_partials(includes=['comp_MatVec'],
                                         out_stream=None,
