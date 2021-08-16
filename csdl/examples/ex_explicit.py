@@ -115,7 +115,7 @@ class ExampleNoRegisteredOutput(Model):
         a = model.declare_variable('a', val=2)
         b = model.create_input('b', val=12)
         model.register_output('prod', a * b)
-        self.add(model, name='sys', promotes=['*'])
+        self.add(model, name='sys')
 
         # These expressions are not passed to the compiler backend
         x1 = self.declare_variable('x1')
@@ -175,7 +175,7 @@ class ExampleWithSubsystems(Model):
         a = m.declare_variable('x1', val=2)
         b = m.create_input('x2', val=12)
         m.register_output('prod', a * b)
-        self.add(m, name='subsystem', promotes=['*'])
+        self.add(m, name='subsystem')
 
         # declare inputs with default values
         # This value is overwritten by connection

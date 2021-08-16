@@ -76,7 +76,7 @@ class ExampleWithSubsystems(ImplicitModel):
         model.register_output('r', r)
 
         # add child system
-        self.add(model, name='R', promotes=['*'])
+        self.add(model, name='R')
         # declare output of child system as input to parent system
         r = self.declare_variable('r')
 
@@ -87,13 +87,13 @@ class ExampleWithSubsystems(ImplicitModel):
         a = model.create_output('a')
         a.define((3 + a - 2 * a**2)**(1 / 4))
         model.nonlinear_solver = NonlinearBlockGS(iprint=0, maxiter=100)
-        self.add(model, name='coeff_a', promotes=['*'])
+        self.add(model, name='coeff_a')
 
         a = self.declare_variable('a')
 
         model = Model()
         model.create_input('b', val=-4)
-        self.add(model, name='coeff_b', promotes=['*'])
+        self.add(model, name='coeff_b')
 
         b = self.declare_variable('b')
         y = self.create_implicit_output('y')
@@ -119,7 +119,7 @@ class ExampleWithSubsystemsBracketedScalar(ImplicitModel):
         model.register_output('r', r)
 
         # add child system
-        self.add(model, name='R', promotes=['*'])
+        self.add(model, name='R')
         # declare output of child system as input to parent system
         r = self.declare_variable('r')
 
@@ -155,7 +155,7 @@ class ExampleWithSubsystemsBracketedArray(ImplicitModel):
         model.register_output('r', r)
 
         # add child system
-        self.add(model, name='R', promotes=['*'])
+        self.add(model, name='R')
         # declare output of child system as input to parent system
         r = self.declare_variable('r', shape=(2, ))
 
@@ -199,7 +199,7 @@ class ExampleWithSubsystemsVisualizeInternalModel(ImplicitModel):
         model.register_output('r', r)
 
         # add child system
-        self.add(model, name='R', promotes=['*'])
+        self.add(model, name='R')
         # declare output of child system as input to parent system
         r = self.declare_variable('r')
 
@@ -210,13 +210,13 @@ class ExampleWithSubsystemsVisualizeInternalModel(ImplicitModel):
         a = model.create_output('a')
         a.define((3 + a - 2 * a**2)**(1 / 4))
         model.nonlinear_solver = NonlinearBlockGS(iprint=0, maxiter=100)
-        self.add(model, name='coeff_a', promotes=['*'])
+        self.add(model, name='coeff_a')
 
         a = self.declare_variable('a')
 
         model = Model()
         model.create_input('b', val=-4)
-        self.add(model, name='coeff_b', promotes=['*'])
+        self.add(model, name='coeff_b')
 
         b = self.declare_variable('b')
         y = self.create_implicit_output('y')

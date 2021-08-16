@@ -9,7 +9,7 @@ def example(Simulator):
             a = model.declare_variable('a', val=2)
             b = model.create_input('b', val=12)
             model.register_output('prod', a * b)
-            self.add(model, name='sys', promotes=['*'])
+            self.add(model, name='sys')
 
             # These expressions are not passed to the compiler backend
             x1 = self.declare_variable('x1')

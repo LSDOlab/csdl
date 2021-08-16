@@ -19,7 +19,7 @@ def example(Simulator):
             a = m.declare_variable('x1', val=2)
             b = m.create_input('x2', val=12)
             m.register_output('prod', a * b)
-            self.add(m, name='subsystem', promotes=['*'])
+            self.add(m, name='subsystem')
 
             # declare inputs with default values
             # This value is overwritten by connection
