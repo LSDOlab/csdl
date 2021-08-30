@@ -52,7 +52,7 @@ def build_clean_dag(registered_outputs):
 
 # TODO: collect all inputs from all models to ensure that the entire
 # model does have inputs; issue warning if not
-def _build_intermediate_representation(func: Callable) -> Callable:
+def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
     """
     This function replaces ``Group.setup`` with a new method that calls
     ``Group.setup`` and performs the necessary steps to determine
@@ -61,14 +61,14 @@ def _build_intermediate_representation(func: Callable) -> Callable:
     The new method is the core of the ``csdl`` package. This function
     analyzes the Directed Acyclic Graph (DAG) and sorts expressions.
     """
-    def _sort_nodes(self):
+    def _run_middle_end(self):
         """
         User defined method to define expressions and add subsystems for
         model execution
         """
         if self._defined is False:
             self._defined = True
-            func(self)
+            run_front_end(self)
 
             # Check if all design variables are inputs
             input_names = set(
@@ -101,7 +101,16 @@ def _build_intermediate_representation(func: Callable) -> Callable:
             #             "No input named {} for connection from {} to {}".format(
             #                 b, a, b))
 
-            # add forward edges
+            # Check that all outputs are defined
+            # for output in self.sorted_expressions:
+            for output in self.registered_outputs:
+                if isinstance(output, ExplicitOutput):
+                    if output.defined is False:
+                        raise ValueError("Output not defined for {}".format(
+                            repr(output)))
+
+            # add forward edges; nodes with fewer forward edges than
+            # dependents will be ignored when sorting nodes
             for r in self.registered_outputs:
                 r.add_fwd_edges()
 
@@ -134,13 +143,6 @@ def _build_intermediate_representation(func: Callable) -> Callable:
             # self.sorted_expressions =
             # topological_sort(self.registered_outputs)
 
-            # Check that all outputs are defined
-            for output in self.sorted_expressions:
-                if isinstance(output, (ExplicitOutput)):
-                    if output.defined is False:
-                        raise ValueError("Output not defined for {}".format(
-                            repr(output)))
-
             # Define child models recursively
             for subgraph in self.subgraphs:
                 if not isinstance(subgraph.submodel, CustomOperation):
@@ -148,16 +150,17 @@ def _build_intermediate_representation(func: Callable) -> Callable:
 
             _, _ = set_default_values(self)
 
-    return _sort_nodes
+    return _run_middle_end
 
 
-class _ComponentBuilder(type):
+class _CompilerFrontEndMiddleEnd(type):
     def __new__(cls, name, bases, attr):
-        attr['define'] = _build_intermediate_representation(attr['define'])
-        return super(_ComponentBuilder, cls).__new__(cls, name, bases, attr)
+        attr['define'] = _run_front_end_and_middle_end(attr['define'])
+        return super(_CompilerFrontEndMiddleEnd,
+                     cls).__new__(cls, name, bases, attr)
 
 
-class Model(metaclass=_ComponentBuilder):
+class Model(metaclass=_CompilerFrontEndMiddleEnd):
     _count = -1
 
     def __init__(self, **kwargs):
