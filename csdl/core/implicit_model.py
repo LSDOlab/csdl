@@ -126,16 +126,37 @@ class ImplicitModel(metaclass=_ProblemBuilder):
         self.derivs = dict()
         self.maxiter = 100
         self.visualize = visualize
+        self.implicit_outputs = []
         self.res_out_map: Dict[str, ImplicitOutput] = dict()
         self.out_res_map: Dict[str, Union[None, Output]] = dict()
         self.out_in_map: Dict[str, List[Variable]] = dict()
         self.brackets_map: Tuple[Dict[str, np.ndarray],
                                  Dict[str, np.ndarray]] = (dict(), dict())
         self.linear_solver = None
-        self.nonlinear_solver = None
+        self._nonlinear_solver = None
         self.parameters = Parameters()
         self.initialize()
         self.parameters.update(kwargs)
+        # self.requires_solver = False
+        # self.unbracketed_outputs = []
+        # self.bracketed_outputs = []
+        self.objective = None
+        self.constraints = dict()
+        self.design_variables = dict()
+        self.use_nonlinear_solver = False
+        self.solve_using_bracketed_search = False
+
+    def get_nonlinear_solver(self):
+        return self._nonlinear_solver
+
+    def set_nonlinear_solver(self, solver):
+        if self.solve_using_bracketed_search is True:
+            raise ValueError(
+                "Cannot set a nonlinear solver when using bracketed search to solve for implicitly defined variables"
+            )
+        self._nonlinear_solver = solver
+
+    nonlinear_solver = property(get_nonlinear_solver, set_nonlinear_solver)
 
     def initialize(self):
         """
@@ -301,6 +322,10 @@ class ImplicitModel(metaclass=_ProblemBuilder):
         # This is only to check later if ImplicitOutput objects are
         # defined
         self.out_res_map[im.name] = None
+
+        # This is used for visualizing the overall model graph as well
+        # as checking if a variable can be added as an objective
+        self.implicit_outputs.append(im)
 
         return im
 

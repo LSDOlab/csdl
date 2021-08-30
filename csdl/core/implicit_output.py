@@ -96,6 +96,11 @@ class ImplicitOutput(Output):
         residual: Output
             Residual expression
         """
+        if self.implicit_model.solve_using_bracketed_search is True:
+            raise SyntaxError(
+                "Defining residuals that require solvers not allowed when bracketed residuals are defined"
+            )
+        self.implicit_model.use_nonlinear_solver = True
         if isinstance(residual, ImplicitOutput):
             raise TypeError(
                 "The residual {} is an ImplicitOutput object, but residuals must not be ImplicitOutput objects"
@@ -157,6 +162,11 @@ class ImplicitOutput(Output):
         residual: Variable
             Residual expression
         """
+        if self.implicit_model.use_nonlinear_solver is True:
+            raise SyntaxError(
+                "Defining bracketed residuals not allowed when residuals that require solvers are defined"
+            )
+        self.implicit_model.solve_using_bracketed_search = True
         if residual is self:
             raise ValueError("Variable for residual of " + self.name +
                              " cannot be self")
