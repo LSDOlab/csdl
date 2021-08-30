@@ -299,6 +299,11 @@ class Model(metaclass=_ComponentBuilder):
         if name in self.constraints.keys():
             raise ValueError("Constraint already defined for {}".format(name))
         else:
+            if lower is not None and upper is not None:
+                if np.greater(lower, upper):
+                    raise ValueError(
+                        "Lower bound is greater than upper bound:\n lower bound: {}\n upper bound: {}"
+                        .format(lower, upper))
             self.constraints[name] = dict(
                 lower=lower,
                 upper=upper,
