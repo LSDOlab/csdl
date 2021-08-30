@@ -8,5 +8,6 @@ from csdl.core.implicit_operation import ImplicitOperation
 from csdl.core.variable import Variable
 from csdl.core.output import Output
 from csdl.core.subgraph import Subgraph
+from csdl.core.simulator_base import SimulatorBase
 from csdl.std import *
 from csdl.solvers import *
