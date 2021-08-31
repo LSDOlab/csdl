@@ -23,6 +23,8 @@ def trimlines(l):
 CSDLPATH = sys.argv[1]
 examples_directory = CSDLPATH + '/csdl/examples/valid/'
 clean_examples_directory = CSDLPATH + '/docs/_build/html/examples/'
+print('Cleaning examples in {}'.format(examples_directory))
+print('Clean examples will be in {}'.format(clean_examples_directory))
 for filename in os.listdir(examples_directory):
     # if filename == "ex_explicit_with_subsystems.py":
     if filename[-3:] == '.py':
