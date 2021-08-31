@@ -33,7 +33,7 @@ class _ReprClass(object):
 # out_stream argument. We run into problems running testflo if we use a default of sys.stdout.
 _DEFAULT_OUT_STREAM = _ReprClass("DEFAULT_OUT_STREAM")
 
-msg = "The CSDL Simulator base class does not implement any methods. Please install a CSDL compiler backend with a Simulator class that conforms to the SDL Simulator API."
+msg = "The CSDL SimulatorBase class does not implement any methods. Please install a CSDL compiler backend with a Simulator class that conforms to the CSDL Simulator API."
 
 
 class SimulatorBase:
@@ -47,36 +47,121 @@ class SimulatorBase:
     backend of choice.
     """
     def __init__(self, model, reorder=False):
+        """
+        Constructor.
+        """
         raise NotImplementedError(msg)
 
     def __getitem__(self, key):
+        """
+        Method to get variable values before or after a simulation run
+        """
         raise NotImplementedError(msg)
 
     def __setitem__(self, key, val):
+        """
+        Method to set values for variables by name
+        """
         raise NotImplementedError(msg)
 
     def run(self):
+        """
+        Method to run a simulation once. This method should be
+        implemented so that it can be called repeatedly to solve an
+        optimization problem.
+        """
         raise NotImplementedError(msg)
 
-    def visualize_model(self):
+    def compute_total_derivatives(self):
+        """
+        Method to compute total derivatives for use by an optimizer
+        """
         raise NotImplementedError(msg)
 
-    def check_partials(
-        self,
-        out_stream=_DEFAULT_OUT_STREAM,
-        includes=None,
-        excludes=None,
-        compact_print=False,
-        abs_err_tol=1e-6,
-        rel_err_tol=1e-6,
-        method='fd',
-        step=None,
-        form='forward',
-        step_calc='abs',
-        force_dense=True,
-        show_only_incorrect=False,
-    ):
+    def compute_exact_hessian(self):
+        """
+        Method to compute exact Hessian
+        """
+        raise NotImplementedError(msg)
+
+    def check_partials(self):
+        """
+        Method to compute the error for all partial derivatives of all
+        operations within the model.
+
+        Returns
+        -------
+        An object that is compatible with ``assert_check_partials``
+
+        """
         raise NotImplementedError(msg)
 
     def assert_check_partials(self, result, atol=1e-8, rtol=1e-8):
+        """
+        Method to check that the partial derivatives of all operations
+        are within a specified tolerance.
+
+        Parameters
+        ----------
+        result: Return type of ``check_partials``
+
+        """
+        raise NotImplementedError(msg)
+
+    def visualize_model(self):
+        """
+        A for the back end to provide its own visualization of the
+        model.
+        """
+        raise NotImplementedError(msg)
+
+    def objective(self):
+        """
+        Method to provide optimizer with objective
+        """
+        raise NotImplementedError(msg)
+
+    def design_variables(self):
+        """
+        Method to provide optimizer with design variables
+        """
+        raise NotImplementedError(msg)
+
+    def constraints(self):
+        """
+        Method to provide optimizer with constraints
+        """
+        raise NotImplementedError(msg)
+
+    def implicit_outputs(self):
+        """
+        Method to provide optimizer with implicit_outputs
+        """
+        raise NotImplementedError(msg)
+
+    def residuals(self):
+        """
+        Method to provide optimizer with residuals
+        """
+        raise NotImplementedError(msg)
+
+    def objective_gradient(self):
+        """
+        Method to provide optimizer with total derivative of objective
+        with respect to design variables
+        """
+        raise NotImplementedError(msg)
+
+    def constraint_jacobian(self):
+        """
+        Method to provide optimizer with total derivatives of
+        constraints with respect to design variables
+        """
+        raise NotImplementedError(msg)
+
+    def residuals_jacobian(self):
+        """
+        Method to provide optimizer with total derivatives of
+        residuals with respect to design variables
+        """
         raise NotImplementedError(msg)
