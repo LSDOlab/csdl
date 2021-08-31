@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from contextlib import contextmanager
-from typing import Callable, Dict, Tuple, List, Union, Set
+from typing import Callable, Tuple, List, Union
 
 # from csdl.core._group import _Group
 from csdl.core.explicit_output import ExplicitOutput
@@ -23,8 +23,9 @@ from csdl.utils.parameters import Parameters
 from csdl.utils.combine_operations import combine_operations
 from csdl.utils.set_default_values import set_default_values
 from warnings import warn
-import networkx as nx
-import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.pylab as plt
+import scipy.sparse as sparse
 
 
 def register_nodes(nodes, node):
@@ -648,32 +649,25 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             pass
 
     def visualize_sparsity(self):
-        import matplotlib.pylab as plt
-        import scipy.sparse as sparse
-
+        """
+        Visualize the sparsity pattern of jacobian for this model
+        """
         self.define()
-
-        # initialize sparse matrix
-        n = len(self.sorted_expressions)
+        nodes = self.sorted_expressions
+        n = len(nodes)
         A = sparse.lil_matrix((n, n))
+        A, _, indices, implicit_nodes = add_diag(A, nodes)
+        A = add_off_diag(A, self, indices)
+        A = add_off_diag_implicit(A, indices, implicit_nodes)
+        plt.spy(A, markersize=1)
+        ax = plt.gca()
+        for axis in 'left', 'right', 'bottom', 'top':
+            ax.spines[axis].set_linewidth(2)
 
-        # populate diagonals to indicate nodes
-        indices = dict()
-        for i, node in enumerate(reversed(self.sorted_expressions)):
-            indices[node] = i
-            A[i, i] = 1
-
-        # populate diagonals to indicate connections
-        for i, node in enumerate(reversed(self.sorted_expressions)):
-            for dep in node.dependencies:
-                if dep in indices.keys():
-                    A[indices[dep], i] = 1
-
-        plt.spy(A.tocoo())
         plt.show()
 
     def visualize_graph(self):
-
+        import networkx as nx
         G = nx.DiGraph()
 
         names = [node.name for node in self.nodes.values()]
@@ -709,3 +703,122 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         pos['END'] = (2, len(operations) + 1)
         nx.draw(G, pos=pos, with_labels=True, font_weight='bold')
         plt.show()
+
+
+def add_diag_implicit(A,
+                      variables,
+                      implicit_outputs,
+                      indices=dict(),
+                      implicit_nodes=dict(),
+                      p=0,
+                      indent=''):
+    i = p
+    implicit_operator = Node()
+    implicit_nodes[implicit_operator] = dict()
+    implicit_nodes[implicit_operator]['vars'] = variables
+    implicit_nodes[implicit_operator]['outs'] = implicit_outputs
+    for node in variables:
+        print(indent + str(i), node.name)
+        A[i, i] = 1
+        # NOTE: the keys are nodes, not names of nodes
+        # NOTE: there will be multiple keys with same .name
+        # attribute
+        indices[node] = i
+        i += 1
+    A[i, i] = 1
+    indices[implicit_operator] = i
+    i += 1
+    for node in implicit_outputs:
+        print(indent + str(i), node.name)
+        A[i, i] = 1
+        # NOTE: the keys are nodes, not names of nodes
+        # NOTE: there will be multiple keys with same .name
+        # attribute
+        indices[node] = i
+        i += 1
+    return A, i, indices, implicit_nodes
+
+
+def add_off_diag_implicit(A, indices, implicit_nodes):
+    print(implicit_nodes)
+    for implicit_operator in implicit_nodes.keys():
+        print(implicit_operator)
+        for node in implicit_nodes[implicit_operator]['vars']:
+            print(node.name)
+            print(indices[implicit_operator])
+            print(indices[node])
+            A[indices[node], indices[implicit_operator]] = 1
+        for node in implicit_nodes[implicit_operator]['outs']:
+            A[indices[implicit_operator], indices[node]] = 1
+    return A
+
+
+def add_diag(A, nodes, indices=dict(), implicit_nodes=dict(), p=0, indent=''):
+    from csdl.core.implicit_model import ImplicitModel
+    # NOTE: A must have shape (len(nodes), len(nodes))
+    print(p)
+    i = p
+    for node in reversed(nodes):
+        if i < A.get_shape()[0]:
+            print(indent + str(i), node.name)
+            if isinstance(node, Subgraph):
+                # TODO: check CustomOperation
+                if isinstance(node.submodel, Model):
+                    m = len(node.submodel.sorted_expressions)
+                    q = A.get_shape()[0] + m - 1
+                    C = sparse.lil_matrix((q, q))
+                    C[:i, :i] = A[:i, :i]
+                    print(indent + str(i), node.name, A.get_shape(),
+                          C.get_shape())
+                    A, i, indices, implicit_nodes = add_diag(
+                        C,
+                        node.submodel.sorted_expressions,
+                        implicit_nodes=implicit_nodes,
+                        p=i,
+                        indent=indent + ' ',
+                    )
+                elif isinstance(node.submodel, ImplicitModel):
+                    variables = list(
+                        filter(lambda x: len(x.dependencies) == 0,
+                               node.submodel._model.variables))
+                    m = len(variables) + len(
+                        node.submodel.implicit_outputs) + 1
+                    if m > 0:
+                        q = A.get_shape()[0] + m - 1
+                        C = sparse.lil_matrix((q, q))
+                        print((q, q), A.get_shape(), C.get_shape())
+                        C[:i, :i] = A[:i, :i]
+                        A, i, indices, implicit_nodes = add_diag_implicit(
+                            C,
+                            variables,
+                            node.submodel.implicit_outputs,
+                            indices=indices,
+                            implicit_nodes=implicit_nodes,
+                            p=i,
+                            indent=indent + ' ',
+                        )
+            else:
+                print(indent + str(i), node.name, A.get_shape())
+                A[i, i] = 1
+                # NOTE: the keys are nodes, not names of nodes
+                # NOTE: there will be multiple keys with same .name
+                # attribute
+                indices[node] = i
+                i += 1
+    return A, i, indices, implicit_nodes
+
+
+# TODO: make triangular only if there are no cycles
+def add_off_diag(A, model, indices):
+    for node in reversed(model.sorted_expressions):
+        if isinstance(node, Subgraph):
+            if isinstance(node.submodel, Model):
+                add_off_diag(A, node.submodel, indices)
+        else:
+            for dep in node.dependencies:
+                if node in indices.keys() and dep in indices.keys():
+                    if dep.name == node.name:
+                        A[indices[node], indices[dep]] = 1
+                    else:
+                        A[indices[dep], indices[node]] = 1
+    return A
