@@ -225,7 +225,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
     def add_objective(
         self,
-        name,
+        var,
         ref=None,
         ref0=None,
         index=None,
@@ -233,11 +233,22 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         adder=None,
         scaler=None,
         parallel_deriv_color=None,
-        vectorize_derivs=False,
         cache_linear_solution=False,
     ):
+        """
+        Declare the objective for the optimization problem. Objective
+        must be a scalar variable.
+        """
+        if not isinstance(var, Output):
+            raise TypeError('Variable must be an Output')
+        if not var.shape == (1, ):
+            raise ValueError('Variable must be a scalar')
+        if var._id == var.name:
+            raise NameError(
+                'Variable is not named by user. Name Variable by registering it as an output first.'
+            )
         self.objective = dict(
-            name=name,
+            name=var.name,
             ref=ref,
             ref0=ref0,
             index=index,
@@ -245,13 +256,12 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             adder=adder,
             scaler=scaler,
             parallel_deriv_color=parallel_deriv_color,
-            vectorize_derivs=vectorize_derivs,
             cache_linear_solution=cache_linear_solution,
         )
 
     def add_design_variable(
         self,
-        name,
+        var,
         lower=None,
         upper=None,
         ref=None,
@@ -261,9 +271,13 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         scaler=None,
         units=None,
         parallel_deriv_color=None,
-        vectorize_derivs=False,
         cache_linear_solution=False,
     ):
+        name = var.name
+        if not isinstance(var, Variable):
+            raise TypeError('Object must be a Variable')
+        if isinstance(var, Output):
+            raise TypeError('Variable is not an input to the model')
         if name in self.design_variables.keys():
             raise ValueError(
                 "{} already added as a design variable".format(name))
@@ -278,13 +292,12 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
                 scaler=scaler,
                 units=units,
                 parallel_deriv_color=parallel_deriv_color,
-                vectorize_derivs=vectorize_derivs,
                 cache_linear_solution=cache_linear_solution,
             )
 
     def add_constraint(
         self,
-        name,
+        var,
         lower=None,
         upper=None,
         equals=None,
@@ -296,9 +309,9 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         indices=None,
         linear=False,
         parallel_deriv_color=None,
-        vectorize_derivs=False,
         cache_linear_solution=False,
     ):
+        name = var.name
         if name in self.constraints.keys():
             raise ValueError("Constraint already defined for {}".format(name))
         else:
@@ -319,7 +332,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
                 indices=indices,
                 linear=linear,
                 parallel_deriv_color=parallel_deriv_color,
-                # vectorize_derivs=vectorize_derivs, # NOTE: removed from OpenMDAO
                 cache_linear_solution=cache_linear_solution,
             )
 
