@@ -1,6 +1,12 @@
 import os
 import sys
 from yapf.yapflib.yapf_api import FormatCode
+"""
+Examples are written as functions that take ``Simulator`` class as an
+argument. This script makes new files containing only the contents of
+the function definition so that Jupyter Sphinx can display and run the
+examples using the reference implementation back end.
+"""
 
 
 def unindent(s: str) -> str:
