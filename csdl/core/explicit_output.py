@@ -112,6 +112,8 @@ class ExplicitOutput(Output):
 
     # TODO: index by tuple, not expression?
     # TODO: allow negative indices
+    # TODO: broadcast: expand scalars
+    # TODO: broadcast: expand arrays
     def __setitem__(
         self,
         key: Union[int, slice, Tuple[slice]],
