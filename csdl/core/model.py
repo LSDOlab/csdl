@@ -240,6 +240,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         Declare the objective for the optimization problem. Objective
         must be a scalar variable.
         """
+        name = var.name
         if not isinstance(var, Output):
             raise TypeError('Variable must be an Output')
         if not var.shape == (1, ):
@@ -249,7 +250,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
                 'Variable is not named by user. Name Variable by registering it as an output first.'
             )
         self.objective = dict(
-            name=var.name,
+            name=name,
             ref=ref,
             ref0=ref0,
             index=index,
@@ -274,9 +275,14 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         parallel_deriv_color=None,
         cache_linear_solution=False,
     ):
+        """
+        Add a design variable to the optimization problem. The design
+        variable must be an ``Input``. This will signal to the optimizer
+        that it is responsible for updating the input variable.
+        """
         name = var.name
-        if not isinstance(var, Variable):
-            raise TypeError('Object must be a Variable')
+        if not isinstance(var, Input):
+            raise TypeError('Variable must be an Input')
         if isinstance(var, Output):
             raise TypeError('Variable is not an input to the model')
         if name in self.design_variables.keys():
@@ -312,6 +318,9 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         parallel_deriv_color=None,
         cache_linear_solution=False,
     ):
+        """
+        Add a constraint to the optimization problem.
+        """
         name = var.name
         if name in self.constraints.keys():
             raise ValueError("Constraint already defined for {}".format(name))

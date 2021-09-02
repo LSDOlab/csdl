@@ -14,8 +14,9 @@ from csdl.utils.parameters import Parameters
 
 def _remove_nonresiduals(model):
     """
-    Remove dependence of root on expressions that are not
-    residuals
+    Remove nodes in ``model.registered_outputs`` that are not
+    residuals, leaving only nodes of ``Output`` type that define a
+    residual and not an output to be used by a submodel.
 
     Parameters
     ----------
@@ -86,12 +87,13 @@ def _build_internal_simulator(func: Callable) -> Callable:
                 # set response variables for internal model (residuals)
                 self._model.add_constraint(residual)
 
+                # NOTE: not necessary for updating values/solving system
                 # set design variables for internal model (inputs and
                 # outputs)
-                for in_var in in_vars:
-                    in_name = in_var.name
-                    if in_name not in self._model.design_variables.keys():
-                        self._model.add_design_variable(in_var)
+                # for in_var in in_vars:
+                #     in_name = in_var.name
+                #     if in_name not in self._model.design_variables.keys():
+                #         self._model.add_design_variable(in_var)
 
     return _build_simulator
 
