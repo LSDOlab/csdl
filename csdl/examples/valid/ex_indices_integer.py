@@ -25,6 +25,7 @@ def example(Simulator):
             # Get value from indices
             self.register_output('x0', x[0])
             self.register_output('x6', x[6])
+            self.register_output('x_2', x[-2])
     
     
     sim = Simulator(ExampleInteger())
@@ -36,5 +37,7 @@ def example(Simulator):
     print(sim['x0'])
     print('x6', sim['x6'].shape)
     print(sim['x6'])
+    print('x_2', sim['x_2'].shape)
+    print(sim['x_2'])
     
     return sim

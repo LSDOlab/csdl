@@ -30,6 +30,7 @@ class ExampleInteger(Model):
         # Get value from indices
         self.register_output('x0', x[0])
         self.register_output('x6', x[6])
+        self.register_output('x_2', x[-2])
 
 
 class ErrorIntegerReuse(Model):
@@ -76,6 +77,7 @@ class ExampleOneDimensional(Model):
         self.register_output('x0_5', x[0:5])
         self.register_output('x3_', x[3:])
         self.register_output('x2_4', x[2:4])
+        self.register_output('x_last', x[-1])
 
 
 class ErrorOneDimensionalReuse(Model):

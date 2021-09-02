@@ -24,6 +24,7 @@ def test_integer_index_assignement(backend):
     np.testing.assert_array_equal(sim['x'], x)
     np.testing.assert_array_equal(sim['x0'], x[0])
     np.testing.assert_array_equal(sim['x6'], x[6])
+    np.testing.assert_array_equal(sim['x_2'], x[-2])
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='cs')
@@ -70,6 +71,7 @@ def test_one_dimensional_index_assignement(backend):
     np.testing.assert_array_equal(sim['x0_5'], x[0:5])
     np.testing.assert_array_equal(sim['x3_'], x[3:])
     np.testing.assert_array_equal(sim['x2_4'], x[2:4])
+    np.testing.assert_array_equal(sim['x_last'], x[-1])
     np.testing.assert_array_equal(sim['z'], x[2])
 
     y = np.zeros(20)
