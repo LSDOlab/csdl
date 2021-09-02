@@ -28,22 +28,22 @@ import matplotlib.pylab as plt
 import scipy.sparse as sparse
 
 
-def register_nodes(nodes, node):
+def build_symbol_table(symbol_table, node):
     for n in node.dependencies:
-        nodes[n._id] = n
-        register_nodes(nodes, n)
+        symbol_table[n._id] = n
+        build_symbol_table(symbol_table, n)
 
 
 def build_clean_dag(registered_outputs):
-    nodes = dict()
+    symbol_table = dict()
     for r in registered_outputs:
-        nodes[r._id] = r
+        symbol_table[r._id] = r
     for r in registered_outputs:
-        register_nodes(nodes, r)
+        build_symbol_table(symbol_table, r)
 
     # Clean up graph, removing dependencies that do not constrain
     # execution order
-    for node in nodes.values():
+    for node in symbol_table.values():
         remove_indirect_dependencies(node)
         if isinstance(node, Operation):
             if len(node.dependencies) < 1:
@@ -128,9 +128,9 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
 
             # Create record of all nodes in DAG
             for r in self.registered_outputs:
-                self.nodes[r._id] = r
+                self.symbol_table[r._id] = r
             for r in self.registered_outputs:
-                register_nodes(self.nodes, r)
+                build_symbol_table(self.symbol_table, r)
 
             if True:
                 # Use modified Kahn's algorithm to sort nodes, reordering
@@ -167,7 +167,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
     def __init__(self, **kwargs):
         Model._count += 1
         self._defined = False
-        self.nodes: dict = {}
+        self.symbol_table: dict = {}
         self.input_vals: dict = {}
         self.sorted_expressions = []
         self.reverse_branch_sorting: bool = False
@@ -670,7 +670,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         import networkx as nx
         G = nx.DiGraph()
 
-        names = [node.name for node in self.nodes.values()]
+        names = [node.name for node in self.symbol_table.values()]
 
         G.add_nodes_from(names)
         G.add_node('BEGIN')
@@ -681,19 +681,20 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             edge_tuples.append((r.name, 'END', 1))
         for i in self.inputs:
             edge_tuples.append(('BEGIN', i.name, 1))
-        for node in self.nodes.values():
+        for node in self.symbol_table.values():
             for dep in node.dependencies:
                 edge_tuples.append((dep.name, node.name, 1))
         G.add_weighted_edges_from(edge_tuples)
 
         variables = [
             node for node in list(
-                filter(lambda x: isinstance(x, Variable), self.nodes.values()))
+                filter(lambda x: isinstance(x, Variable),
+                       self.symbol_table.values()))
         ]
         operations = [
             node for node in list(
                 filter(lambda x: isinstance(x, (Operation, Subgraph)),
-                       self.nodes.values()))
+                       self.symbol_table.values()))
         ]
 
         pos = dict()
