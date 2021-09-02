@@ -75,7 +75,7 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
             input_names = set(
                 filter(lambda x: isinstance(x, Input),
                        [inp.name for inp in self.inputs]))
-            for name in self.design_variables:
+            for name in self.design_variables.keys():
                 if name not in input_names:
                     raise KeyError(
                         "{} is not an input to the model".format(name))
