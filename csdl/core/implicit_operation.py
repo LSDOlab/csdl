@@ -2,6 +2,11 @@ from csdl.core.custom_operation import CustomOperation
 
 
 class ImplicitOperation(CustomOperation):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.linear_solver = None
+        self.nonlinear_solver = None
+
     def evaluate_residuals(
         self,
         inputs,
