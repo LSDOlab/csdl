@@ -226,7 +226,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
     def add_objective(
         self,
-        var,
+        name,
         ref=None,
         ref0=None,
         index=None,
@@ -240,15 +240,17 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         Declare the objective for the optimization problem. Objective
         must be a scalar variable.
         """
-        name = var.name
-        if not isinstance(var, Output):
-            raise TypeError('Variable must be an Output')
-        if not var.shape == (1, ):
-            raise ValueError('Variable must be a scalar')
-        if var._id == var.name:
-            raise NameError(
-                'Variable is not named by user. Name Variable by registering it as an output first.'
-            )
+        # alternate implementation using a Variable object instead of a
+        # name
+        # name = var.name
+        # if not isinstance(var, Output):
+        #     raise TypeError('Variable must be an Output')
+        # if not var.shape == (1, ):
+        #     raise ValueError('Variable must be a scalar')
+        # if var._id == var.name:
+        #     raise NameError(
+        #         'Variable is not named by user. Name Variable by registering it as an output first.'
+        #     )
         self.objective = dict(
             name=name,
             ref=ref,
@@ -263,7 +265,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
     def add_design_variable(
         self,
-        var,
+        name,
         lower=None,
         upper=None,
         ref=None,
@@ -280,31 +282,32 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         variable must be an ``Input``. This will signal to the optimizer
         that it is responsible for updating the input variable.
         """
-        name = var.name
-        if not isinstance(var, Input):
-            raise TypeError('Variable must be an Input')
-        if isinstance(var, Output):
-            raise TypeError('Variable is not an input to the model')
+        # alternate implementation using a Variable object instead of a
+        # nam
+        # name = var.name
+        # if not isinstance(var, Input):
+        #     raise TypeError('Variable must be an Input')
+        # if isinstance(var, Output):
+        #     raise TypeError('Variable is not an input to the model')
         if name in self.design_variables.keys():
             raise ValueError(
                 "{} already added as a design variable".format(name))
-        else:
-            self.design_variables[name] = dict(
-                lower=lower,
-                upper=upper,
-                ref=ref,
-                ref0=ref0,
-                indices=indices,
-                adder=adder,
-                scaler=scaler,
-                units=units,
-                parallel_deriv_color=parallel_deriv_color,
-                cache_linear_solution=cache_linear_solution,
-            )
+        self.design_variables[name] = dict(
+            lower=lower,
+            upper=upper,
+            ref=ref,
+            ref0=ref0,
+            indices=indices,
+            adder=adder,
+            scaler=scaler,
+            units=units,
+            parallel_deriv_color=parallel_deriv_color,
+            cache_linear_solution=cache_linear_solution,
+        )
 
     def add_constraint(
         self,
-        var,
+        name,
         lower=None,
         upper=None,
         equals=None,
@@ -321,7 +324,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         """
         Add a constraint to the optimization problem.
         """
-        name = var.name
         if name in self.constraints.keys():
             raise ValueError("Constraint already defined for {}".format(name))
         else:

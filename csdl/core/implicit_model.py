@@ -85,7 +85,7 @@ def _build_internal_simulator(func: Callable) -> Callable:
                 residual = self.out_res_map[implicit_output_name]
 
                 # set response variables for internal model (residuals)
-                self._model.add_constraint(residual)
+                self._model.add_constraint(residual.name)
 
                 # NOTE: not necessary for updating values/solving system
                 # set design variables for internal model (inputs and
@@ -93,7 +93,7 @@ def _build_internal_simulator(func: Callable) -> Callable:
                 # for in_var in in_vars:
                 #     in_name = in_var.name
                 #     if in_name not in self._model.design_variables.keys():
-                #         self._model.add_design_variable(in_var)
+                #         self._model.add_design_variable(in_var.name)
 
     return _build_simulator
 
