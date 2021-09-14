@@ -10,6 +10,7 @@ jobs:
 
   setup_repo:
     runs-on: ubuntu-latest
+    container: debian:buster-slim
 
     steps:
       - uses: actions/checkout@v1
@@ -42,11 +43,6 @@ jobs:
           ls ${here}/docs/docs/worked_examples
         shell: bash
 
-  gh-release:
-    needs: setup_repo
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
@@ -96,3 +92,8 @@ jobs:
   #           npm i
   #         fi
   #         npm run build
+
+  # gh-release:
+  #   needs: setup_repo
+  #   if: github.event_name != 'pull_request'
+  #   runs-on: ubuntu-latest
