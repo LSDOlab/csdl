@@ -11,19 +11,22 @@ jobs:
   setup_repo:
     runs-on: ubuntu-latest
     container: debian:buster-slim
-
-    steps:
-
+#        apt-get -y install python3-pip git
+#        apt-get update
 #        pip3 install redbaron yapf
 #        git clone --depth=1 https://github.com/lsdolab/csdl_om.git
 #        pip3 install -e csdl_om/
+#        pip3 install -e ..
+    steps:
     - name: Prepare environment, install back end
       run: |
-        apt-get update
-        apt-get -y install python3-pip git
-        ls
+        echo "-----"
         pwd
-        pip3 install -e ..
+        echo "-----"
+        ls
+        echo "-----"
+        ls ../
+        echo "-----"
       shell: bash
 
   #   - name: Generate Worked Examples
