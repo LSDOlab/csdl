@@ -117,7 +117,7 @@ class ExampleNoRegisteredOutput(Model):
         model.register_output('prod', a * b)
         self.add(model, name='sys')
 
-        # These expressions are not passed to the compiler backend
+        # These expressions are not passed to the compiler back end
         x1 = self.declare_variable('x1')
         x2 = self.declare_variable('x2')
         y1 = x2 + x1

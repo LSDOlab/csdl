@@ -12,17 +12,20 @@ def example(Simulator):
             q = 10
     
             # Declare a tensor of shape 3x6x7x10 as input
-            T1 = self.declare_variable('T1',
-                                       val=np.arange(n * m * p * q).reshape(
-                                           (n, m, p, q)))
+            T1 = self.declare_variable(
+                'T1',
+                val=np.arange(n * m * p * q).reshape((n, m, p, q)),
+            )
     
             # Declare another tensor of shape 3x6x7x10 as input
-            T2 = self.declare_variable('T2',
-                                       val=np.arange(n * m * p * q,
-                                                     2 * n * m * p * q).reshape(
-                                                         (n, m, p, q)))
+            T2 = self.declare_variable(
+                'T2',
+                val=np.arange(n * m * p * q, 2 * n * m * p * q).reshape(
+                    (n, m, p, q)),
+            )
             # Output the elementwise average of tensors T1 and T2
-            self.register_output('multiple_tensor_average', csdl.average(T1, T2))
+            self.register_output('multiple_tensor_average',
+                                 csdl.average(T1, T2))
     
     
     sim = Simulator(ExampleMultipleTensor())

@@ -2,7 +2,8 @@ def example(Simulator):
     import numpy as np
     import csdl
     from csdl import Model
-
+    
+    
     class ExampleMesh(Model):
         def define(self):
             nx = 3
@@ -14,13 +15,14 @@ def example(Simulator):
             def_mesh = self.declare_variable('def_mesh', val=mesh)
             b_pts = def_mesh[:-1, :, :] * .75 + def_mesh[1:, :, :] * .25
             self.register_output('b_pts', b_pts)
-
+    
+    
     sim = Simulator(ExampleMesh())
     sim.run()
-
+    
     print('def_mesh', sim['def_mesh'].shape)
     print(sim['def_mesh'])
     print('b_pts', sim['b_pts'].shape)
     print(sim['b_pts'])
-
+    
     return sim

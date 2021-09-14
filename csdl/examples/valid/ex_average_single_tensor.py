@@ -12,12 +12,16 @@ def example(Simulator):
             q = 10
     
             # Declare a tensor of shape 3x6x7x10 as input
-            T1 = self.declare_variable('T1',
-                                       val=np.arange(n * m * p * q).reshape(
-                                           (n, m, p, q)))
+            T1 = self.declare_variable(
+                'T1',
+                val=np.arange(n * m * p * q).reshape((n, m, p, q)),
+            )
     
             # Output the average of all the elements of the tensor T1
-            self.register_output('single_tensor_average', csdl.average(T1))
+            self.register_output(
+                'single_tensor_average',
+                csdl.average(T1),
+            )
     
     
     sim = Simulator(ExampleSingleTensor())

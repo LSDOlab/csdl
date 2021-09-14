@@ -10,10 +10,16 @@ def example(Simulator):
             m = 6
     
             # Declare a matrix of shape 3x6 as input
-            M1 = self.declare_variable('M1', val=np.arange(n * m).reshape((n, m)))
+            M1 = self.declare_variable(
+                'M1',
+                val=np.arange(n * m).reshape((n, m)),
+            )
     
             # Output the average of all the elements of the matrix M1
-            self.register_output('single_matrix_average', csdl.average(M1))
+            self.register_output(
+                'single_matrix_average',
+                csdl.average(M1),
+            )
     
     
     sim = Simulator(ExampleSingleMatrix())

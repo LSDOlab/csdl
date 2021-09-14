@@ -2,6 +2,7 @@ def example(Simulator):
     from csdl import Model
     import csdl
     import numpy as np
+    from scipy.sparse import csc_matrix
     
     
     class ErrorMatrixVectorIncompatibleShapes(Model):

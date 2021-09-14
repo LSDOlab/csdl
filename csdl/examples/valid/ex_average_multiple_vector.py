@@ -15,7 +15,10 @@ def example(Simulator):
             v2 = self.declare_variable('v2', val=np.arange(n, 2 * n))
     
             # Output the elementwise average of vectors v1 and v2
-            self.register_output('multiple_vector_average', csdl.average(v1, v2))
+            self.register_output(
+                'multiple_vector_average',
+                csdl.average(v1, v2),
+            )
     
     
     sim = Simulator(ExampleMultipleVector())

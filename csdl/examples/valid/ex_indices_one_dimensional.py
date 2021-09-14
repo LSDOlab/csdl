@@ -46,7 +46,5 @@ def example(Simulator):
     print(sim['x3_'])
     print('x2_4', sim['x2_4'].shape)
     print(sim['x2_4'])
-    print('x_last', sim['x_last'].shape)
-    print(sim['x_last'])
     
     return sim
