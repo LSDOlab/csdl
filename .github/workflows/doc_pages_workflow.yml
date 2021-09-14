@@ -21,7 +21,10 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
 
-      - name: Prepare environment, install back end
+      - name: Run entire workflow
+        env:
+          USE_SSH: true
+          GIT_USER: vgucsd
         run: |
           apt-get update
           apt-get -y install python3-pip nodejs npm git rsync make
@@ -30,33 +33,11 @@ jobs:
           pip3 install -e csdl_om/
           ls
           pip3 install -e .
-        shell: bash
-
-      - name: Generate Worked Examples
-        env:
-          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          USE_SSH: true
-          GIT_USER: vgucsd
-        run: |
           here=`pwd`
           mkdir -p ${here}/docs/docs/worked_examples
           python3 ${here}/csdl/utils/generate_worked_examples_mdx.py ${here}
           echo "Worked Examples:"
           ls ${here}/docs/docs/worked_examples
-        shell: bash
-
-      # - uses: actions/checkout@v2
-      # - uses: actions/setup-node@v1
-      #   with:
-      #     node-version: '12.x'
-      # - uses: webfactory/ssh-agent@v0.5.3
-      #   with:
-      #     ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
-      - name: Release to GitHub Pages
-        env:
-          USE_SSH: true
-          GIT_USER: vgucsd
-        run: |
           echo "BUILDING DOCS..."
           echo "Worked Examples:"
           ls ${here}/docs/docs/worked_examples
