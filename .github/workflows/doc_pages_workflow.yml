@@ -83,6 +83,8 @@ jobs:
           GIT_USER: vgucsd
         run: |
           echo "BUILDING DOCS..."
+          cd docs
+          pwd
           ls
           git config --global user.email "vgandari@eng.ucsd.edu"
           git config --global user.name "vgucsd"
