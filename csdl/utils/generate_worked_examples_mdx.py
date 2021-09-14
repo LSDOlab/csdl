@@ -59,8 +59,9 @@ for filename in os.listdir(examples_directory):
             for line in filestr[1:-1]:
                 clean_filestr_lines.append(unindent(line))
             trimlines(clean_filestr_lines)
-            outfile = open(
-                clean_examples_directory + filename[:-3] + '.mdx', 'w')
+            new_path = clean_examples_directory + filename[:-3] + '.mdx'
+            print(new_path)
+            outfile = open(new_path, 'w')
             clean_filestr, changed = FormatCode(
                 "".join(clean_filestr_lines),
                 style_config=style_path,
