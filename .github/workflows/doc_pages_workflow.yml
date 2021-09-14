@@ -38,15 +38,10 @@ jobs:
       run: |
         here=`pwd`
         echo $here
-        ls
-        echo "    csdl"
-        ls csdl/
-        echo "    csdl/utils"
-        ls csdl/utils/
-      # mkdir -p ${here}/../docs/docs/worked_examples
-      # ls ${here}/../docs/docs/
-      # python3 ${here}/utils/generate_worked_examples_mdx.py ${here}
-      # ls ${here}/docs/docs/worked_examples
+        mkdir -p ${here}/../docs/docs/worked_examples
+        ls ${here}/../docs/docs/
+        python3 ${here}/utils/generate_worked_examples_mdx.py ${here}
+        ls ${here}/docs/docs/worked_examples
       shell: bash
 
   # checks:
