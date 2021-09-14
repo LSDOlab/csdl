@@ -15,6 +15,7 @@ const katex = require('rehype-katex');
     favicon: 'img/favicon.ico',
     organizationName: 'lsdolab',
     projectName: 'csdl',
+    trailingSlash: 'false',
     presets: [
         [
             '@docusaurus/preset-classic',
