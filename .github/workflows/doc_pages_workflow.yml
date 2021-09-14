@@ -20,7 +20,7 @@ jobs:
     steps:
     - name: Prepare environment, install back end
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         echo "-----"
         pwd
