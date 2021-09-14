@@ -10,8 +10,8 @@ def check_valid(name, value):
     """
     Check the validity of value for the option with name.
 
-    Parameters
-    ----------
+    **Parameters**
+
     name : str
         name of the option
     value : any
@@ -22,7 +22,8 @@ def check_valid(name, value):
     ValueError
         if value is not valid for option
     """
-    raise ValueError(f"Option '{name}' with value {value} is not valid.")
+    raise ValueError(
+        f"Option '{name}' with value {value} is not valid.")
 
 
 class Parameters(object):
@@ -50,8 +51,8 @@ class Parameters(object):
         """
         Initialize all attributes.
 
-        Parameters
-        ----------
+        **Parameters**
+
         parent_name : str
             Name or class name of System that owns this OptionsDictionary
         read_only : bool
@@ -67,8 +68,8 @@ class Parameters(object):
         """
         Return state as a dict.
 
-        Returns
-        -------
+        **Returns**
+
         dict
             State to get.
         """
@@ -78,7 +79,8 @@ class Parameters(object):
             state = self.__dict__.copy()
             state['_dict'] = {
                 key: val
-                for key, val in state['_dict'].items() if val['recordable']
+                for key, val in state['_dict'].items()
+                if val['recordable']
             }
             return state
 
@@ -86,8 +88,8 @@ class Parameters(object):
         """
         Return a dictionary representation of the options.
 
-        Returns
-        -------
+        **Returns**
+
         dict
             The options dictionary.
         """
@@ -211,8 +213,8 @@ class Parameters(object):
         """
         Raise the given exception type, with parent's name prepended to the message.
 
-        Parameters
-        ----------
+        **Parameters**
+
         msg : str
             The error message.
         exc_type : class
@@ -232,8 +234,8 @@ class Parameters(object):
         the type of value is one of a list of acceptable types, value is not less than lower,
         value is not greater than upper, and value satisfies check_valid.
 
-        Parameters
-        ----------
+        **Parameters**
+
         name : str
             The key for the declared option.
         value : object
@@ -252,8 +254,8 @@ class Parameters(object):
                     if isinstance(value, str):
                         value = "'{}'".format(value)
                     self._raise(
-                        "Value ({}) of option '{}' is not one of {}.".format(
-                            value, name, values), ValueError)
+                        "Value ({}) of option '{}' is not one of {}.".
+                        format(value, name, values), ValueError)
             # If only types is declared
             elif types is not None:
                 if not isinstance(value, types):
@@ -263,7 +265,8 @@ class Parameters(object):
                         value = "'{}'".format(value)
 
                     if isinstance(types, (set, tuple, list)):
-                        typs = tuple([type_.__name__ for type_ in types])
+                        typs = tuple(
+                            [type_.__name__ for type_ in types])
                         self._raise(
                             "Value ({}) of option '{}' has type '{}', but one of "
                             "types {} was expected.".format(
@@ -272,22 +275,23 @@ class Parameters(object):
                     else:
                         self._raise(
                             "Value ({}) of option '{}' has type '{}', but type '{}' "
-                            "was expected.".format(value, name, vtype,
-                                                   types.__name__),
+                            "was expected.".format(
+                                value, name, vtype, types.__name__),
                             exc_type=TypeError)
 
             if upper is not None:
                 if value > upper:
-                    self._raise("Value ({}) of option '{}' "
-                                "exceeds maximum allowed value of {}.".format(
-                                    value, name, upper),
-                                exc_type=ValueError)
+                    self._raise(
+                        "Value ({}) of option '{}' "
+                        "exceeds maximum allowed value of {}.".format(
+                            value, name, upper),
+                        exc_type=ValueError)
             if lower is not None:
                 if value < lower:
                     self._raise(
                         "Value ({}) of option '{}' "
-                        "is less than minimum allowed value of {}.".format(
-                            value, name, lower),
+                        "is less than minimum allowed value of {}.".
+                        format(value, name, lower),
                         exc_type=ValueError)
 
         # General function test
@@ -315,8 +319,8 @@ class Parameters(object):
         2. If types only was given when declaring, value must satisfy isinstance(value, types).
         3. It is an error if both values and types are given.
 
-        Parameters
-        ----------
+        **Parameters**
+
         name : str
             Name of the option.
         default : object or Null
@@ -339,14 +343,15 @@ class Parameters(object):
         recordable : bool
             If True, add to recorder
         """
-        if values is not None and not isinstance(values, (set, list, tuple)):
+        if values is not None and not isinstance(values,
+                                                 (set, list, tuple)):
             self._raise(
                 "In declaration of option '%s', the 'values' arg must be of type None,"
                 " list, or tuple - not %s." % (name, values),
                 exc_type=TypeError)
 
-        if types is not None and not isinstance(types,
-                                                (type, set, list, tuple)):
+        if types is not None and not isinstance(
+                types, (type, set, list, tuple)):
             self._raise(
                 "In declaration of option '%s', the 'types' arg must be None, a type "
                 "or a tuple - not %s." % (name, types),
@@ -354,8 +359,8 @@ class Parameters(object):
 
         if types is not None and values is not None:
             self._raise(
-                "'types' and 'values' were both specified for option '%s'." %
-                name)
+                "'types' and 'values' were both specified for option '%s'."
+                % name)
 
         if types is bool:
             values = (True, False)
@@ -390,8 +395,8 @@ class Parameters(object):
         """
         Remove entry from the OptionsDictionary, for classes that don't use that option.
 
-        Parameters
-        ----------
+        **Parameters**
+
         name : str
             The name of a key, the entry of which will be removed from the internal dictionary.
 
@@ -403,8 +408,8 @@ class Parameters(object):
         """
         Update the internal dictionary with the given one.
 
-        Parameters
-        ----------
+        **Parameters**
+
         in_dict : dict
             The incoming dictionary to add to the internal one.
         """
@@ -415,8 +420,8 @@ class Parameters(object):
         """
         Provide an iterator.
 
-        Returns
-        -------
+        **Returns**
+
         iterable
             iterator over the keys in the dictionary.
         """
@@ -426,13 +431,13 @@ class Parameters(object):
         """
         Check if the key is in the local dictionary.
 
-        Parameters
-        ----------
+        **Parameters**
+
         key : str
             name of the option.
 
-        Returns
-        -------
+        **Returns**
+
         boolean
             whether key is in the local dict.
         """
@@ -442,8 +447,8 @@ class Parameters(object):
         """
         Set an option in the local dictionary.
 
-        Parameters
-        ----------
+        **Parameters**
+
         name : str
             name of the option.
         value : -
@@ -457,8 +462,9 @@ class Parameters(object):
             self._raise(msg.format(name), exc_type=KeyError)
 
         if self._read_only:
-            self._raise("Tried to set read-only option '{}'.".format(name),
-                        exc_type=KeyError)
+            self._raise(
+                "Tried to set read-only option '{}'.".format(name),
+                exc_type=KeyError)
 
         self._assert_valid(name, value)
 
@@ -469,13 +475,13 @@ class Parameters(object):
         """
         Get an option from the dict or declared default.
 
-        Parameters
-        ----------
+        **Parameters**
+
         name : str
             name of the option.
 
-        Returns
-        -------
+        **Returns**
+
         value : -
             value of the option.
         """
@@ -486,8 +492,8 @@ class Parameters(object):
                 return meta['val']
             else:
                 self._raise(
-                    "Option '{}' is required but has not been set.".format(
-                        name))
+                    "Option '{}' is required but has not been set.".
+                    format(name))
         except KeyError:
             self._raise("Option '{}' cannot be found".format(name),
                         exc_type=KeyError)

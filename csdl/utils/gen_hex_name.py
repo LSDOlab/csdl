@@ -3,13 +3,13 @@ def gen_hex_name(num: int) -> str:
     """
     Convert an integer from base 10 to base 64 (string)
 
-    Parameters
-    ----------
+    **Parameters**
+
     num: int
         Number to convert, in base 10
 
-    Returns
-    -------
+    **Returns**
+
     str
         4-digit number in base 63, with leading zeros
     """

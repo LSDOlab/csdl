@@ -10,16 +10,16 @@ def get_shape_val(
     """
     Get shape from shape or value if shape is unspecified
 
-    Parameters
-    ----------
+    **Parameters**
+
     shape: None or tuple
         Shape of value
 
     val: Number or ndarray
         Value
 
-    Returns
-    -------
+    **Returns**
+
     Tuple[int]
         Shape of value
     """

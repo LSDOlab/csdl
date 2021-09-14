@@ -10,8 +10,8 @@ def remove_indirect_dependencies(node: Variable):
     is, if C depends on B and A, and B depends on A, then the execution
     order must be A, B, C, even without the dependence of C on A.
 
-    Parameters
-    ----------
+    **Parameters**
+
     node: Variable
         The node to treat as "root". In ``csdl.model``,
         ``Group._root`` is treated as the "root" node.
@@ -35,7 +35,8 @@ def remove_indirect_dependencies(node: Variable):
             node.remove_dependency_by_index(i)
 
 
-def topological_sort(registered_nodes: List[Variable]) -> List[Variable]:
+def topological_sort(
+        registered_nodes: List[Variable]) -> List[Variable]:
     """
     Perform a topological sort on the Directed Acyclic Graph (DAG).
     If any cycles are detected when traversing the graph,
@@ -46,14 +47,14 @@ def topological_sort(registered_nodes: List[Variable]) -> List[Variable]:
     not be added to the sorted list until the node has been visited as
     many times as its in-degree; i.e. the number of dependents.
 
-    Parameters
-    ----------
+    **Parameters**
+
     node: Variable
         The node to treat as "root". In ``csdl.model``,
         ``Group._root`` is treated as the "root" node.
 
-    Returns
-    -------
+    **Returns**
+
     list[Variable]
         List of ``Variable`` objects sorted from root to leaf. When
         overriding ``csdl.Model.setup``, the first node will be
@@ -83,7 +84,8 @@ def topological_sort(registered_nodes: List[Variable]) -> List[Variable]:
     return sorted_nodes
 
 
-def paper_topological_sort(registered_nodes: List[Variable]) -> List[Variable]:
+def paper_topological_sort(
+        registered_nodes: List[Variable]) -> List[Variable]:
     """
     Perform a topological sort on the Directed Acyclic Graph (DAG).
     If any cycles are detected when traversing the graph,
@@ -94,14 +96,14 @@ def paper_topological_sort(registered_nodes: List[Variable]) -> List[Variable]:
     not be added to the sorted list until the node has been visited as
     many times as its in-degree; i.e. the number of dependents.
 
-    Parameters
-    ----------
+    **Parameters**
+
     node: Variable
         The node to treat as "root". In ``csdl.model``,
         ``Group._root`` is treated as the "root" node.
 
-    Returns
-    -------
+    **Returns**
+
     list[Variable]
         List of ``Variable`` objects sorted from root to leaf. When
         overriding ``csdl.Model.setup``, the first node will be
@@ -120,7 +122,8 @@ def paper_topological_sort(registered_nodes: List[Variable]) -> List[Variable]:
             # modify to respect order that user registered outputs
             if v in registered_nodes:
                 if not (all(x in sorted_nodes for x in v.dependents)):
-                    raise Warning('{} is registered late'.format(v.name))
+                    raise Warning('{} is registered late'.format(
+                        v.name))
 
             if v.times_visited == v.get_num_dependents():
                 for w in v.dependencies:
@@ -146,14 +149,14 @@ def modified_topological_sort(
     not be added to the sorted list until the node has been visited as
     many times as its in-degree; i.e. the number of dependents.
 
-    Parameters
-    ----------
+    **Parameters**
+
     node: Variable
         The node to treat as "root". In ``csdl.model``,
         ``Group._root`` is treated as the "root" node.
 
-    Returns
-    -------
+    **Returns**
+
     list[Variable]
         List of ``Variable`` objects sorted from root to leaf. When
         overriding ``csdl.Model.setup``, the first node will be
@@ -166,8 +169,8 @@ def modified_topological_sort(
     while stack != []:
         v = stack.pop()
         if v.get_num_dependents() == 0:
-            if isinstance(v, Variable) and isinstance(v.dependencies[0],
-                                                      print_var):
+            if isinstance(v, Variable) and isinstance(
+                    v.dependencies[0], print_var):
                 # ensure print_var operations are moved to end of model
                 print_operations.append(v.dependencies[0])
             else:
