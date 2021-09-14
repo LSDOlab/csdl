@@ -10,7 +10,6 @@ jobs:
 
   setup_repo:
     runs-on: ubuntu-latest
-    container: debian:buster-slim
 
     steps:
       - uses: actions/checkout@v1
@@ -39,6 +38,7 @@ jobs:
           here=`pwd`
           mkdir -p ${here}/docs/docs/worked_examples
           python3 ${here}/csdl/utils/generate_worked_examples_mdx.py ${here}
+          echo "Worked Examples:"
           ls ${here}/docs/docs/worked_examples
         shell: bash
 
