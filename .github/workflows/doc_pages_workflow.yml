@@ -24,7 +24,7 @@ jobs:
     - name: Prepare environment, install back end
       run: |
         apt-get update
-        apt-get -y install python3-pip nodejs npm
+        apt-get -y install python3-pip nodejs npm git rsync make
         pip3 install redbaron yapf
         git clone --depth=1 https://github.com/lsdolab/csdl_om.git
         pip3 install -e csdl_om/
@@ -35,7 +35,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        apt-get -y install git rsync make
         git clone --depth 1 "https://token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" .
       shell: bash
 
