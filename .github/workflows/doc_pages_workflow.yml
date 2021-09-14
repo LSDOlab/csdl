@@ -10,7 +10,6 @@ jobs:
 
   setup_repo:
     runs-on: ubuntu-latest
-    container: debian:buster-slim
 
     steps:
       - uses: actions/checkout@v2
