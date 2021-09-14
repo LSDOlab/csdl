@@ -43,6 +43,7 @@ jobs:
         shell: bash
 
   gh-release:
+    needs: setup_repo
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
