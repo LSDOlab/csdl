@@ -56,6 +56,8 @@ jobs:
           GIT_USER: vgucsd
         run: |
           echo "BUILDING DOCS..."
+          echo "Worked Examples:"
+          ls ${here}/docs/docs/worked_examples
           cd docs
           pwd
           ls
