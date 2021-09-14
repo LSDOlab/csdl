@@ -43,28 +43,28 @@ jobs:
       shell: bash
 
 
-  # checks:
-  #   needs: setup_repo
-  #   if: github.event_name != 'push'
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v1
-  #     - uses: actions/setup-node@v1
-  #       with:
-  #         node-version: '12.x'
-  #     - uses: webfactory/ssh-agent@v0.5.0
-  #       with:
-  #         ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
-  #     - name: Test Build
-  #       run: |
-  #         if [ -e yarn.lock ]; then
-  #           yarn install --frozen-lockfile
-  #         elif [ -e package-lock.json ]; then
-  #           npm ci
-  #         else
-  #           npm i
-  #         fi
-  #         npm run build
+  checks:
+    needs: setup_repo
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
+      - name: Test Build
+        run: |
+          if [ -e yarn.lock ]; then
+            yarn install --frozen-lockfile
+          elif [ -e package-lock.json ]; then
+            npm ci
+          else
+            npm i
+          fi
+          npm run build
 
   gh-release:
     needs: setup_repo
