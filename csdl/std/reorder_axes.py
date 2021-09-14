@@ -10,8 +10,8 @@ def reorder_axes(var: Variable, operation: str):
     '''
     The function reorders the axes of the input.
 
-    Parameters
-    ----------
+    **Parameters**
+
     var: Variable
         The Variable that will have its axes reordered.
 
@@ -23,7 +23,8 @@ def reorder_axes(var: Variable, operation: str):
     if not isinstance(var, Variable):
         raise TypeError(var, " is not an Variable object")
 
-    new_axes_locations = compute_new_axes_locations(var.shape, operation)
+    new_axes_locations = compute_new_axes_locations(
+        var.shape, operation)
     op = ops.reorder_axes(
         var,
         operation=operation,

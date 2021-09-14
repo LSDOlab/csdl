@@ -46,8 +46,8 @@ class BroydenSolver(NonlinearSolver):
         """
         Initialize all attributes.
 
-        Parameters
-        ----------
+        **Parameters**
+
         **kwargs : dict
             options dictionary.
         """
@@ -79,40 +79,70 @@ class BroydenSolver(NonlinearSolver):
         """
         super()._declare_options()
 
-        self.options.declare('alpha', default=0.4,
-                             desc="Value to scale the starting Jacobian, which is Identity. This "
-                                  "option does nothing if you compute the initial Jacobian "
-                                  "instead.")
-        self.options.declare('compute_jacobian', types=bool, default=True,
-                             desc="When True, compute an initial Jacobian, otherwise start "
-                                  "with Identity scaled by alpha. Further Jacobians may also be "
-                                  "computed depending on the other options.")
-        self.options.declare('converge_limit', default=1.0,
-                             desc="Ratio of current residual to previous residual above which the "
-                                  "convergence is considered a failure. The Jacobian will be "
-                                  "regenerated once this condition has been reached a number of "
-                                  "consecutive times as specified in max_converge_failures.")
-        self.options.declare('cs_reconverge', types=bool, default=True,
-                             desc='When True, when this driver solves under a complex step, nudge '
-                             'the Solution vector by a small amount so that it reconverges.')
-        self.options.declare('diverge_limit', default=2.0,
-                             desc="Ratio of current residual to previous residual above which the "
-                                  "Jacobian will be immediately regenerated.")
-        self.options.declare('max_converge_failures', default=3,
-                             desc="The number of convergence failures before regenerating the "
-                                  "Jacobian.")
-        self.options.declare('max_jacobians', default=10,
-                             desc="Maximum number of jacobians to compute.")
-        self.options.declare('state_vars', [], desc="List of the state-variable/residuals that "
-                                                    "are to be solved here.")
-        self.options.declare('update_broyden', default=True,
-                             desc="Flag controls whether to perform Broyden update to the "
-                                  "Jacobian. There are some applications where it may be useful "
-                                  "to turn this off.")
-        self.options.declare('reraise_child_analysiserror', types=bool, default=False,
-                             desc='When the option is true, a solver will reraise any '
-                             'AnalysisError that arises during subsolve; when false, it will '
-                             'continue solving.')
+        self.options.declare(
+            'alpha',
+            default=0.4,
+            desc=
+            "Value to scale the starting Jacobian, which is Identity. This "
+            "option does nothing if you compute the initial Jacobian "
+            "instead.")
+        self.options.declare(
+            'compute_jacobian',
+            types=bool,
+            default=True,
+            desc=
+            "When True, compute an initial Jacobian, otherwise start "
+            "with Identity scaled by alpha. Further Jacobians may also be "
+            "computed depending on the other options.")
+        self.options.declare(
+            'converge_limit',
+            default=1.0,
+            desc=
+            "Ratio of current residual to previous residual above which the "
+            "convergence is considered a failure. The Jacobian will be "
+            "regenerated once this condition has been reached a number of "
+            "consecutive times as specified in max_converge_failures.")
+        self.options.declare(
+            'cs_reconverge',
+            types=bool,
+            default=True,
+            desc=
+            'When True, when this driver solves under a complex step, nudge '
+            'the Solution vector by a small amount so that it reconverges.'
+        )
+        self.options.declare(
+            'diverge_limit',
+            default=2.0,
+            desc=
+            "Ratio of current residual to previous residual above which the "
+            "Jacobian will be immediately regenerated.")
+        self.options.declare(
+            'max_converge_failures',
+            default=3,
+            desc=
+            "The number of convergence failures before regenerating the "
+            "Jacobian.")
+        self.options.declare(
+            'max_jacobians',
+            default=10,
+            desc="Maximum number of jacobians to compute.")
+        self.options.declare(
+            'state_vars', [],
+            desc="List of the state-variable/residuals that "
+            "are to be solved here.")
+        self.options.declare(
+            'update_broyden',
+            default=True,
+            desc="Flag controls whether to perform Broyden update to the "
+            "Jacobian. There are some applications where it may be useful "
+            "to turn this off.")
+        self.options.declare(
+            'reraise_child_analysiserror',
+            types=bool,
+            default=False,
+            desc='When the option is true, a solver will reraise any '
+            'AnalysisError that arises during subsolve; when false, it will '
+            'continue solving.')
 
         self.supports['gradients'] = True
         self.supports['implicit_components'] = True

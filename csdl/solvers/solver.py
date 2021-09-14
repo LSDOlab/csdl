@@ -1,7 +1,7 @@
 """Define the base Solver class."""
 
-
 from csdl.utils.parameters import Parameters
+
 
 class Solver(object):
     """
@@ -49,8 +49,8 @@ class Solver(object):
         """
         Initialize all attributes.
 
-        Parameters
-        ----------
+        **Parameters**
+
         **kwargs : dict of keyword arguments
             Keyword arguments that will be mapped into the Solver options.
         """
@@ -81,7 +81,8 @@ class Solver(object):
             'err_on_non_converge',
             types=bool,
             default=False,
-            desc="When True, AnalysisError will be raised if we don't converge."
+            desc=
+            "When True, AnalysisError will be raised if we don't converge."
         )
 
         # Case recording options
@@ -135,7 +136,9 @@ class Solver(object):
         # What the solver supports.
         self.supports = Parameters()
         self.supports.declare('gradients', types=bool, default=False)
-        self.supports.declare('implicit_components', types=bool, default=False)
+        self.supports.declare('implicit_components',
+                              types=bool,
+                              default=False)
 
         self._declare_options()
         self.options.update(kwargs)
@@ -147,14 +150,17 @@ class Solver(object):
         """
         Return info to prepend to messages.
 
-        Returns
-        -------
+        **Returns**
+
         str
             Info to prepend to messages.
         """
         if self._system is None:
             return type(self).__name__
-        return '{} in {}'.format(type(self).__name__, self._system().msginfo)
+        return '{} in {}'.format(
+            type(self).__name__,
+            self._system().msginfo)
+
     def _declare_options(self):
         """
         Declare options before kwargs are processed in the init method.
@@ -163,13 +169,12 @@ class Solver(object):
         """
         pass
 
-
     def __str__(self):
         """
         Return a string representation of the solver.
 
-        Returns
-        -------
+        **Returns**
+
         str
             String representation of the solver.
         """

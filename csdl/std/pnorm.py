@@ -9,8 +9,8 @@ def pnorm(var, pnorm_type=2, axis=None):
     '''
     This function computes the pnorm
 
-    Parameters
-    ----------
+    **Parameters**
+
     expr: Variable
         The Variable(s) over which to take the minimum
 
@@ -28,7 +28,8 @@ def pnorm(var, pnorm_type=2, axis=None):
             "pnorm_type {} is not positive and even".format(pnorm_type))
     if axis is not None:
         if not isinstance(axis, int) and not isinstance(axis, tuple):
-            raise ValueError("axis must be an integer or tuple of integers")
+            raise ValueError(
+                "axis must be an integer or tuple of integers")
         if isinstance(axis, int):
             if axis > len(var.shape):
                 raise IndexError(

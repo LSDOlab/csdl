@@ -18,8 +18,8 @@ class LinearSolver(Solver):
         """
         Initialize all attributes.
 
-        Parameters
-        ----------
+        **Parameters**
+
         **kwargs : dict
             options dictionary.
         """

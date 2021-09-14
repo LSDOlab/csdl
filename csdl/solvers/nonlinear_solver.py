@@ -18,8 +18,8 @@ class NonlinearSolver(Solver):
         """
         Initialize all attributes.
 
-        Parameters
-        ----------
+        **Parameters**
+
         **kwargs : dict
             options dictionary.
         """
@@ -40,12 +40,14 @@ class NonlinearSolver(Solver):
         self.options.declare(
             'stall_limit',
             default=0,
-            desc='Number of iterations after which, if the residual norms are '
+            desc=
+            'Number of iterations after which, if the residual norms are '
             'identical within the stall_tol, then terminate as if max '
             'iterations were reached. Default is 0, which disables this '
             'feature.')
         self.options.declare(
             'stall_tol',
             default=1e-12,
-            desc='When stall checking is enabled, the threshold below which the '
+            desc=
+            'When stall checking is enabled, the threshold below which the '
             'residual norm is considered unchanged.')

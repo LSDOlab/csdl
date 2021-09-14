@@ -11,8 +11,8 @@ def einsum_new_api(*operands: List[Variable],
     '''
     The Einstein Summation function performs the equivalent of numpy.einsum using a new api
 
-    Parameters
-    ----------
+    **Parameters**
+
     operands: Variables(s)
         The Variable(s) which you would like to perform an einsum with.
 
@@ -27,7 +27,8 @@ def einsum_new_api(*operands: List[Variable],
         if not isinstance(expr, Variable):
             raise TypeError(expr, " is not an Variable object")
     if partial_format is not 'dense' and partial_format is not 'sparse':
-        raise ValueError("partial_format must be \'dense\' or \'sparse\'")
+        raise ValueError(
+            "partial_format must be \'dense\' or \'sparse\'")
 
     scalar_output = False
     if len(operands) == len(operation):

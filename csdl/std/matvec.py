@@ -11,8 +11,8 @@ def matvec(mat, vec):
     This function can compute a matrix-matrix multiplication, similar to the
     numpy counterpart.
 
-    Parameters
-    ----------
+    **Parameters**
+
     mat1: Variable
         The first input for the matrix-matrix multiplication
 

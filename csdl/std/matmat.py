@@ -10,8 +10,8 @@ def matmat(mat1, mat2):
     This function can compute a matrix-matrix multiplication, similar to the
     numpy counterpart.
 
-    Parameters
-    ----------
+    **Parameters**
+
     mat1: Variable
         The first input for the matrix-matrix multiplication
 

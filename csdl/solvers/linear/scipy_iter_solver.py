@@ -29,8 +29,8 @@ class ScipyKrylov(LinearSolver):
         """
         Declare the solver option.
 
-        Parameters
-        ----------
+        **Parameters**
+
         **kwargs : {}
             dictionary of options set by the instantiating class/script.
         """
@@ -51,7 +51,8 @@ class ScipyKrylov(LinearSolver):
             'restart',
             default=20,
             types=int,
-            desc='Number of iterations between restarts. Larger values increase '
+            desc=
+            'Number of iterations between restarts. Larger values increase '
             'iteration cost, but may be necessary for convergence. This '
             'option applies only to gmres.')
 

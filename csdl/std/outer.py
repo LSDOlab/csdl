@@ -9,8 +9,8 @@ def outer(a: Variable, b: Variable):
     '''
     This can the outer product between two inputs.
 
-    Parameters
-    ----------
+    **Parameters**
+
     expr1: Variable
         The first input for the outer product.
 

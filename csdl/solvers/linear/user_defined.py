@@ -22,8 +22,8 @@ class LinearUserDefined(LinearSolver):
         """
         Initialize all attributes.
 
-        Parameters
-        ----------
+        **Parameters**
+
         solve_function : function
             Custom function containing the solve_linear function. The default is None, which means
             the name defaults to "solve_linear".

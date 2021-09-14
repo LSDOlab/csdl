@@ -18,8 +18,8 @@ def _remove_nonresiduals(model):
     residuals, leaving only nodes of ``Output`` type that define a
     residual and not an output to be used by a submodel.
 
-    Parameters
-    ----------
+    **Parameters**
+
     var: Variable
         Node that serves as root for DAG
     """
@@ -49,11 +49,12 @@ def _build_internal_simulator(func: Callable) -> Callable:
             _remove_nonresiduals(self._model)
 
             # Check if all implicit outputs are defined
-            for implicit_output_name, residual in self.out_res_map.items():
+            for implicit_output_name, residual in self.out_res_map.items(
+            ):
                 if residual is None:
                     raise ValueError(
-                        "{} does not have an associated residual.".format(
-                            implicit_output_name))
+                        "{} does not have an associated residual.".
+                        format(implicit_output_name))
 
             # Collect residual expressions and their corresponding inputs
             # and outputs
@@ -63,11 +64,12 @@ def _build_internal_simulator(func: Callable) -> Callable:
 
                 # Collect inputs (terminal nodes) for this residual only; no
                 # duplicates
-                in_vars = list(set(collect_terminals(
-                    [],
-                    residual,
-                    residual,
-                )))
+                in_vars = list(
+                    set(collect_terminals(
+                        [],
+                        residual,
+                        residual,
+                    )))
 
                 # Store inputs for this implicit output
                 self.out_in_map[implicit_output_name] = in_vars
@@ -101,7 +103,8 @@ def _build_internal_simulator(func: Callable) -> Callable:
 class _ProblemBuilder(type):
     def __new__(cls, name, bases, attr):
         attr['define'] = _build_internal_simulator(attr['define'])
-        return super(_ProblemBuilder, cls).__new__(cls, name, bases, attr)
+        return super(_ProblemBuilder,
+                     cls).__new__(cls, name, bases, attr)
 
 
 class ImplicitModel(metaclass=_ProblemBuilder):
@@ -133,7 +136,8 @@ class ImplicitModel(metaclass=_ProblemBuilder):
         self.out_res_map: Dict[str, Union[None, Output]] = dict()
         self.out_in_map: Dict[str, List[Variable]] = dict()
         self.brackets_map: Tuple[Dict[str, np.ndarray],
-                                 Dict[str, np.ndarray]] = (dict(), dict())
+                                 Dict[str,
+                                      np.ndarray]] = (dict(), dict())
         self.linear_solver = None
         self._nonlinear_solver = None
         self.parameters = Parameters()
@@ -158,7 +162,8 @@ class ImplicitModel(metaclass=_ProblemBuilder):
             )
         self._nonlinear_solver = solver
 
-    nonlinear_solver = property(get_nonlinear_solver, set_nonlinear_solver)
+    nonlinear_solver = property(get_nonlinear_solver,
+                                set_nonlinear_solver)
 
     def initialize(self):
         """
@@ -295,8 +300,8 @@ class ImplicitModel(metaclass=_ProblemBuilder):
         """
         Create a value that is computed implicitly
 
-        Parameters
-        ----------
+        **Parameters**
+
         name: str
             Name of variable in CSDL
         shape: Tuple[int]

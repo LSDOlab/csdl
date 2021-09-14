@@ -7,8 +7,8 @@ def rotmat(var: Variable, axis: str):
     '''
     This function creates a rotation matrix depending on the input value and the axis.
 
-    Parameters
-    ----------
+    **Parameters**
+
     expr: Variable
         The value which determines by how much the rotation matrix
 

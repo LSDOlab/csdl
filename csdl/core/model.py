@@ -48,15 +48,16 @@ def build_clean_dag(registered_outputs):
         if isinstance(node, Operation):
             if len(node.dependencies) < 1:
                 raise ValueError(
-                    "Operation objects must have at least one dependency")
+                    "Operation objects must have at least one dependency"
+                )
 
 
 # TODO: collect all inputs from all models to ensure that the entire
 # model does have inputs; issue warning if not
 def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
     """
-    This function replaces ``Group.setup`` with a new method that calls
-    ``Group.setup`` and performs the necessary steps to determine
+    This function replaces ``Model.setup`` with a new method that calls
+    ``Model.setup`` and performs the necessary steps to determine
     execution order and construct and add the appropriate subsystems.
 
     The new method is the core of the ``csdl`` package. This function
@@ -79,8 +80,8 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
             for name in self.design_variables.keys():
                 if name not in input_names:
                     raise KeyError(
-                        "{} is not the CSDL name of an input to the model".
-                        format(name))
+                        "{} is not the CSDL name of an input to the model"
+                        .format(name))
             del input_names
 
             # check that all connections are valid
@@ -109,8 +110,9 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
             for output in self.registered_outputs:
                 if isinstance(output, ExplicitOutput):
                     if output.defined is False:
-                        raise ValueError("Output not defined for {}".format(
-                            repr(output)))
+                        raise ValueError(
+                            "Output not defined for {}".format(
+                                repr(output)))
 
             # add forward edges; nodes with fewer forward edges than
             # dependents will be ignored when sorting nodes
@@ -125,7 +127,8 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
                 terminate = True
             while terminate is False:
                 for r in self.registered_outputs:
-                    terminate = combine_operations(self.registered_outputs, r)
+                    terminate = combine_operations(
+                        self.registered_outputs, r)
                 terminate = True
 
             # Create record of all nodes in DAG
@@ -194,20 +197,97 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
     def initialize(self):
         """
-        User defined method to set parameters
+        User defined method to declare parameter values. Parameters are
+        compile time constants (neither inputs nor outputs to the model)
+        and cannot be updated at runtime. Parameters are intended to
+        make a ``Model`` subclass definition generic, and therefore
+        reusable. The example below shows how a ``Model`` subclass
+        definition uses parameters and how the user can set parameters
+        when constructing the example ``Model`` subclass.
+
+        **Example**
+
+
+        ```py
+        class Example(Model):
+            def initialize(self):
+                self.parameters.declare('num_times', types=int)
+                self.parameters.declare('step_size', types=float)
+                self.parameters.declare('surface', types=dict)
+
+            def define(self):
+                num_times = self.parameters['num_times']
+                step_size = self.parameters['step_size']
+                surface = self.parameters['surface']
+                name = surface['name'] # str
+                symmetry = surface['symmetry'] # bool
+                mesh = surface['mesh'] # numpy array
+
+                # define runtime behavior...
+
+            surface = {
+                'name': 'wing',
+                'symmetry': False,
+                'mesh': mesh,
+            }
+
+            # compile using Simulator imported from back end...
+            sim = Simulator(
+                Example(
+                    num_times=100,
+                    step_size=0.1,
+                    surface=surface,
+                ),
+            )
+        ```
+
         """
         pass
 
     def define(self):
         """
-        User defined method to define numerical model
+        User defined method to define runtime behavior.
+
+        **Example**
+
+        ```py
+        class Example(Model):
+            def define(self):
+                self.create_input('x')
+                m = 5
+                b = 3
+                y = m*x + b
+                self.register_output('y', y)
+
+        # compile using Simulator imported from back end...
+        sim = Simulator(Example())
+        sim['x'] = -3/5
+        sim.run()
+        print(sim['y']) # expect 0
+        ```
         """
         pass
 
     def print_var(self, var: Variable):
+        """
+        Print *runtime* value during execution. Note that ``print_var``
+        should only be used for debugging, as it does have a performance
+        impact. Note that Python's ``print`` function will print the
+        CSDL compile time ``Variable`` object information, and will have
+        no effect on run time execution.
+
+        **Example**
+
+        ```python
+        y = csdl.sin(x)
+        print(y) # will print compile time information about y
+        self.print_var(y) # will print run time value of y
+        ```
+        """
         if not isinstance(var, Variable):
             raise TypeError(
-                "CSDL can only print information about Variable objects")
+                "CSDL can only print information about Variable objects"
+            )
         op = print_var(var)
         out = Output(
             var.name + '_print',
@@ -327,7 +407,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         Add a constraint to the optimization problem.
         """
         if name in self.constraints.keys():
-            raise ValueError("Constraint already defined for {}".format(name))
+            raise ValueError(
+                "Constraint already defined for {}".format(name))
         else:
             if lower is not None and upper is not None:
                 if np.greater(lower, upper):
@@ -350,8 +431,10 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             )
 
     def connect(self, a: str, b: str):
-        warn("Error messages for connections are not yet built into "
-             "CSDL frontend. Pay attention to any errors emmited by backend.")
+        warn(
+            "Error messages for connections are not yet built into "
+            "CSDL frontend. Pay attention to any errors emmited by back end."
+        )
         if (a, b) in self.connections:
             warn("Connection from {} to {} issued twice.".format(a, b))
         self.connections.append((a, b))
@@ -378,8 +461,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         the call to ``self.declare_variable`` must appear after the call to
         ``self.add``.
 
-        Parameters
-        ----------
+        **Parameters**
+
         name: str
             Name of variable in CSDL to be used as a local input that
             takes a value from a parent model, child model, or
@@ -389,8 +472,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         val: Number or ndarray
             Default value for variable
 
-        Returns
-        -------
+        **Returns**
+
         DocInput
             An object to use in expressions
         """
@@ -428,19 +511,17 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         Create an input to the main model, whose value remains constant
         during model evaluation.
 
-        Parameters
-        ----------
+        **Parameters**
+
         name: str
             Name of variable in CSDL
         shape: Tuple[int]
             Shape of variable
         val: Number or ndarray
             Value for variable during first model evaluation
-        dv: bool
-            Flag to set design variable
 
-        Returns
-        -------
+        **Returns**
+
         Input
             An object to use in expressions
         """
@@ -483,15 +564,23 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         Create a value that is computed explicitly, either through
         indexed assignment, or as a fixed point iteration.
 
-        Parameters
-        ----------
+        **Example**
+
+        ```python
+        x = self.create_output('x', shape=(5,3,2))
+        x[:, :, 0] = a
+        x[:, :, 1] = b
+        ```
+
+        **Parameters**
+
         name: str
             Name of variable in CSDL
         shape: Tuple[int]
             Shape of variable
 
-        Returns
-        -------
+        **Returns**
+
         ExplicitOutput
             An object to use in expressions
         """
@@ -513,27 +602,28 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             distributed=distributed,
         )
         if ex in self.registered_outputs:
-            raise ValueError("cannot create the same output in the same model")
+            raise ValueError(
+                "cannot create the same output in the same model")
         self.registered_outputs.append(ex)
         return ex
 
     def register_output(self, name: str, var: Variable) -> Variable:
         """
-        Register ``expr`` as an output of the ``Group``.
-        When adding subsystems, each of the subsystem's inputs requires
+        Register ``var`` as an output of the ``Model``.
+        When adding subsystems, each of the submodel's inputs requires
         a call to ``register_output`` prior to the call to
         ``add``.
 
-        Parameters
-        ----------
+        **Parameters**
+
         name: str
             Name of variable in CSDL
 
-        expr: Variable
+        var: Variable
             Variable that computes output
 
-        Returns
-        -------
+        **Returns**
+
         Variable
             Variable that computes output
         """
@@ -565,19 +655,19 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         promotes_outputs: Iterable = None,
     ):
         """
-        Add a subsystem to the ``Group``.
+        Add a submodel to the ``Model``.
 
         ``self.add`` call must be preceded by a call to
-        ``self.register_output`` for each of the subsystem's inputs,
+        ``self.register_output`` for each of the submodel's inputs,
         and followed by ``self.declare_variable`` for each of the
-        subsystem's outputs.
+        submodel's outputs.
 
-        Parameters
-        ----------
+        **Parameters**
+
         name: str
-            Name of subsystem
+            Name of submodel
         submodel: System
-            Subsystem to add to `Group`
+            Subsystem to add to `Model`
         promotes: Iterable
             Variables to promote
         promotes_inputs: Iterable
@@ -585,29 +675,31 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         promotes_outputs: Iterable
             Outputs to promote
 
-        Returns
-        -------
+        **Returns**
+
         System
-            Subsystem to add to `Group`
+            Subsystem to add to `Model`
         """
         from csdl.core.implicit_model import ImplicitModel
-        if not isinstance(submodel, (Model, ImplicitModel, CustomOperation)):
+        if not isinstance(submodel,
+                          (Model, ImplicitModel, CustomOperation)):
             raise TypeError(
-                "{} is not a Model, ImplicitModel, or CustomOperation".format(
-                    submodel))
+                "{} is not a Model, ImplicitModel, or CustomOperation".
+                format(submodel))
 
         # promote by default
-        if promotes == [] and (promotes_inputs
-                               is not None) or (promotes_outputs is not None):
+        if promotes == [] and (promotes_inputs is not None) or (
+                promotes_outputs is not None):
             raise ValueError(
-                "cannot selectively promote inputs and outputs if promotes=[]")
+                "cannot selectively promote inputs and outputs if promotes=[]"
+            )
         if promotes == ['*'] and (promotes_inputs is not None) or (
                 promotes_outputs is not None):
             raise ValueError(
                 "cannot selectively promote inputs and outputs if promoting all variables"
             )
-        if promotes is None and (promotes_inputs is None) and (promotes_outputs
-                                                               is None):
+        if promotes is None and (promotes_inputs is
+                                 None) and (promotes_outputs is None):
             promotes = ['*']
         if promotes == []:
             promotes_inputs = []
@@ -621,11 +713,13 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         )
         self.subgraphs.append(subgraph)
         if self._most_recently_added_subgraph is not None:
-            subgraph.add_dependency_node(self._most_recently_added_subgraph)
+            subgraph.add_dependency_node(
+                self._most_recently_added_subgraph)
         self._most_recently_added_subgraph = subgraph
         for r in self.registered_outputs:
             if not isinstance(r, Subgraph):
-                self._most_recently_added_subgraph.add_dependency_node(r)
+                self._most_recently_added_subgraph.add_dependency_node(
+                    r)
         for i in self.inputs:
             self._most_recently_added_subgraph.add_dependency_node(i)
 
@@ -637,21 +731,21 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
     @contextmanager
     def create_model(self, name: str):
         """
-        Create a ``Group`` object and add as a subsystem, promoting all
+        Create a ``Model`` object and add as a submodel, promoting all
         inputs and outputs.
         For use in ``with`` contexts.
         NOTE: Only use if planning to promote all varaibales within
-        child ``Group`` object.
+        child ``Model`` object.
 
-        Parameters
-        ----------
+        **Parameters**
+
         name: str
-            Name of new child ``Group`` object
+            Name of new child ``Model`` object
 
-        Returns
-        -------
-        Group
-            Child ``Group`` object whosevariables are all promoted
+        **Returns**
+
+        Model
+            Child ``Model`` object whosevariables are all promoted
         """
         try:
             m = Model()
@@ -712,7 +806,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
         pos = dict()
         pos.update((n.name, (1, i)) for i, n in enumerate(variables))
-        pos.update((n.name, (2, i + 1)) for i, n in enumerate(operations))
+        pos.update(
+            (n.name, (2, i + 1)) for i, n in enumerate(operations))
         pos['BEGIN'] = (2, 0)
         pos['END'] = (2, len(operations) + 1)
         nx.draw(G, pos=pos, with_labels=True, font_weight='bold')
@@ -767,7 +862,12 @@ def add_off_diag_implicit(A, indices, implicit_nodes):
     return A
 
 
-def add_diag(A, nodes, indices=dict(), implicit_nodes=dict(), p=0, indent=''):
+def add_diag(A,
+             nodes,
+             indices=dict(),
+             implicit_nodes=dict(),
+             p=0,
+             indent=''):
     from csdl.core.implicit_model import ImplicitModel
     # NOTE: A must have shape (len(nodes), len(nodes))
     print(p)

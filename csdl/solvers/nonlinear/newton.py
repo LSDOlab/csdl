@@ -27,8 +27,8 @@ class NewtonSolver(NonlinearSolver):
         """
         Initialize all attributes.
 
-        Parameters
-        ----------
+        **Parameters**
+
         **kwargs : dict
             options dictionary.
         """
@@ -60,7 +60,8 @@ class NewtonSolver(NonlinearSolver):
             default=True,
             desc=
             'When True, when this driver solves under a complex step, nudge '
-            'the Solution vector by a small amount so that it reconverges.')
+            'the Solution vector by a small amount so that it reconverges.'
+        )
         self.options.declare(
             'reraise_child_analysiserror',
             types=bool,

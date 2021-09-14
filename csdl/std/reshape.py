@@ -8,8 +8,8 @@ def reshape(var: Variable, new_shape: tuple):
     '''
     This function reshapes the input into a new shape.
 
-    Parameters
-    ----------
+    **Parameters**
+
     var: Variable
         The Variable which you want to reshape
 

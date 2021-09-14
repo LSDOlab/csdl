@@ -38,8 +38,8 @@ class ExplicitOutput(Output):
         """
         Initialize explicit output
 
-        Parameters
-        ----------
+        **Parameters**
+
         name: str
             Name of variable to compute explicitly
         shape: Tuple[int]
@@ -64,7 +64,8 @@ class ExplicitOutput(Output):
 
         self.defined: bool = False
         self.indexed_assignment: bool = False
-        self._tgt_indices: Dict[str, Tuple[Tuple[int], np.ndarray]] = dict()
+        self._tgt_indices: Dict[str, Tuple[Tuple[int],
+                                           np.ndarray]] = dict()
         self.checked_indices: Set[np.ndarray] = set()
         self.overlapping_indices: Set[np.ndarray] = set()
         self._tgt_vals: Dict[str, np.ndarray] = dict()
@@ -76,14 +77,15 @@ class ExplicitOutput(Output):
         this output. This method defines a cyclic relationship, which
         requires an iterative solver to converge.
 
-        Parameters
-        ----------
+        **Parameters**
+
         var: Variable
             The expression to compute iteratively until convergence
         """
         if var is self:
             raise ValueError(
-                "Variable for output {} cannot be self".format(self.name), )
+                "Variable for output {} cannot be self".format(
+                    self.name), )
         if self.indexed_assignment == True and self.defined == True:
             raise ValueError(
                 "Variable for output {}"
@@ -97,7 +99,7 @@ class ExplicitOutput(Output):
                 .format(self.name))
         self.defined = True
 
-        # create passthrough operation for backend to recover edges that
+        # create passthrough operation for back end to recover edges that
         # form cycles
         op = passthrough(var, output=self)
         self.add_dependency_node(op)
@@ -165,8 +167,9 @@ class ExplicitOutput(Output):
 
         # Check that source and target shapes match
         if np.array(tgt_indices).shape != var.shape:
-            raise ValueError("Shape of LHS {} and RHS {} do not match".format(
-                np.array(tgt_indices).shape, var.shape))
+            raise ValueError(
+                "Shape of LHS {} and RHS {} do not match".format(
+                    np.array(tgt_indices).shape, var.shape))
         tgt_indices = np.array(tgt_indices).flatten()
 
         # Check that indices are in range
@@ -176,8 +179,8 @@ class ExplicitOutput(Output):
 
         if var.name in self._tgt_indices.keys():
             raise KeyError("Repeated use of expression " + var.name +
-                           " in assignment to elements in " + self.name +
-                           ". Consider using csdl.expand")
+                           " in assignment to elements in " +
+                           self.name + ". Consider using csdl.expand")
         self._tgt_indices[var.name] = (var.shape, tgt_indices)
         self._tgt_vals[var.name] = var.val
 
@@ -186,7 +189,8 @@ class ExplicitOutput(Output):
             tgt_indices)
         self.checked_indices = self.checked_indices.union(tgt_indices)
         if len(self.overlapping_indices) > 0:
-            raise ValueError("Indices used for assignment must not overlap")
+            raise ValueError(
+                "Indices used for assignment must not overlap")
 
             # expr_indices = self._tgt_indices,
             # out_name = self.name,

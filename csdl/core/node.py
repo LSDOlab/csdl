@@ -118,8 +118,8 @@ class Node():
         """
         Register all nodes in DAG.
 
-        Parameters
-        ----------
+        **Parameters**
+
         nodes: dict[Variable]
             Dictionary of nodes registered so far
         """
@@ -164,13 +164,13 @@ class Node():
         cost of branches in the DAG, which would affect execution order,
         even with the sme constraints on execution order.
 
-        Parameters
-        ----------
+        **Parameters**
+
         candidate: Variable
             The candidate dependency node
 
-        Returns
-        -------
+        **Returns**
+
         Optional[int]
             If ``dependency`` is a dependency of ``self``, then the index of
             ``dependency`` in ``self.dependencies`` is returned. Otherwise,
@@ -187,8 +187,8 @@ class Node():
         ``index`` is out of range. See
         ``Variable.remove_dependency``.
 
-        Parameters
-        ----------
+        **Parameters**
+
         index: int
             Index within ``self.dependencies`` where the node to be
             removed might be
@@ -202,8 +202,8 @@ class Node():
         dependency. Used for removing indirect dependencies and
         preventing cycles from forming in DAG.
 
-        Parameters
-        ----------
+        **Parameters**
+
         candidate: Variable
             Node to remove from ``self.dependencies``
         """
@@ -218,13 +218,13 @@ class Node():
         cost of branches in the DAG, which would affect execution order,
         even with the sme constraints on execution order.
 
-        Parameters
-        ----------
+        **Parameters**
+
         candidate: Variable
             The candidate dependency node
 
-        Returns
-        -------
+        **Returns**
+
         Optional[int]
             If ``dependency`` is a dependency of ``self``, then the index of
             ``dependency`` in ``self.dependencies`` is returned. Otherwise,
@@ -247,8 +247,8 @@ class Node():
         ``index`` is out of range. See
         ``Variable.remove_dependency``.
 
-        Parameters
-        ----------
+        **Parameters**
+
         index: int
             Index within ``self.dependencies`` where the node to be
             removed might be
@@ -262,8 +262,8 @@ class Node():
         dependency. Used for removing indirect dependencies and
         preventing cycles from forming in DAG.
 
-        Parameters
-        ----------
+        **Parameters**
+
         candidate: Variable
             Node to remove from ``self.dependencies``
         """

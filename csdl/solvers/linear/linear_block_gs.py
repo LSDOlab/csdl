@@ -23,8 +23,8 @@ class LinearBlockGS(BlockLinearSolver):
         """
         Initialize all attributes.
 
-        Parameters
-        ----------
+        **Parameters**
+
         **kwargs : dict
             options dictionary.
         """
@@ -39,16 +39,20 @@ class LinearBlockGS(BlockLinearSolver):
         """
         super()._declare_options()
 
-        self.options.declare('use_aitken',
-                             types=bool,
-                             default=False,
-                             desc='set to True to use Aitken relaxation')
-        self.options.declare('aitken_min_factor',
-                             default=0.1,
-                             desc='lower limit for Aitken relaxation factor')
-        self.options.declare('aitken_max_factor',
-                             default=1.5,
-                             desc='upper limit for Aitken relaxation factor')
-        self.options.declare('aitken_initial_factor',
-                             default=1.0,
-                             desc='initial value for Aitken relaxation factor')
+        self.options.declare(
+            'use_aitken',
+            types=bool,
+            default=False,
+            desc='set to True to use Aitken relaxation')
+        self.options.declare(
+            'aitken_min_factor',
+            default=0.1,
+            desc='lower limit for Aitken relaxation factor')
+        self.options.declare(
+            'aitken_max_factor',
+            default=1.5,
+            desc='upper limit for Aitken relaxation factor')
+        self.options.declare(
+            'aitken_initial_factor',
+            default=1.0,
+            desc='initial value for Aitken relaxation factor')

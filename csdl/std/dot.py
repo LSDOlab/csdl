@@ -9,8 +9,8 @@ def dot(a: Variable, b: Variable, axis=None):
     '''
     This can the dot product between two inputs.
 
-    Parameters
-    ----------
+    **Parameters**
+
     expr1: Variable
         The first input for the dot product.
 
@@ -32,7 +32,8 @@ def dot(a: Variable, b: Variable, axis=None):
     else:
         if axis is None:
             raise ValueError(
-                "Axis required when first argument is a matrix or tensor")
+                "Axis required when first argument is a matrix or tensor"
+            )
         if a.shape[axis] != 3:
             raise ValueError(
                 "The specified axis must correspond to the value of 3 in shape"

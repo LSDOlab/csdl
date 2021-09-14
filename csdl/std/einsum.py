@@ -5,12 +5,14 @@ from csdl.utils.einsum_utils import compute_einsum_shape, einsum_subscripts_toli
 from typing import List
 
 
-def einsum(*operands: List[Variable], subscripts: str, partial_format='dense'):
+def einsum(*operands: List[Variable],
+           subscripts: str,
+           partial_format='dense'):
     '''
     The Einstein Summation function performs the equivalent of numpy.einsum
 
-    Parameters
-    ----------
+    **Parameters**
+
     operands: Variable(s)
         The Variable(s) which you would like to perform an einsum with.
 
@@ -25,7 +27,8 @@ def einsum(*operands: List[Variable], subscripts: str, partial_format='dense'):
         if not isinstance(expr, Variable):
             raise TypeError(expr, " is not an Variable object")
     if partial_format is not 'dense' and partial_format is not 'sparse':
-        raise ValueError("partial_format must be \'dense\' or \'sparse\'")
+        raise ValueError(
+            "partial_format must be \'dense\' or \'sparse\'")
 
     op = ops.einsum(*operands,
                     subscripts=subscripts,

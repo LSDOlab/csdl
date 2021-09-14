@@ -9,8 +9,8 @@ def transpose(var: Variable):
     '''
     This function can perform the transpose of an input
 
-    Parameters
-    ----------
+    **Parameters**
+
     expr: Variable
         The input which will be transposed
 

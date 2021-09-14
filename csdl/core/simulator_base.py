@@ -10,8 +10,8 @@ class _ReprClass(object):
         """
         Inititialize the __repr__ string.
 
-        Parameters
-        ----------
+        **Parameters**
+
         repr_string : str
             The string to be returned by __repr__
         """
@@ -21,8 +21,8 @@ class _ReprClass(object):
         """
         Return our _repr_string.
 
-        Returns
-        -------
+        **Returns**
+
         str
             Whatever string we were initialized with.
         """
@@ -33,18 +33,18 @@ class _ReprClass(object):
 # out_stream argument. We run into problems running testflo if we use a default of sys.stdout.
 _DEFAULT_OUT_STREAM = _ReprClass("DEFAULT_OUT_STREAM")
 
-msg = "The CSDL SimulatorBase class does not implement any methods. Please install a CSDL compiler backend with a Simulator class that conforms to the CSDL Simulator API."
+msg = "The CSDL SimulatorBase class does not implement any methods. Please install a CSDL compiler back end with a Simulator class that conforms to the CSDL Simulator API."
 
 
 class SimulatorBase:
     """
     A class that can be used as a base class for the ``Simulator`` class
-    that a CSDL compiler backend would provide.
-    This class is only here so that CSDL users and CSDL compiler backend
+    that a CSDL compiler back end would provide.
+    This class is only here so that CSDL users and CSDL compiler back end
     developers have API documentation.
     CSDL users are not to use the ``SimulatorBase`` class provided by
     ``csdl``, only the ``Simulator`` class provided by the CSDL compiler
-    backend of choice.
+    back end of choice.
     """
     def __init__(self, model, reorder=False):
         """
@@ -89,8 +89,8 @@ class SimulatorBase:
         Method to compute the error for all partial derivatives of all
         operations within the model.
 
-        Returns
-        -------
+        **Returns**
+
         An object that is compatible with ``assert_check_partials``
 
         """
@@ -101,8 +101,8 @@ class SimulatorBase:
         Method to check that the partial derivatives of all operations
         are within a specified tolerance.
 
-        Parameters
-        ----------
+        **Parameters**
+
         result: Return type of ``check_partials``
 
         """

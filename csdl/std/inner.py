@@ -9,8 +9,8 @@ def inner(a: Variable, b: Variable, axes=None):
     '''
     This can the dot product between two inputs.
 
-    Parameters
-    ----------
+    **Parameters**
+
     a: Variable
         The first input for the inner product.
 
@@ -29,7 +29,8 @@ def inner(a: Variable, b: Variable, axes=None):
     if len(a.shape) == 1 and len(b.shape) == 1:
         if axes is not None:
             raise ValueError(
-                "Axes must not be provided when both arguments are vectors")
+                "Axes must not be provided when both arguments are vectors"
+            )
         shape = (1, )
     else:
         if axes is None:

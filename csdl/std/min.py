@@ -10,8 +10,8 @@ def min(*vars, axis=None, rho=20.):
     This function can compute an elementwise or axiswise minimum of
     a single or multiple inputs.
 
-    Parameters
-    ----------
+    **Parameters**
+
     vars: Variable(s)
         The Variable(s) over which to take the minimum
 
@@ -33,7 +33,8 @@ def min(*vars, axis=None, rho=20.):
         shape = vars[0].shape
     if len(vars) > 1 and axis is not None:
         raise RuntimeError(
-            "Cannot take minimum of multiple inputs when axis is provided")
+            "Cannot take minimum of multiple inputs when axis is provided"
+        )
     if len(vars) > 1 and axis is None:
         shape = vars[0].shape
         for var in vars:

@@ -7,8 +7,8 @@ def cross(in1, in2, axis: int):
     '''
     This can the cross product between two inputs.
 
-    Parameters
-    ----------
+    **Parameters**
+
     in1: Variable
         The first input for the cross product.
 
@@ -26,7 +26,8 @@ def cross(in1, in2, axis: int):
         raise ValueError("The shapes of the inputs must match!")
     if in1.shape[axis] != 3:
         raise ValueError(
-            "The specified axis must correspond to the value of 3 in shape")
+            "The specified axis must correspond to the value of 3 in shape"
+        )
 
     op = ops.cross(in1, in2, axis=axis)
     op.outs = (Output(

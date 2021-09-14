@@ -10,8 +10,8 @@ def sum(*summands: List[Variable], axes=None):
     This function can compute an elementwise or axiswise sum of
     a single or multiple inputs.
 
-    Parameters
-    ----------
+    **Parameters**
+
     summands: Variable(s)
         The Variable(s) over which to take the sum
 

@@ -52,8 +52,8 @@ class ImplicitOutput(Output):
         """
         Initialize implicit output
 
-        Parameters
-        ----------
+        **Parameters**
+
         name: str
             Name of variable to compute implicitly
         shape: Tuple[int]
@@ -91,8 +91,8 @@ class ImplicitOutput(Output):
         Define the residual that must equal zero for this output to be
         computed
 
-        Parameters
-        ----------
+        **Parameters**
+
         residual: Output
             Residual expression
         """
@@ -117,15 +117,16 @@ class ImplicitOutput(Output):
                     repr(self)))
 
         if residual.name in self.implicit_model.res_out_map.keys():
-            raise ValueError("Residual {} already used for output {}".format(
-                residual.name,
-                self.implicit_model.res_out_map[residual.name],
-            ))
+            raise ValueError(
+                "Residual {} already used for output {}".format(
+                    residual.name,
+                    self.implicit_model.res_out_map[residual.name],
+                ))
 
         if self.shape != residual.shape:
             raise ValueError(
-                "Shapes for implicit output {} and residual {} do not match".
-                format(self.name, residual.name))
+                "Shapes for implicit output {} and residual {} do not match"
+                .format(self.name, residual.name))
         # set flag so that this expression is a residual and not an
         # output of an ImplicitModel
         residual.is_residual = True
@@ -157,8 +158,8 @@ class ImplicitOutput(Output):
         Define the residual that must equal zero for this output to be
         computed
 
-        Parameters
-        ----------
+        **Parameters**
+
         residual: Variable
             Residual expression
         """
@@ -176,8 +177,8 @@ class ImplicitOutput(Output):
 
         if self.shape != residual.shape:
             raise ValueError(
-                "Shapes for implicit output {} and residual {} do not match".
-                format(self.name, residual.name))
+                "Shapes for implicit output {} and residual {} do not match"
+                .format(self.name, residual.name))
 
         # set flag so that this expression is a residual
         residual.is_residual = True
