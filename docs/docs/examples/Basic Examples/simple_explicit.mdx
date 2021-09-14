@@ -1,0 +1,30 @@
+Simple Explicit Expressions
+===========================
+
+In this example, we define some variables that are computed explicitly,
+and regiser those variables as outputs.
+Each output in this example is computed explicitly using the basic
+mathematical operations.
+The example below is described as follows.
+
+``Model.declare_variable`` returns a ``Variable`` object, which
+represents a value that comes from outside the current model, either as
+an output of a parent model (a model that is above the current model in
+the model hierarchy), or an output of a child model (a model that is
+below the current model in the model hierarchy).
+
+Some variables are defined using mathematical expressions, and finally,
+each output is registered.
+To register an output of the model, use the ``Model.register_output``
+method.
+``Model.register_output`` requires a name that the CSDL compiler back end
+will use to access the variable output.
+This name does not need to be the same as the Python variable name, but
+it's good practice to stay consistent.
+The CSDL compiler back end has no knowledge of the Python variable name,
+only the name provided in methods like ``Model.create_input``,
+``Model.declare_variable``, and ``Model.register_output``.
+
+import WorkedExample from './../../worked_examples/ex_explicit_binary_operations.mdx';
+
+<WorkedExample />

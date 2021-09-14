@@ -1,0 +1,23 @@
+---
+title: Building a Compiler Back End
+sidebar_position: 5
+---
+
+------------------------------------------------------------------------
+
+The CSDL compiler back end _must_
+
+- Provide a class named `Simulator` that conforms to the `SimulatorBase`
+  API (see [Developer API](../api)).
+  - The `Simulator` class _should_ inherit from `SimulatorBase`
+- Implement the entire Standard Library, and the partial derivatives for
+  each standard operation.
+- Implement the MAUD architecture.
+- Not store a `Model` object; i.e. deletion of the `Model` object _must
+  be allowed_ after a `Simulator` object is constructed, imposing no
+  additional memory overhead when `Simulator.run` is called.
+
+The `Simulator` class can be implemented in any language, as long as
+there is a Python interface available.
+For example, if `Simulator` is implemented in C++, the `pybind11`
+library can expose the C++ class to Python.

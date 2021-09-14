@@ -1,0 +1,57 @@
+```py
+from csdl_om import Simulator
+import numpy as np
+from csdl import Model
+import csdl
+
+
+class ExampleInnerTensorVector(Model):
+    def define(self):
+        a = np.arange(4)
+        vec = self.declare_variable('a', val=a)
+
+        # Shape of Tensor
+        shape3 = (2, 4, 3)
+        c = np.arange(24).reshape(shape3)
+
+        # Declaring tensor
+        tens = self.declare_variable('c', val=c)
+
+        # Inner Product of a tensor and a vector
+        self.register_output(
+            'einsum_inner2',
+            csdl.einsum_new_api(
+                tens,
+                vec,
+                operation=[('rows', 0, 1), (0, ), ('rows', 1)],
+            ))
+
+
+sim = Simulator(ExampleInnerTensorVector())
+sim.run()
+
+print('a', sim['a'].shape)
+print(sim['a'])
+print('c', sim['c'].shape)
+print(sim['c'])
+print('einsum_inner2', sim['einsum_inner2'].shape)
+print(sim['einsum_inner2'])
+```
+
+
+```a (4,)
+[0. 1. 2. 3.]
+c (2, 4, 3)
+[[[ 0.  1.  2.]
+  [ 3.  4.  5.]
+  [ 6.  7.  8.]
+  [ 9. 10. 11.]]
+
+ [[12. 13. 14.]
+  [15. 16. 17.]
+  [18. 19. 20.]
+  [21. 22. 23.]]]
+einsum_inner2 (2, 3)
+[[ 42.  48.  54.]
+ [114. 120. 126.]]
+```

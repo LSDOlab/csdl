@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # install package and dependencies
-apt-get -y install python3-pip
+apt-get -y install python3-pip nodejs npm
 pip3 install redbaron
 # install yapf to format examples for docs
 pip3 install yapf
@@ -11,7 +11,7 @@ pip3 install -e csdl_om/
 pip3 install -e .
 
 # build docs
-make -C docs clean
+npm run build
 here=`pwd`
 mkdir -p ${here}/docs/_build/html/examples
 python3 ${here}/docs/utils/clean_examples.py ${here}
@@ -23,7 +23,7 @@ echo "DOCS BUILT"
 
 docroot=`mktemp -d`
 # copy docs to temporary directory
-rsync -av "${here}/docs/_build/html/" "${docroot}"
+rsync -av "${here}/docs/build/ "${docroot}"
 
 # create git repository in temporary directory
 pushd "${docroot}"
@@ -37,10 +37,8 @@ touch .nojekyll
 # add README for gh-pages branch
 cat > README.md <<EOF
 # csdl
-
 This branch contains the generated documentation pages for
 [csdl](https://lsdolab.github.io/csdl).
-
 EOF
 
 # commit changes

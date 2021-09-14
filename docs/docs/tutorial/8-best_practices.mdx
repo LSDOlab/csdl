@@ -1,0 +1,105 @@
+---
+title: Best Practices
+---
+
+------------------------------------------------------------------------
+
+
+This page provides some best practices to help you avoid making common
+errors when using CSDL.
+This section assumes you have read the preceding sections in this
+tutorial.
+These best practices are not required, but _highly recommended_.
+If you run into any issues because of something you did wrong, the
+[Troubleshooting](../troubleshooting) will be more appropriate.
+
+## Read the error messages
+
+``csdl`` has early error messages meant to prevent users from providing
+ill-formed or physically meaningless model specifications.
+The error messages should be helpful when debugging model
+specifications.
+Ideally, all errors should occur within ``Model``, and if ``Model`` does
+not emit an error, then the back end will not emit an error and the
+compilation will be successful.
+
+## Use the same (compile time) name for the Python Variable object as the (run time) name for the CSDL variable
+
+```py
+lift = self.declare_variable('lift')
+```
+
+not
+
+```py
+l = self.declare_variable('lift')
+```
+
+This is not required, but it avoids confusion.
+
+<!--
+## Do not redefine a variable
+
+CSDL is designed so that variables are immutable -- once a variable is
+defined, it cannot be modified.
+There are two reasons for this.
+First, it makes code easier to reason about.
+If a variable is defined once, then there is no confusion about what a
+variable represents when it is used later.
+The second reason is that each variable is actually a node in the IR.
+
+Unfortunately, Python does not enforce immutability, so it's possible to
+bind the same name to a new object in large code bases.
+
+Here's an example to illustrate the behavior.
+
+```py
+class Example(Model):
+    def define(self):
+        r = self.declare_variable('r')
+        s = 3*r
+        self.register_output('s', s)
+
+        t = s**2
+        self.register_output('t', t)
+
+        s = 2*t
+        u = s + 4
+        self.register_output('u', u)
+```
+
+The first `s` and the second
+
+The ``=`` operator doesn't assign the value on the right hand side to a
+variable on the left hand side; instead, ``=`` binds the variable name
+on the left hand side to the value on the right.
+Each variable is simply a reference to an object in memory.
+If a variable name is bound to a different object, then there is more
+than one object that has been referenced with the same name and it
+becomes unclear which object is being referenced in other parts of the
+code.
+Unfortunately, there is no way for Python to enforce that one variable
+name can only be bound to one object throughout the lifetime of that
+variable.
+
+-->
+
+## Prefer Promotion Over Connection
+
+CSDL promotes variable names from child models by default.
+In some cases, promotions are not allowed, and connections are required.
+Promoting more than one variable from more than one child model is
+allowed if both variables are constructed using
+`Model.declare_variable`.
+If two variables are outputs, either constructed by
+`Model.create_output`, or registered using `Model.register_output`, and
+they have the same name, then they cannot be promoted to the same level
+in the hierarchy.
+
+Connections are meant for connecting two variables with different names,
+or at different levels within the model hierarchy.
+
+```py
+self.connect('child_1.a', 'child_2.b')
+self.connect('child_1.c', 'child_2.grandchild.b')
+```

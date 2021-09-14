@@ -1,0 +1,82 @@
+---
+title: Installation Instructions
+---
+
+------------------------------------------------------------------------
+
+To install `csdl`, first clone the repository and install using `pip`.
+From the terminal/command line,
+
+```sh
+git clone https://github.com/lsdolab/csdl.git
+pip install -e csdl/
+```
+
+Then install a back end from the
+[List of Available Back Ends](../backends).
+
+Note that this package requires an implementation of the CSDL compiler
+back end (options listed in the link above) to run.
+Installing `csdl` alone will not be enough to run code written using
+CSDL.
+
+Packages that implement the compiler back end should depend on `csdl`.
+It is highly recommended to create a different environment for each
+back end, as they may require different versions of `csdl`.
+
+## Updating
+
+To update `csdl` to the latest version,
+
+```sh
+cd path/to/csdl
+git pull
+```
+
+## Testing
+
+`csdl` provides tests that are independent of the compiler back end
+implementation.
+That is, tests are implementation-agnostic.
+
+To run all tests for the CSDL compiler, navigate to the directory
+containing the `csdl` package and run
+
+```sh
+pytest -s --backend <backend>
+```
+
+where `<backend>` (including angle brackets) is the name of the
+back end implementation.
+Quotes are not required.
+
+For example, if using `csdl_om` as the back end, run
+
+```sh
+pytest -s --backend csdl_om
+```
+
+Note that this command does not run any test specific to the back end
+implementation.
+
+:::note
+The `csdl_om` package supplies the compiler back end used to
+generate all output generated from examples in this documentation.
+:::
+
+If all tests pass for one back end implementation, but not another, that
+is an indication that the back end implementation that resulted in test
+failures has a bug.
+
+If the bug is an indication of lack of test coverage in the frontend,
+new tests should be added to `csdl` to ensure compliance among all
+back end implementations.
+
+## Tools
+
+CSDL is an embedded domain specific language (EDSL), a "language within
+a language."
+Python is the host language for CSDL.
+To get the best experience using CSDL, use your favorite Python
+Integrated Development Environment (IDE) or text editor with your
+favorite extensions.

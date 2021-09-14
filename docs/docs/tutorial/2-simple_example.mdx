@@ -1,0 +1,142 @@
+---
+title: A Simple Example to Get Started
+---
+
+------------------------------------------------------------------------
+
+Note that mathematical models alone cannot be used to run a simulation.
+To build a simulation implementation and run simulations, a back end for
+the CSDL compiler is required
+
+This section presents a first look at an example of a model defined
+using CSDL.
+You don't have to understand the example the first time you look at it;
+this example is here to provide a reference point for the discussion
+that follows.
+Also note that this example only shows some basic features of CSDL, and
+we will only be discussing them at a high level in this section.
+Later, we'll go over the basic features in more detail, as well as more
+advanced features.
+
+- [ ] TODO: add submodel, add design variables, objective, constraints
+
+```py
+from csdl import Model
+import csdl
+
+class Example(Model):
+    def initialize(self):
+        self.parameters.declare('in_name', types=str)
+        self.parameters.declare('out_name', types=str)
+
+    def define(self):
+        in_name = self.parameters['in_name']
+        out_name = self.parameters['out_name']
+
+        p = self.declare_variable(in_name, shape=(2,))
+        x = p[0]
+        y = p[1]
+
+        distance = (x**2 + y**2)**(1/2)
+
+        self.register_output('distance', distance)
+
+        p_out = self.create_output(out_name, shape=(3,))
+        p_out[:2] = p
+        p_out[-1] = distance
+
+from csdl_om import Simulator
+
+in_name = 't'
+out_name = 'u'
+sim = Simulator(Example(in_name='t', out_name='u'))
+sim.run()
+print(sim[in_name])
+print(sim['distance'])
+print(sim[out_name])
+```
+
+The first thing to notice is the two main classes used in this script,
+the `Example` class, which inherits from `Model`, and the
+`Simulator` class.
+Before looking at the definition of `Example` or the usage of either
+`Example` or `Simulator`, it is important to understand the role
+that these two classes play in this example, and the role that `Model`
+and `Simulator` play in all programs written in CSDL.
+Even though Python is an interpreted language, CSDL is a compiled
+language.
+
+The CSDL compiler is a three stage compiler.
+Three stage compilers are split between a front end, which generates an
+intermediate representation of the code, a middle end, which performs
+implementation-independent optimizations on the generated intermediatea
+representation, and a back end, which generates executable code.
+The `csdl` package implements the front end and middle end in the
+`Model` class, while a separate package implements the back end in the
+`Simulator` class.
+
+The `Model` class interface is
+Because of the way the roles are split between `Model` and
+`Simulator`, creating an instance of a `Model` (or in this example,
+`Example`) class does not construct an object that can simulate the
+behavior of
+The `Model` and `Simulator` classes are Python interfaces to the
+CSDL compiler.
+
+Understanding the importance
+
+The first line imports the `Model` class.
+The `Model` class is the base class for all classes where a
+mathematical model of a system is specified.
+The example above shows a mathematical model defined using a class
+called `Example`.
+There are two methods in `Model` that the user is free to define:
+`initialize` and `define`.
+
+The first method, `initialize`, is used for defining model parameters.
+Model parameters are neither inputs to the model, nor are they computed
+by the model.
+Instead, model parameters make model definitions more generic.
+Note that the choice of defining an `initialize` method is entirely
+optional.
+In this case, users of `Example` are free to choose the name of an
+input variable and an output variable.
+
+The second method, `define`, is where the mathematical model is
+specified.
+This is where most CSDL code is written, except for some advanced use
+cases that we'll cover later.
+You'll notice that the parameters defined in the `initialize` method
+are accessed in the `define` method.
+The `initialize` method is always called before the `define` method,
+and all parameters declared in `initialize` are available by the time
+`define` is called.
+That is, you will always have access to parameters within the `define`
+method.
+
+After getting all the relevant parameters, this example declares a
+variable using the `declare_variable` method.
+The `declare_variable` method is used for declaring a variable that is
+an input to the instance of the class, in this case, `Example`.
+Specifically, the declared variable is an output of a parent model or a
+child model.
+In this example, the only instance of `Example` is the top level model
+in the hierarchy, and it has no children, so by default, `p` is an
+input to the model from an external source.
+The variable `p` is declared to have the name `in_name`.
+The name of the variable and the name passed to `declare_variable`
+need not be the same, although keeping them the same makes your code
+easier to read.
+The name `in_name` will be used to access the value after the
+simulation runs.
+The `declare_variable` method also has a `shape` keyword argument,
+which specifies the dimensions of a tensor.
+By default, `shape=(1,)`, which represents a rank-1 tensor with its
+one dimension, 1, i.e. a scalar.
+In this example, `shape=(2,)` represents a 2-vector.
+
+Next, `x` and `y` are defined in terms of `p`.
+Then, the distance is computed using `csdl.sqrt`.
+Note that we could also compute the distance using
+`distance = csdl.norm(p)`.
+The next

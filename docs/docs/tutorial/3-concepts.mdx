@@ -1,0 +1,379 @@
+---
+title: Language Concepts
+---
+
+------------------------------------------------------------------------
+
+This section covers the basic concepts of CSDL that you will need to
+understand in order to write effective CSDL code.
+In this section, you will learn about the basic object types (or
+classes),
+
+- Model
+- Variable
+- Operation
+
+In addition to the basic classes, this section presents ideas for
+understanding CSDL as a compiled language.
+This tutorial will refer back to and build upon the concepts presented
+in this section.
+
+## Model
+
+A CSDL model is a mathematical specification of a physical system.
+The majority of user code is located in the definition for a user
+defined class that inherits from the `Model` class.
+Users can supply a mathematical specification using a functional
+programming style, which resembles mathematical notation, to define a
+model as a composition of functions.
+Users can also supply a mathematical specification using an object
+oriented programming style, to define a model as a composition of
+models.
+This composition defines a model hierarchy, where the top level model is
+the "main" model, representing the entire system (e.g. a vehicle) and
+the models further down the hierarchy represent subsystem, or
+disciplines (e.g. aerodynamics, structures, propulsion).
+The model hierarchy has a
+[tree](https://en.wikipedia.org/wiki/Tree_(data_structure)) structure;
+each model has at most one parent, and any number of children.
+Assembling a model hierarchy is done using the
+[`Model.add`](/docs/lang_ref/model#add) method.
+Connections between models are issued via the
+[`Model.connect`](/docs/lang_ref/model#connect) method.
+Connections represent equality between variables declared or defined in
+different disciplines.
+For example, one discipline could compute the load on a wing due to
+aerodynamic forces, and another discipline could use that load as an
+input to compute the wing deflection.
+
+Users are free to define a model specification using a mix of the
+functional and object oriented paradigms.
+Model specifications are defined within the
+[`Model.define`](/docs/lang_ref/model#define) method.
+For example,
+
+```py
+from csdl import Model
+
+class Example(Model):
+    def define(self):
+        # mathematical specification goes here
+```
+
+:::note
+The `Model` class and user defined subclasses _do not provide an
+implementation_.
+To generate an implementation, an object of the `Simulator` class must
+be constructed from a `Model` object.
+The `csdl` package supplies the `Model` class, while a separate package
+chosen by the user supplies the `Simulator` class.
+:::
+
+## Variable
+
+The concept of a variable in CSDL differs from the concept of a variable
+in Python.
+In Python, variables store _run time values_, e.g. `x=3`, or
+`a=np.eye(3)`.
+In CSDL, a variable stores the _history of previous operations and
+variables_ used to define that variable.
+The histories form a structure called a Directed Acyclic Graph (DAG).
+The nodes of the DAG are variables and operations.
+This DAG structure forms and intermediate representation (IR) of the program.
+Storing an IR of the program comes with many
+benfits.
+The CSDL IR can store properties of variables and
+operations that the compiler can exploit, either before generating the
+final executable, or during code generation.
+For example, the compiler back end is free to implement derivative
+computation for each operation, requiring no additional input from the
+user.
+
+:::note
+Because CSDL variables do not store run time values, printing a CSDL
+variable will not show its run time value.
+In order to print a run time value for a variable, use the
+[`Model.print_var`](/docs/lang_ref/model#print_var) method.
+:::
+
+CSDL variables can be used the same way Python variables are used.
+For example,
+
+```py
+from csdl import Model
+import csdl
+
+class Example(Model):
+    def define(self):
+        # construct csdl Variable objects
+        x = self.declare_variable('x')
+        m = self.declare_variable('m')
+        b = self.declare_variable('b')
+
+        # define new Variable objects just as Python variables are defined
+        y = m*x**2 + b
+        # call functions from CSDL standard library
+        z = csdl.sin(x)
+
+        # register variables as outputs to make CSDL aware of variable definitions
+        self.register_output('y', y)
+        self.register_output('z', z)
+```
+
+The next section, [Variable Types](types), will cover
+[`Model.declare_variable`](/docs/lang_ref/model#declare_variable)  and
+[`Model.register_output`](/docs/lang_ref/model#register_output) into
+more detail.
+
+:::note
+CSDL variables have some limitations.
+Unlike NumPy arrays, CSDL variables do not support broadcasting. In
+order to perform elementwise multiplication, for example, a scalar
+variable (array with shape `(1,)`) by a variable that represents a
+vector, tensor, or matrix, users must use the `csdl.reshape` or
+`csdl.expand` functions to make the shapes of the operands compatible.
+:::
+
+As mentioned in [Model](#model), CSDL users can use a functional or
+object oriented style to define a model specification.
+Defining variables in terms of other variables, or as functions of
+variables, is how users define a model specification using the
+functional programming style.
+Most user defined models will use the functional programming style,
+especially the simplest models.
+
+Part of the functional style to keep in mind is that CSDL variables are
+_immutable_; once a variable is defined, there is no way to express a
+change (or mutation) in that variable's value at run time.
+In some cases, variable values cannot be defined explicitly, rather,
+they must be computed iteratively.
+For example, a function $f(x,y)=0$ that takes $x$ as an input and whose
+output is $y$ requires an iterative solution if the equation $f(x,y)=0$
+cannot be rearranged so that $y$ is isolated to one side of the
+equation.
+In this case, a solver is required to mutate the value at run time until
+a residual $r_y=f(x,y)$ converges within some tolerance.
+CSDL does not require users to implement solvers, but does not allow run
+time loops either; i.e.
+
+```py
+class Example(Model):
+    def define(self):
+        x = self.declare_variable('x')
+        while x - 0.5*x > 1e-6:
+            x = 0.5*x
+```
+
+:::note
+Python does not enforce immutability, so if a variable is redefined (or
+in Python parlance, if a variable name is bound to a new reference),
+then the object in memory storing the variable data is not in use in
+later parts of the code.
+:::
+
+- [ ] TODO: emit error when using while loops?
+- [ ] TODO: link to std lib
+- [ ] TODO: finalze implicit API
+
+## Operation
+
+- [ ] TODO: finalze implicit API, discuss using implicit_operation
+
+The concept of an operation in CSDL also serves to construct the IR.
+Users do not interact with operations except when defining
+[Custom Operations](/docs/tutorial/advanced#custom-operations), which is
+covered in the [Advanced](/docs/tutorial/advanced) section of this
+tutorial, but it is still useful at this stage to understand how the IR
+is constructed when Python executes `Model.define`.
+As mentioned in [Variable](#variable), the IR has the structure of a
+DAG, where nodes represent either variables or operations.
+Each operation node has at least one predecessor node of variable type,
+and at least one successor node of variable type.
+Each variable node has at most one predecessor node of operation type,
+and zero or more successor nodes of operation type.
+
+Operations can store properties, such as whether or not they are linear
+operations, elementwise operations, posynomials, etc.
+These properties are used for performing implementation-independent
+optimizations/graph transformations on the IR.
+
+Derivatives for operations provided by the standard library are also
+implemented in the CSDL compiler back end.
+Operation properties and derivatives are hidden from the user so that
+code optimization and derivative implementation are automated, ensuring
+that user code is clear and easily maintainable without sacrificing
+performance of generated code.
+
+## Simulator
+
+The previous subsections describe (at a high level) how users define a
+model specification using the CSDL language.
+The `csdl` package provides classes that represent all of the concepts
+presented up to this point.
+The model specification is contained within a single top level, or
+"main" model, represented by a user defined subclass of `Model`.
+
+The `Model` class, however, contains only a _specification_, not an
+_implementation_.
+That is, there is no way of _simulating_ the model, given a `Model`
+definition.
+
+In order to simulate the model, CSDL requires the `Simulator` class,
+which the `csdl` package _does not provide_.
+
+
+## Compile Time vs Run Time
+
+CSDL is an embedded domain specific language (EDSL).
+CSDL is "embedded" in the sense that it relies on a host language to
+perform some compilation steps.
+CSDL is also a compiled language, which means that the user's code
+cannot be executed directly and must first be translated to executable
+code -- compiled -- before the user can run the program.
+CSDL is also a compiled language, which means that users cannot run CSDL
+code directly, but must first compile an executable object, and then run
+a simulation using that executable object.
+In languages like C, the compilation and execution steps are performed
+via the command line separately, but in CSDL, the user invokes these
+steps by issuing these commands within the same Python script where a
+model is defined.
+The compilation and execution steps are separated as follows:
+
+```py
+from csdl import Model
+from somewhere_else import Simulator
+
+# user specifies model
+class Example(Model):
+    def define(self):
+        # ...
+
+# user compiles an executable object, sim
+m = Model() # CSDL compiler front end and middle end execute
+sim = Simulator(m) # CSDL compiler back end executes
+
+# compilation complete
+# execute simulation
+sim.run()
+
+# simulation finished, analyze data
+plot(sim['x'], sim['y'])
+```
+
+Even though CSDL is a compiled language, users interact with the CSDL
+compiler via a Python script, and the compilation and execution steps
+are combined into one process.
+Unlike interpreted languages like Python, however, the CSDL compiler is
+an ahead-of-time compiler, as opposed to an interpreter/just-in-time
+compiler.
+
+- CSDL code is written in Python source files with a `.py` extension.
+- Python handles the parsing and lexing of CSDL code, just as any other
+  Python code.
+
+This means that although user code specifies a program's execution, the
+computer does not run user code directly.
+Instead, user code is tranformed from a high level language (CSDL) to
+low-level code (generated by user selected CSDL compiler back end) that
+a computer can then execute.
+The CSDL compiler is a three stage compiler consisting of a front end, a
+middle end, and a back end.
+The front end constructs an IR from user code and the middle end
+performs implementation-independent optimizations on that IR.
+The back end completes the compilation process, generating low-level
+executable code from the optimized IR.
+
+The CSDL compiler front end and middle end are implemented in the
+`Model` class in the `csdl` package.
+The CSDL back end is implemented in the `Simulator` class, which a
+separate package (selected by the user) provides.
+The `Model` and `Simulator` classes are Python interfaces to the
+CSDL compiler.
+The CSDL compiler front end and middle end are implemented in Python.
+Most user code is written in the definition for a `Model` subclass.
+CSDL user code is very similar to Python code, and the Standard Library
+has an API that follows the NumPy library closely.
+When the Python interpreter constructs an instance of a user defined
+`Model` subclass, it runs CSDL user code (i.e. runs the
+CSDL compiler front end), which direcly constructs the
+IR; no simulation is performed.
+The `Model` class then performs implementation-independent
+optimizations on the IR (i.e.  runs the CSDL compiler middle end).
+
+CSDL user code only indirectly defines run time behavior.
+Instead, CSDL code defines the construction of the IR .
+
+The `Simulator` class constructor takes a `Model` object as an
+argument, generates low-level executable code, and stores a reference to
+the executable object that the user can execute
+
+:::note
+Without constructing an instance of a `Simulator` class from a
+user defined `Model` subclass, the user has no way of simulating
+the behavior specified in the `Model` subclass, either for
+analysis or optimization.
+
+Even though Python is an interpreted language, and users do not need
+to perform an extra compilation step (apart from constructing a
+`Simulator` object), all Python run time execution prior to a call
+to `Simulator.run` is considered CSDL *compile time execution*.
+:::
+
+The `Model` base class from the `csdl` package provides an interface
+for users to define a mathematical specification for a physical system.
+The `Simulator` class from a separate package selected by the user
+provides an interface for users to compile an executable object that can
+run a simulation.
+
+with the ability to construct an IR directly, maintaining a
+high level of abstraction that hides a bunch of stuff.
+Once the executable object is constructed, the user can run a simulation
+by calling the `Simulator.run` method.
+
+:::note
+The `Simulator` class is not required to define a mathematical
+specification.
+Projects that use CSDL will typically consist of a library of
+`Model` subclasses and functions that make use of the CSDL
+Standard Library.
+Libraries based on CSDL should depend only on the `csdl` package.
+Individual analyses and optimization problems, however, will not
+only rely on `csdl`, but also on the package selected to implement
+and run a simulation for a particular analysis or optimization.
+:::
+
+- [ ] TODO: default values
+
+## Parameters
+
+Parameters are compile time constants that can be set by the user to
+change a model definition per instance of a model.
+For example, if a model requires time integration, the number of time
+steps and the step size can be set without creating a new model
+definition.
+Parameters are also useful for setting the resolution of a mesh grid, or
+the number of instances of another model to add as children in the model
+hierarchy (e.g. the number of satellites in a swarm).
+Parameters make model definitions more generic, and thus reusable,
+reducing overhead for users of your library.
+
+:::note
+Parameters in CSDL can best be compared to non-type template
+parameters in C++ and const generics in Rust.
+:::
+
+Parameters can be of any Python type, and a  `Model` definition can
+restrict parameters to a set of types.
+
+The CSDL `Model` class has an attribute called `parameters`, which
+gives users some power over a `Model` subclass definition without
+defining a new `Model` subclass.
+
+This makes `Model` subclasses *generic*.
+Generic classes
+
+Other languages have the same concept as a CSDL parameter with different
+names to enable generic user code.
+
+- C++: non-type, or value parameters when using templates
+- Rust: const generic

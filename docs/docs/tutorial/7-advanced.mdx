@@ -1,0 +1,71 @@
+---
+title: Advanced
+---
+
+------------------------------------------------------------------------
+
+## Custom Operations
+
+## Conditional Compilation
+
+You can use Python's `if`, `elif`, and `else` to perform
+conditional compilation.
+Let's say you have a model simulates steady state behavior,
+
+## Using Loops to Add Several Models
+
+A model specification can be constructed programmatically at compile
+time, based on compile time constants (parameters).
+
+
+```py
+class Example(Model):
+    def initialize(self):
+        self.parameters.declare('num_engines', default=2, types=int)
+        self.parameters.declare('engine_names', default=[], types=list)
+
+    def define(self):
+        # iterate over a number of engines, or a list of engine names
+        num_engines = self.parameters['num_engines']
+        engine_names = self.parameters['num_engines']
+        r = range(num_engines)
+        if len(engine_names) > 0:
+          r = engine_names
+
+        # add specified number of engines
+        for i in r:
+            # suppress promotions because all engines will have an
+            # output with the same name
+            self.add(EngineModel(),
+                name='engine_{}'.format(i),
+                promotes=[],
+            )
+
+        # compute total thrust provided by engines
+        thrusts = []
+        for i in r:
+            # declare a variable for each thrust
+            local_name = 'thrust_{}'.format(i)
+            thrust = self.declare_variable(local_name)
+            # connect thrust from each engine to a locally defined
+            # thrust variable
+            self.connect(
+                'engine_{}.thrust'.format(i),
+                local_name,
+            )
+            # store each variable reference in a list so it doesn't get
+            # deleted when it goes out of scope
+            thrusts.append(thrust)
+
+        # sum the thrusts using standard library function, sum
+        total_thrust = csdl.sum(*thrusts)
+        self.register_output('total_thrust', total_thrust)
+```
+
+:::note
+All Python loops within a `Model.define` definition are _compile time_
+loops.
+That is, the loops are used to _construct the mathematical
+specification_ procedurally _within the CSDL compiler front end_, and
+are not executed during simulation.
+:::

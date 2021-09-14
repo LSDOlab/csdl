@@ -1,0 +1,87 @@
+---
+title: Troubleshooting
+sidebar_position: 6
+---
+
+# Troubleshooting
+
+------------------------------------------------------------------------
+
+## I made a model, but when I run my program, nothing happens.
+
+Assuming you created a class that inherits from ``Model`` like so,
+
+```py
+from csdl import Model
+import csdl
+import numpy as np
+
+# This is nothing more than a class definition.
+class Example(Model):
+    def define(self):
+        theta = self.declare_variable('theta', val=np.pi/4)
+        x = csdl.cos(theta)
+        y = csdl.sin(theta)
+        self.register_output('x', x)
+        self.register_output('y', y)
+
+# After the class is defined, nothing happens.
+```
+
+then there is no way to execute the simulation because you did not issue
+a command to the compiler to generate a simulation implementation or run
+a simulation.
+In order to generate a simulation implementation, use
+
+```py
+from backend import Simulator
+
+# Generate an implementation.
+sim = Simulator(Example())
+# Run simulation.
+sim.run()
+# Access values
+print(sim['x'])
+print(sim['y'])
+```
+
+Note that the ``Simulator`` constructor calls the ``Model.define()``
+method automatically.
+
+## Why can't I print variable values?
+
+The Python ``print`` function will print information about the CSDL
+``Variable`` object, but not run time information.
+This is because calling ``print`` within ``Model.define`` is a *compile
+time* operation, not a *run time operation*.
+To print variables at run time, the ``Model.print_var`` method is
+provided, which prints the CSDL variable name, shape, and value during
+each simulation run.
+
+I get an "Output not defined" error, but I defined my output.
+-------------------------------------------------------------
+
+Either you forgot to define a value to your output using indexed
+assignment, or you made your variable reference a new object, neglecting
+the original output you created.
+
+```py
+# create an output
+x = self.create_output('x')
+# do some stuff without defining x...
+# bind x to a new object returned by f; now there is no reference to
+# the original output
+x = f(y)
+# register output, which is not the same as the output returned by
+# previous call to create_output
+self.register_output('x', x)
+```
+
+Also remember that you do not need to register/rename the output using a
+call to ``register_output``.
+
+```py
+x = self.create_output('x', shape=(2,))
+x[0] = f(y)
+x[1] = g(z)
+```

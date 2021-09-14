@@ -1,0 +1,338 @@
+---
+title: Model
+sidebar_position: 1
+---
+
+------------------------------------------------------------------------
+
+
+<a id="csdl.core.model"></a>
+
+# csdl.core.model
+
+Model docs
+
+<a id="csdl.core.model.Model"></a>
+
+## Model Objects
+
+```python
+class Model(, metaclass=_CompilerFrontEndMiddleEnd)
+```
+
+<a id="csdl.core.model.Model.initialize"></a>
+
+### initialize
+
+```python
+def initialize()
+```
+
+User defined method to declare parameter values. Parameters are
+compile time constants (neither inputs nor outputs to the model)
+and cannot be updated at runtime. Parameters are intended to
+make a ``Model`` subclass definition generic, and therefore
+reusable. The example below shows how a ``Model`` subclass
+definition uses parameters and how the user can set parameters
+when constructing the example ``Model`` subclass.
+
+**Example**
+
+
+```py
+class Example(Model):
+    def initialize(self):
+        self.parameters.declare('num_times', types=int)
+        self.parameters.declare('step_size', types=float)
+        self.parameters.declare('surface', types=dict)
+
+    def define(self):
+        num_times = self.parameters['num_times']
+        step_size = self.parameters['step_size']
+        surface = self.parameters['surface']
+        name = surface['name'] # str
+        symmetry = surface['symmetry'] # bool
+        mesh = surface['mesh'] # numpy array
+
+        # define runtime behavior...
+
+    surface = {
+        'name': 'wing',
+        'symmetry': False,
+        'mesh': mesh,
+    }
+
+    # compile using Simulator imported from back end...
+    sim = Simulator(
+        Example(
+            num_times=100,
+            step_size=0.1,
+            surface=surface,
+        ),
+    )
+```
+
+<a id="csdl.core.model.Model.define"></a>
+
+### define
+
+```python
+def define()
+```
+
+User defined method to define runtime behavior.
+
+**Example**
+
+.. code-block:: python
+
+    class Example(Model):
+        def define(self):
+            self.create_input('x')
+            m = 5
+            b = 3
+            y = m*x + b
+            self.register_output('y', y)
+
+    # compile using Simulator imported from back end...
+    sim = Simulator(Example())
+    sim['x'] = -3/5
+    sim.run()
+    print(sim['y']) # expect 0
+
+<a id="csdl.core.model.Model.print_var"></a>
+
+### print\_var
+
+```python
+def print_var(var: Variable)
+```
+
+Print *runtime* value during execution. Note that ``print_var``
+should only be used for debugging, as it does have a performance
+impact. Note that Python's ``print`` function will print the
+CSDL compile time ``Variable`` object information, and will have
+no effect on run time execution.
+
+**Example**
+
+```python
+y = csdl.sin(x)
+print(y) # will print compile time information about y
+self.print_var(y) # will print run time value of y
+```
+
+<a id="csdl.core.model.Model.add_objective"></a>
+
+### add\_objective
+
+```python
+def add_objective(name, ref=None, ref0=None, index=None, units=None, adder=None, scaler=None, parallel_deriv_color=None, cache_linear_solution=False)
+```
+
+Declare the objective for the optimization problem. Objective
+must be a scalar variable.
+
+<a id="csdl.core.model.Model.add_design_variable"></a>
+
+### add\_design\_variable
+
+```python
+def add_design_variable(name, lower=None, upper=None, ref=None, ref0=None, indices=None, adder=None, scaler=None, units=None, parallel_deriv_color=None, cache_linear_solution=False)
+```
+
+Add a design variable to the optimization problem. The design
+variable must be an ``Input``. This will signal to the optimizer
+that it is responsible for updating the input variable.
+
+<a id="csdl.core.model.Model.add_constraint"></a>
+
+### add\_constraint
+
+```python
+def add_constraint(name, lower=None, upper=None, equals=None, ref=None, ref0=None, adder=None, scaler=None, units=None, indices=None, linear=False, parallel_deriv_color=None, cache_linear_solution=False)
+```
+
+Add a constraint to the optimization problem.
+
+<a id="csdl.core.model.Model.declare_variable"></a>
+
+### declare\_variable
+
+```python
+def declare_variable(name: str, val=1.0, shape=(1, ), src_indices=None, flat_src_indices=None, units=None, desc='', tags=None, shape_by_conn=False, copy_shape=None, distributed=None) -> Variable
+```
+
+Declare an input to use in an expression.
+
+An input can be an output of a child ``System``. If the user
+declares an input that is computed by a child ``System``, then
+the call to ``self.declare_variable`` must appear after the call to
+``self.add``.
+
+**Parameters**
+
+name: str
+    Name of variable in CSDL to be used as a local input that
+    takes a value from a parent model, child model, or
+    previously registered output within the model.
+shape: Tuple[int]
+    Shape of variable
+val: Number or ndarray
+    Default value for variable
+
+**Returns**
+
+DocInput
+    An object to use in expressions
+
+<a id="csdl.core.model.Model.create_input"></a>
+
+### create\_input
+
+```python
+def create_input(name, val=1.0, shape=(1, ), units=None, desc='', tags=None, shape_by_conn=False, copy_shape=None, distributed=None) -> Input
+```
+
+Create an input to the main model, whose value remains constant
+during model evaluation.
+
+**Parameters**
+
+name: str
+    Name of variable in CSDL
+shape: Tuple[int]
+    Shape of variable
+val: Number or ndarray
+    Value for variable during first model evaluation
+
+**Returns**
+
+Input
+    An object to use in expressions
+
+<a id="csdl.core.model.Model.create_output"></a>
+
+### create\_output
+
+```python
+def create_output(name, val=1.0, shape=(1, ), units=None, res_units=None, desc='', lower=None, upper=None, ref=1.0, ref0=0.0, res_ref=1.0, tags=None, shape_by_conn=False, copy_shape=None, distributed=None) -> ExplicitOutput
+```
+
+Create a value that is computed explicitly, either through
+indexed assignment, or as a fixed point iteration.
+
+**Example**
+
+```python
+x = self.create_output('x', shape=(5,3,2))
+x[:, :, 0] = a
+x[:, :, 1] = b
+```
+
+**Parameters**
+
+name: str
+    Name of variable in CSDL
+shape: Tuple[int]
+    Shape of variable
+
+**Returns**
+
+ExplicitOutput
+    An object to use in expressions
+
+<a id="csdl.core.model.Model.register_output"></a>
+
+### register\_output
+
+```python
+def register_output(name: str, var: Variable) -> Variable
+```
+
+Register ``var`` as an output of the ``Model``.
+When adding subsystems, each of the submodel's inputs requires
+a call to ``register_output`` prior to the call to
+``add``.
+
+**Parameters**
+
+name: str
+    Name of variable in CSDL
+
+var: Variable
+    Variable that computes output
+
+**Returns**
+
+Variable
+    Variable that computes output
+
+<a id="csdl.core.model.Model.add"></a>
+
+### add
+
+```python
+def add(submodel, name: str = '', promotes: Iterable = None, promotes_inputs: Iterable = None, promotes_outputs: Iterable = None)
+```
+
+Add a submodel to the ``Model``.
+
+``self.add`` call must be preceded by a call to
+``self.register_output`` for each of the submodel's inputs,
+and followed by ``self.declare_variable`` for each of the
+submodel's outputs.
+
+**Parameters**
+
+name: str
+    Name of submodel
+submodel: System
+    Subsystem to add to `Model`
+promotes: Iterable
+    Variables to promote
+promotes_inputs: Iterable
+    Inputs to promote
+promotes_outputs: Iterable
+    Outputs to promote
+
+**Returns**
+
+System
+    Subsystem to add to `Model`
+
+<a id="csdl.core.model.Model.create_model"></a>
+
+### create\_model
+
+```python
+@contextmanager
+def create_model(name: str)
+```
+
+Create a ``Model`` object and add as a submodel, promoting all
+inputs and outputs.
+For use in ``with`` contexts.
+NOTE: Only use if planning to promote all varaibales within
+child ``Model`` object.
+
+**Parameters**
+
+name: str
+    Name of new child ``Model`` object
+
+**Returns**
+
+Model
+    Child ``Model`` object whosevariables are all promoted
+
+<a id="csdl.core.model.Model.visualize_sparsity"></a>
+
+### visualize\_sparsity
+
+```python
+def visualize_sparsity()
+```
+
+Visualize the sparsity pattern of jacobian for this model
+

@@ -1,0 +1,71 @@
+```py
+from csdl_om import Simulator
+from csdl import Model
+import csdl
+import numpy as np
+
+
+class ExampleAxisFree(Model):
+    def define(self):
+
+        # Shape of the tensor
+        shape = (2, 3, 4, 5)
+
+        # Number of elements in the tensor
+        num_of_elements = np.prod(shape)
+
+        # Creating a numpy tensor with the desired shape and size
+        tensor = np.arange(num_of_elements).reshape(shape)
+
+        # Declaring in1 as input tensor
+        in1 = self.declare_variable('in1', val=tensor)
+
+        # Computing the 6-norm on in1 without specifying an axis
+        self.register_output('axis_free_pnorm',
+                             csdl.pnorm(in1, pnorm_type=6))
+
+
+sim = Simulator(ExampleAxisFree())
+sim.run()
+
+print('in1', sim['in1'].shape)
+print(sim['in1'])
+print('axis_free_pnorm', sim['axis_free_pnorm'].shape)
+print(sim['axis_free_pnorm'])
+```
+
+
+```in1 (2, 3, 4, 5)
+[[[[  0.   1.   2.   3.   4.]
+   [  5.   6.   7.   8.   9.]
+   [ 10.  11.  12.  13.  14.]
+   [ 15.  16.  17.  18.  19.]]
+
+  [[ 20.  21.  22.  23.  24.]
+   [ 25.  26.  27.  28.  29.]
+   [ 30.  31.  32.  33.  34.]
+   [ 35.  36.  37.  38.  39.]]
+
+  [[ 40.  41.  42.  43.  44.]
+   [ 45.  46.  47.  48.  49.]
+   [ 50.  51.  52.  53.  54.]
+   [ 55.  56.  57.  58.  59.]]]
+
+
+ [[[ 60.  61.  62.  63.  64.]
+   [ 65.  66.  67.  68.  69.]
+   [ 70.  71.  72.  73.  74.]
+   [ 75.  76.  77.  78.  79.]]
+
+  [[ 80.  81.  82.  83.  84.]
+   [ 85.  86.  87.  88.  89.]
+   [ 90.  91.  92.  93.  94.]
+   [ 95.  96.  97.  98.  99.]]
+
+  [[100. 101. 102. 103. 104.]
+   [105. 106. 107. 108. 109.]
+   [110. 111. 112. 113. 114.]
+   [115. 116. 117. 118. 119.]]]]
+axis_free_pnorm (1,)
+[191.75087118]
+```

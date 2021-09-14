@@ -1,0 +1,1397 @@
+---
+title: Developer API
+---
+
+------------------------------------------------------------------------
+
+
+<a id="csdl.core.model"></a>
+
+# csdl.core.model
+
+Model docs
+
+<a id="csdl.core.model.build_symbol_table"></a>
+
+### build\_symbol\_table
+
+```python
+def build_symbol_table(symbol_table, node)
+```
+
+<a id="csdl.core.model.build_clean_dag"></a>
+
+### build\_clean\_dag
+
+```python
+def build_clean_dag(registered_outputs)
+```
+
+<a id="csdl.core.model._run_front_end_and_middle_end"></a>
+
+### \_run\_front\_end\_and\_middle\_end
+
+```python
+def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable
+```
+
+This function replaces ``Model.setup`` with a new method that calls
+``Model.setup`` and performs the necessary steps to determine
+execution order and construct and add the appropriate subsystems.
+
+The new method is the core of the ``csdl`` package. This function
+analyzes the Directed Acyclic Graph (DAG) and sorts expressions.
+
+<a id="csdl.core.model._CompilerFrontEndMiddleEnd"></a>
+
+## \_CompilerFrontEndMiddleEnd Objects
+
+```python
+class _CompilerFrontEndMiddleEnd(type)
+```
+
+<a id="csdl.core.model._CompilerFrontEndMiddleEnd.__new__"></a>
+
+### \_\_new\_\_
+
+```python
+def __new__(cls, name, bases, attr)
+```
+
+<a id="csdl.core.model.Model"></a>
+
+## Model Objects
+
+```python
+class Model(, metaclass=_CompilerFrontEndMiddleEnd)
+```
+
+<a id="csdl.core.model.Model.__init__"></a>
+
+### \_\_init\_\_
+
+```python
+def __init__(**kwargs)
+```
+
+<a id="csdl.core.model.Model.initialize"></a>
+
+### initialize
+
+```python
+def initialize()
+```
+
+User defined method to declare parameter values. Parameters are
+compile time constants (neither inputs nor outputs to the model)
+and cannot be updated at runtime. Parameters are intended to
+make a ``Model`` subclass definition generic, and therefore
+reusable. The example below shows how a ``Model`` subclass
+definition uses parameters and how the user can set parameters
+when constructing the example ``Model`` subclass.
+
+**Example**
+
+
+```py
+class Example(Model):
+    def initialize(self):
+        self.parameters.declare('num_times', types=int)
+        self.parameters.declare('step_size', types=float)
+        self.parameters.declare('surface', types=dict)
+
+    def define(self):
+        num_times = self.parameters['num_times']
+        step_size = self.parameters['step_size']
+        surface = self.parameters['surface']
+        name = surface['name'] # str
+        symmetry = surface['symmetry'] # bool
+        mesh = surface['mesh'] # numpy array
+
+        # define runtime behavior...
+
+    surface = {
+        'name': 'wing',
+        'symmetry': False,
+        'mesh': mesh,
+    }
+
+    # compile using Simulator imported from back end...
+    sim = Simulator(
+        Example(
+            num_times=100,
+            step_size=0.1,
+            surface=surface,
+        ),
+    )
+```
+
+<a id="csdl.core.model.Model.define"></a>
+
+### define
+
+```python
+def define()
+```
+
+User defined method to define runtime behavior.
+
+**Example**
+
+.. code-block:: python
+
+    class Example(Model):
+        def define(self):
+            self.create_input('x')
+            m = 5
+            b = 3
+            y = m*x + b
+            self.register_output('y', y)
+
+    # compile using Simulator imported from back end...
+    sim = Simulator(Example())
+    sim['x'] = -3/5
+    sim.run()
+    print(sim['y']) # expect 0
+
+<a id="csdl.core.model.Model.print_var"></a>
+
+### print\_var
+
+```python
+def print_var(var: Variable)
+```
+
+Print *runtime* value during execution. Note that ``print_var``
+should only be used for debugging, as it does have a performance
+impact. Note that Python's ``print`` function will print the
+CSDL compile time ``Variable`` object information, and will have
+no effect on run time execution.
+
+**Example**
+
+```python
+y = csdl.sin(x)
+print(y) # will print compile time information about y
+self.print_var(y) # will print run time value of y
+```
+
+<a id="csdl.core.model.Model.add_objective"></a>
+
+### add\_objective
+
+```python
+def add_objective(name, ref=None, ref0=None, index=None, units=None, adder=None, scaler=None, parallel_deriv_color=None, cache_linear_solution=False)
+```
+
+Declare the objective for the optimization problem. Objective
+must be a scalar variable.
+
+<a id="csdl.core.model.Model.add_design_variable"></a>
+
+### add\_design\_variable
+
+```python
+def add_design_variable(name, lower=None, upper=None, ref=None, ref0=None, indices=None, adder=None, scaler=None, units=None, parallel_deriv_color=None, cache_linear_solution=False)
+```
+
+Add a design variable to the optimization problem. The design
+variable must be an ``Input``. This will signal to the optimizer
+that it is responsible for updating the input variable.
+
+<a id="csdl.core.model.Model.add_constraint"></a>
+
+### add\_constraint
+
+```python
+def add_constraint(name, lower=None, upper=None, equals=None, ref=None, ref0=None, adder=None, scaler=None, units=None, indices=None, linear=False, parallel_deriv_color=None, cache_linear_solution=False)
+```
+
+Add a constraint to the optimization problem.
+
+<a id="csdl.core.model.Model.connect"></a>
+
+### connect
+
+```python
+def connect(a: str, b: str)
+```
+
+<a id="csdl.core.model.Model.declare_variable"></a>
+
+### declare\_variable
+
+```python
+def declare_variable(name: str, val=1.0, shape=(1, ), src_indices=None, flat_src_indices=None, units=None, desc='', tags=None, shape_by_conn=False, copy_shape=None, distributed=None) -> Variable
+```
+
+Declare an input to use in an expression.
+
+An input can be an output of a child ``System``. If the user
+declares an input that is computed by a child ``System``, then
+the call to ``self.declare_variable`` must appear after the call to
+``self.add``.
+
+**Parameters**
+
+name: str
+    Name of variable in CSDL to be used as a local input that
+    takes a value from a parent model, child model, or
+    previously registered output within the model.
+shape: Tuple[int]
+    Shape of variable
+val: Number or ndarray
+    Default value for variable
+
+**Returns**
+
+DocInput
+    An object to use in expressions
+
+<a id="csdl.core.model.Model.create_input"></a>
+
+### create\_input
+
+```python
+def create_input(name, val=1.0, shape=(1, ), units=None, desc='', tags=None, shape_by_conn=False, copy_shape=None, distributed=None) -> Input
+```
+
+Create an input to the main model, whose value remains constant
+during model evaluation.
+
+**Parameters**
+
+name: str
+    Name of variable in CSDL
+shape: Tuple[int]
+    Shape of variable
+val: Number or ndarray
+    Value for variable during first model evaluation
+
+**Returns**
+
+Input
+    An object to use in expressions
+
+<a id="csdl.core.model.Model.create_output"></a>
+
+### create\_output
+
+```python
+def create_output(name, val=1.0, shape=(1, ), units=None, res_units=None, desc='', lower=None, upper=None, ref=1.0, ref0=0.0, res_ref=1.0, tags=None, shape_by_conn=False, copy_shape=None, distributed=None) -> ExplicitOutput
+```
+
+Create a value that is computed explicitly, either through
+indexed assignment, or as a fixed point iteration.
+
+**Example**
+
+```python
+x = self.create_output('x', shape=(5,3,2))
+x[:, :, 0] = a
+x[:, :, 1] = b
+```
+
+**Parameters**
+
+name: str
+    Name of variable in CSDL
+shape: Tuple[int]
+    Shape of variable
+
+**Returns**
+
+ExplicitOutput
+    An object to use in expressions
+
+<a id="csdl.core.model.Model.register_output"></a>
+
+### register\_output
+
+```python
+def register_output(name: str, var: Variable) -> Variable
+```
+
+Register ``var`` as an output of the ``Model``.
+When adding subsystems, each of the submodel's inputs requires
+a call to ``register_output`` prior to the call to
+``add``.
+
+**Parameters**
+
+name: str
+    Name of variable in CSDL
+
+var: Variable
+    Variable that computes output
+
+**Returns**
+
+Variable
+    Variable that computes output
+
+<a id="csdl.core.model.Model.add"></a>
+
+### add
+
+```python
+def add(submodel, name: str = '', promotes: Iterable = None, promotes_inputs: Iterable = None, promotes_outputs: Iterable = None)
+```
+
+Add a submodel to the ``Model``.
+
+``self.add`` call must be preceded by a call to
+``self.register_output`` for each of the submodel's inputs,
+and followed by ``self.declare_variable`` for each of the
+submodel's outputs.
+
+**Parameters**
+
+name: str
+    Name of submodel
+submodel: System
+    Subsystem to add to `Model`
+promotes: Iterable
+    Variables to promote
+promotes_inputs: Iterable
+    Inputs to promote
+promotes_outputs: Iterable
+    Outputs to promote
+
+**Returns**
+
+System
+    Subsystem to add to `Model`
+
+<a id="csdl.core.model.Model.create_model"></a>
+
+### create\_model
+
+```python
+@contextmanager
+def create_model(name: str)
+```
+
+Create a ``Model`` object and add as a submodel, promoting all
+inputs and outputs.
+For use in ``with`` contexts.
+NOTE: Only use if planning to promote all varaibales within
+child ``Model`` object.
+
+**Parameters**
+
+name: str
+    Name of new child ``Model`` object
+
+**Returns**
+
+Model
+    Child ``Model`` object whosevariables are all promoted
+
+<a id="csdl.core.model.Model.visualize_sparsity"></a>
+
+### visualize\_sparsity
+
+```python
+def visualize_sparsity()
+```
+
+Visualize the sparsity pattern of jacobian for this model
+
+<a id="csdl.core.model.Model.visualize_graph"></a>
+
+### visualize\_graph
+
+```python
+def visualize_graph()
+```
+
+<a id="csdl.core.model.add_diag_implicit"></a>
+
+### add\_diag\_implicit
+
+```python
+def add_diag_implicit(A, variables, implicit_outputs, indices=dict(), implicit_nodes=dict(), p=0, indent='')
+```
+
+<a id="csdl.core.model.add_off_diag_implicit"></a>
+
+### add\_off\_diag\_implicit
+
+```python
+def add_off_diag_implicit(A, indices, implicit_nodes)
+```
+
+<a id="csdl.core.model.add_diag"></a>
+
+### add\_diag
+
+```python
+def add_diag(A, nodes, indices=dict(), implicit_nodes=dict(), p=0, indent='')
+```
+
+<a id="csdl.core.model.add_off_diag"></a>
+
+### add\_off\_diag
+
+```python
+def add_off_diag(A, model, indices)
+```
+
+<a id="csdl.core.simulator_base"></a>
+
+# csdl.core.simulator\_base
+
+<a id="csdl.core.simulator_base._ReprClass"></a>
+
+## \_ReprClass Objects
+
+```python
+class _ReprClass(object)
+```
+
+Class for defining objects with a simple constant string __repr__.
+
+This is useful for constants used in arg lists when you want them to appear in
+automatically generated source documentation as a certain string instead of python's
+default representation.
+
+<a id="csdl.core.simulator_base._ReprClass.__init__"></a>
+
+### \_\_init\_\_
+
+```python
+def __init__(repr_string)
+```
+
+Inititialize the __repr__ string.
+
+**Parameters**
+
+repr_string : str
+    The string to be returned by __repr__
+
+<a id="csdl.core.simulator_base._ReprClass.__repr__"></a>
+
+### \_\_repr\_\_
+
+```python
+def __repr__()
+```
+
+Return our _repr_string.
+
+**Returns**
+
+str
+    Whatever string we were initialized with.
+
+<a id="csdl.core.simulator_base.SimulatorBase"></a>
+
+## SimulatorBase Objects
+
+```python
+class SimulatorBase()
+```
+
+A class that can be used as a base class for the ``Simulator`` class
+that a CSDL compiler back end would provide.
+This class is only here so that CSDL users and CSDL compiler back end
+developers have API documentation.
+CSDL users are not to use the ``SimulatorBase`` class provided by
+``csdl``, only the ``Simulator`` class provided by the CSDL compiler
+back end of choice.
+
+<a id="csdl.core.simulator_base.SimulatorBase.__init__"></a>
+
+### \_\_init\_\_
+
+```python
+def __init__(model, reorder=False)
+```
+
+Constructor.
+
+<a id="csdl.core.simulator_base.SimulatorBase.__getitem__"></a>
+
+### \_\_getitem\_\_
+
+```python
+def __getitem__(key)
+```
+
+Method to get variable values before or after a simulation run
+
+<a id="csdl.core.simulator_base.SimulatorBase.__setitem__"></a>
+
+### \_\_setitem\_\_
+
+```python
+def __setitem__(key, val)
+```
+
+Method to set values for variables by name
+
+<a id="csdl.core.simulator_base.SimulatorBase.run"></a>
+
+### run
+
+```python
+def run()
+```
+
+Method to run a simulation once. This method should be
+implemented so that it can be called repeatedly to solve an
+optimization problem.
+
+<a id="csdl.core.simulator_base.SimulatorBase.compute_total_derivatives"></a>
+
+### compute\_total\_derivatives
+
+```python
+def compute_total_derivatives()
+```
+
+Method to compute total derivatives for use by an optimizer
+
+<a id="csdl.core.simulator_base.SimulatorBase.compute_exact_hessian"></a>
+
+### compute\_exact\_hessian
+
+```python
+def compute_exact_hessian()
+```
+
+Method to compute exact Hessian
+
+<a id="csdl.core.simulator_base.SimulatorBase.check_partials"></a>
+
+### check\_partials
+
+```python
+def check_partials()
+```
+
+Method to compute the error for all partial derivatives of all
+operations within the model.
+
+**Returns**
+
+An object that is compatible with ``assert_check_partials``
+
+<a id="csdl.core.simulator_base.SimulatorBase.assert_check_partials"></a>
+
+### assert\_check\_partials
+
+```python
+def assert_check_partials(result, atol=1e-8, rtol=1e-8)
+```
+
+Method to check that the partial derivatives of all operations
+are within a specified tolerance.
+
+**Parameters**
+
+result: Return type of ``check_partials``
+
+<a id="csdl.core.simulator_base.SimulatorBase.visualize_model"></a>
+
+### visualize\_model
+
+```python
+def visualize_model()
+```
+
+A for the back end to provide its own visualization of the
+model.
+
+<a id="csdl.core.simulator_base.SimulatorBase.objective"></a>
+
+### objective
+
+```python
+def objective()
+```
+
+Method to provide optimizer with objective
+
+<a id="csdl.core.simulator_base.SimulatorBase.design_variables"></a>
+
+### design\_variables
+
+```python
+def design_variables()
+```
+
+Method to provide optimizer with design variables
+
+<a id="csdl.core.simulator_base.SimulatorBase.constraints"></a>
+
+### constraints
+
+```python
+def constraints()
+```
+
+Method to provide optimizer with constraints
+
+<a id="csdl.core.simulator_base.SimulatorBase.implicit_outputs"></a>
+
+### implicit\_outputs
+
+```python
+def implicit_outputs()
+```
+
+Method to provide optimizer with implicit_outputs
+
+<a id="csdl.core.simulator_base.SimulatorBase.residuals"></a>
+
+### residuals
+
+```python
+def residuals()
+```
+
+Method to provide optimizer with residuals
+
+<a id="csdl.core.simulator_base.SimulatorBase.objective_gradient"></a>
+
+### objective\_gradient
+
+```python
+def objective_gradient()
+```
+
+Method to provide optimizer with total derivative of objective
+with respect to design variables
+
+<a id="csdl.core.simulator_base.SimulatorBase.constraint_jacobian"></a>
+
+### constraint\_jacobian
+
+```python
+def constraint_jacobian()
+```
+
+Method to provide optimizer with total derivatives of
+constraints with respect to design variables
+
+<a id="csdl.core.simulator_base.SimulatorBase.residuals_jacobian"></a>
+
+### residuals\_jacobian
+
+```python
+def residuals_jacobian()
+```
+
+Method to provide optimizer with total derivatives of
+residuals with respect to design variables
+
+<a id="csdl.core.explicit_operation"></a>
+
+# csdl.core.explicit\_operation
+
+<a id="csdl.core.explicit_operation.ExplicitOperation"></a>
+
+## ExplicitOperation Objects
+
+```python
+class ExplicitOperation(CustomOperation)
+```
+
+<a id="csdl.core.explicit_operation.ExplicitOperation.compute"></a>
+
+### compute
+
+```python
+def compute(inputs, outputs)
+```
+
+Define outputs as an explicit function of the inputs
+
+**Example**
+
+.. code-block:: python
+
+    def compute(self, inputs, outputs):
+        outputs['L'] = 1/2 * inputs['Cl'] * inputs['rho'] * inputs['V']**2 * inputs['S']
+        outputs['D'] = 1/2 * inputs['Cd'] * inputs['rho'] * inputs['V']**2 * inputs['S']
+
+<a id="csdl.core.explicit_operation.ExplicitOperation.compute_derivatives"></a>
+
+### compute\_derivatives
+
+```python
+def compute_derivatives(inputs, derivatives)
+```
+
+User defined method to compute partial derivatives for this
+operation
+
+**Example**
+
+.. code-block:: python
+
+    def compute(self, inputs, outputs):
+        outputs['L'] = 1/2 * inputs['Cl'] * inputs['rho'] * inputs['V']**2 * inputs['S']
+        outputs['D'] = 1/2 * inputs['Cd'] * inputs['rho'] * inputs['V']**2 * inputs['S']
+
+    def compute_derivatives(self, inputs, derivatives):
+        derivatives['L', 'Cl'] = 1/2 * inputs['rho'] * inputs['V']**2 * inputs['S']
+        derivatives['L', 'rho'] = 1/2 * inputs['Cl'] * inputs['V']**2 * inputs['S']
+        derivatives['L', 'V'] = inputs['Cl'] * inputs['rho'] * inputs['V'] * inputs['S']
+        derivatives['L', 'S'] = 1/2 * inputs['Cl'] * inputs['rho'] * inputs['V']**2
+
+        derivatives['D', 'Cd'] = 1/2 * inputs['rho'] * inputs['V']**2 * inputs['S']
+        derivatives['D', 'rho'] = 1/2 * inputs['Cd'] * inputs['V']**2 * inputs['S']
+        derivatives['D', 'V'] = inputs['Cd'] * inputs['rho'] * inputs['V'] * inputs['S']
+        derivatives['D', 'S'] = 1/2 * inputs['Cd'] * inputs['rho'] * inputs['V']**2
+
+<a id="csdl.core.explicit_operation.ExplicitOperation.compute_jacvec_product"></a>
+
+### compute\_jacvec\_product
+
+```python
+def compute_jacvec_product(inputs, d_inputs, d_outputs, mode)
+```
+
+[Optional] Implement partial derivatives by computing a
+matrix-vector product
+
+*Example*
+
+.. code-block:: python
+
+    def compute(self, inputs, outputs):
+        outputs['area'] = inputs['length'] * inputs['width']
+
+    def compute_jacvec_product(self, inputs, d_inputs, d_outputs, mode):
+        if mode == 'fwd':
+            if 'area' in d_outputs:
+                if 'length' in d_inputs:
+                    d_outputs['area'] += inputs['width'] * d_inputs['length']
+                if 'width' in d_inputs:
+                    d_outputs['area'] += inputs['length'] * d_inputs['width']
+        elif mode == 'rev':
+            if 'area' in d_outputs:
+                if 'length' in d_inputs:
+                    d_inputs['length'] += inputs['width'] * d_outputs['area']
+                if 'width' in d_inputs:
+                    d_inputs['width'] += inputs['length'] * d_outputs['area']
+
+<a id="csdl.core.implicit_operation"></a>
+
+# csdl.core.implicit\_operation
+
+<a id="csdl.core.implicit_operation.ImplicitOperation"></a>
+
+## ImplicitOperation Objects
+
+```python
+class ImplicitOperation(CustomOperation)
+```
+
+<a id="csdl.core.implicit_operation.ImplicitOperation.__init__"></a>
+
+### \_\_init\_\_
+
+```python
+def __init__(*args, **kwargs)
+```
+
+<a id="csdl.core.implicit_operation.ImplicitOperation.evaluate_residuals"></a>
+
+### evaluate\_residuals
+
+```python
+def evaluate_residuals(inputs, outputs, residuals)
+```
+
+User defined method to evaluate residuals
+
+*Example*
+
+.. code-block:: python
+
+    def evaluate_residuals(self, inputs, outputs, residuals):
+        x = outputs['x']
+        a = inputs['a']
+        b = inputs['b']
+        c = inputs['c']
+        residuals['x'] = a * x**2 + b * x + c
+
+<a id="csdl.core.implicit_operation.ImplicitOperation.compute_derivatives"></a>
+
+### compute\_derivatives
+
+```python
+def compute_derivatives(inputs, outputs, derivatives)
+```
+
+[Optional] User defined method to evaluate exact derivatives of
+residuals wrt inputs and outputs
+
+*Example*
+
+.. code-block:: python
+
+    def compute_derivatives(self, inputs, outputs, derivatives):
+        a = inputs['a']
+        b = inputs['b']
+        x = outputs['x']
+
+        derivatives['x', 'a'] = x**2
+        derivatives['x', 'b'] = x
+        derivatives['x', 'c'] = 1.0
+        derivatives['x', 'x'] = 2 * a * x + b
+
+        # only necessary if implementing `apply_inverse_jacobian`
+        self.inv_jac = 1.0 / (2 * a * x + b)
+
+<a id="csdl.core.implicit_operation.ImplicitOperation.solve_residual_equations"></a>
+
+### solve\_residual\_equations
+
+```python
+def solve_residual_equations(inputs, outputs)
+```
+
+[Optional] User defined method to solve residual equations,
+computing the outputs given the inputs. Define this method to
+implement a custom solver. Assigning a nonlinear solver will
+cause `evaluate_residual_equations` to run instead.
+
+*Example*
+
+.. code-block:: python
+
+    def solve_residual_equations(self, inputs, outputs):
+        a = inputs['a']
+        b = inputs['b']
+        c = inputs['c']
+        outputs['x'] = (-b + (b ** 2 - 4 * a * c) ** 0.5) / (2 * a)
+
+<a id="csdl.core.implicit_operation.ImplicitOperation.apply_inverse_jacobian"></a>
+
+### apply\_inverse\_jacobian
+
+```python
+def apply_inverse_jacobian(d_outputs, d_residuals, mode)
+```
+
+[Optional] Solve linear system. Invoked when solving coupled
+linear system; i.e. when solving Newton system to update
+implicit state variables, and when computing total derivatives
+
+*Example*
+
+.. code-block:: python
+
+    # using self.inv_jac defined in `compute_derivatives` example
+    def apply_inverse_jacobian( self, d_outputs, d_residuals, mode)
+        if mode == 'fwd':
+            d_outputs['x'] = self.inv_jac * d_residuals['x']
+        elif mode == 'rev':
+            d_residuals['x'] = self.inv_jac * d_outputs['x']
+
+<a id="csdl.core.implicit_operation.ImplicitOperation.compute_jacvec_product"></a>
+
+### compute\_jacvec\_product
+
+```python
+def compute_jacvec_product(inputs, outputs, d_inputs, d_outputs, d_residuals, mode)
+```
+
+[Optional] Implement partial derivatives by computing a
+matrix-vector product.
+
+*Example*
+
+.. code-block:: python
+
+    def compute_jacvec_product(
+            self,
+            inputs,
+            outputs,
+            d_inputs,
+            d_outputs,
+            d_residuals,
+            mode,
+        ):
+            a = inputs['a']
+            b = inputs['b']
+            c = inputs['c']
+            x = outputs['x']
+            if mode == 'fwd':
+                if 'x' in d_residuals:
+                    if 'x' in d_outputs:
+                        d_residuals['x'] += (2 * a * x + b) * d_outputs['x']
+                    if 'a' in d_inputs:
+                        d_residuals['x'] += x ** 2 * d_inputs['a']
+                    if 'b' in d_inputs:
+                        d_residuals['x'] += x * d_inputs['b']
+                    if 'c' in d_inputs:
+                        d_residuals['x'] += d_inputs['c']
+            elif mode == 'rev':
+                if 'x' in d_residuals:
+                    if 'x' in d_outputs:
+                        d_outputs['x'] += (2 * a * x + b) * d_residuals['x']
+                    if 'a' in d_inputs:
+                        d_inputs['a'] += x ** 2 * d_residuals['x']
+                    if 'b' in d_inputs:
+                        d_inputs['b'] += x * d_residuals['x']
+                    if 'c' in d_inputs:
+                        d_inputs['c'] += d_residuals['x']
+
+<a id="csdl.core.node"></a>
+
+# csdl.core.node
+
+<a id="csdl.core.node.slice_to_tuple"></a>
+
+### slice\_to\_tuple
+
+```python
+def slice_to_tuple(key: slice, size: int) -> tuple
+```
+
+<a id="csdl.core.node.Node"></a>
+
+## Node Objects
+
+```python
+class Node()
+```
+
+The ``Node`` class is a base type for nodes in a Directed
+Acyclic Graph (DAG) that represents the computation to be performed
+during model evaluation.
+
+<a id="csdl.core.node.Node.__init__"></a>
+
+### \_\_init\_\_
+
+```python
+def __init__(*args, **kwargs)
+```
+
+<a id="csdl.core.node.Node.__iadd__"></a>
+
+### \_\_iadd\_\_
+
+```python
+def __iadd__(other)
+```
+
+<a id="csdl.core.node.Node.__iand__"></a>
+
+### \_\_iand\_\_
+
+```python
+def __iand__(other)
+```
+
+<a id="csdl.core.node.Node.__idiv__"></a>
+
+### \_\_idiv\_\_
+
+```python
+def __idiv__(other)
+```
+
+<a id="csdl.core.node.Node.__ifloordiv__"></a>
+
+### \_\_ifloordiv\_\_
+
+```python
+def __ifloordiv__(other)
+```
+
+<a id="csdl.core.node.Node.__ilshift__"></a>
+
+### \_\_ilshift\_\_
+
+```python
+def __ilshift__(other)
+```
+
+<a id="csdl.core.node.Node.__imod__"></a>
+
+### \_\_imod\_\_
+
+```python
+def __imod__(other)
+```
+
+<a id="csdl.core.node.Node.__imul__"></a>
+
+### \_\_imul\_\_
+
+```python
+def __imul__(other)
+```
+
+<a id="csdl.core.node.Node.__ior__"></a>
+
+### \_\_ior\_\_
+
+```python
+def __ior__(other)
+```
+
+<a id="csdl.core.node.Node.__ipow__"></a>
+
+### \_\_ipow\_\_
+
+```python
+def __ipow__(other)
+```
+
+<a id="csdl.core.node.Node.__irshift__"></a>
+
+### \_\_irshift\_\_
+
+```python
+def __irshift__(other)
+```
+
+<a id="csdl.core.node.Node.__isub__"></a>
+
+### \_\_isub\_\_
+
+```python
+def __isub__(other)
+```
+
+<a id="csdl.core.node.Node.__ixor__"></a>
+
+### \_\_ixor\_\_
+
+```python
+def __ixor__(other)
+```
+
+<a id="csdl.core.node.Node.add_fwd_edges"></a>
+
+### add\_fwd\_edges
+
+```python
+def add_fwd_edges()
+```
+
+<a id="csdl.core.node.Node.add_dependent_node"></a>
+
+### add\_dependent\_node
+
+```python
+def add_dependent_node(dependent)
+```
+
+<a id="csdl.core.node.Node.register_nodes"></a>
+
+### register\_nodes
+
+```python
+def register_nodes(nodes: dict)
+```
+
+Register all nodes in DAG.
+
+**Parameters**
+
+nodes: dict[Variable]
+    Dictionary of nodes registered so far
+
+<a id="csdl.core.node.Node.incr_times_visited"></a>
+
+### incr\_times\_visited
+
+```python
+def incr_times_visited()
+```
+
+Increment number of times a node is visited during ``topological_sort``.
+This is necessary for ``topological_sort`` to determine
+execution order for expressions.
+
+<a id="csdl.core.node.Node.get_dependency_index"></a>
+
+### get\_dependency\_index
+
+```python
+def get_dependency_index(candidate) -> Optional[int]
+```
+
+Get index of dependency in ``self.dependencies``. Used for
+removing indirect dependencies that woud otherwise affect the
+cost of branches in the DAG, which would affect execution order,
+even with the sme constraints on execution order.
+
+**Parameters**
+
+candidate: Variable
+    The candidate dependency node
+
+**Returns**
+
+Optional[int]
+    If ``dependency`` is a dependency of ``self``, then the index of
+    ``dependency`` in ``self.dependencies`` is returned. Otherwise,
+    ``None`` is returned.
+
+<a id="csdl.core.node.Node.remove_dependency_by_index"></a>
+
+### remove\_dependency\_by\_index
+
+```python
+def remove_dependency_by_index(index)
+```
+
+Remove dependency node, given its index. does nothing if
+``index`` is out of range. See
+``Variable.remove_dependency``.
+
+**Parameters**
+
+index: int
+    Index within ``self.dependencies`` where the node to be
+    removed might be
+
+<a id="csdl.core.node.Node.remove_dependency_node"></a>
+
+### remove\_dependency\_node
+
+```python
+def remove_dependency_node(candidate)
+```
+
+Remove dependency node. Does nothing if `candidate` is not a
+dependency. Used for removing indirect dependencies and
+preventing cycles from forming in DAG.
+
+**Parameters**
+
+candidate: Variable
+    Node to remove from ``self.dependencies``
+
+<a id="csdl.core.node.Node.get_dependent_index"></a>
+
+### get\_dependent\_index
+
+```python
+def get_dependent_index(candidate) -> Optional[int]
+```
+
+Get index of dependency in ``self.dependencies``. Used for
+removing indirect dependencies that woud otherwise affect the
+cost of branches in the DAG, which would affect execution order,
+even with the sme constraints on execution order.
+
+**Parameters**
+
+candidate: Variable
+    The candidate dependency node
+
+**Returns**
+
+Optional[int]
+    If ``dependency`` is a dependency of ``self``, then the index of
+    ``dependency`` in ``self.dependencies`` is returned. Otherwise,
+    ``None`` is returned.
+
+<a id="csdl.core.node.Node._dedup_dependencies"></a>
+
+### \_dedup\_dependencies
+
+```python
+def _dedup_dependencies()
+```
+
+Remove duplicate dependencies. Used when adding a dependency.
+
+<a id="csdl.core.node.Node.remove_dependent_by_index"></a>
+
+### remove\_dependent\_by\_index
+
+```python
+def remove_dependent_by_index(index)
+```
+
+Remove dependency node, given its index. does nothing if
+``index`` is out of range. See
+``Variable.remove_dependency``.
+
+**Parameters**
+
+index: int
+    Index within ``self.dependencies`` where the node to be
+    removed might be
+
+<a id="csdl.core.node.Node.remove_dependent_node"></a>
+
+### remove\_dependent\_node
+
+```python
+def remove_dependent_node(candidate)
+```
+
+Remove dependency node. Does nothing if `candidate` is not a
+dependency. Used for removing indirect dependencies and
+preventing cycles from forming in DAG.
+
+**Parameters**
+
+candidate: Variable
+    Node to remove from ``self.dependencies``
+
+<a id="csdl.core.node.Node.print_dag"></a>
+
+### print\_dag
+
+```python
+def print_dag(depth=-1, indent='')
+```
+
+Print the graph starting at this node (debugging tool)
+
+<a id="csdl.core.node.Node.get_num_dependents"></a>
+
+### get\_num\_dependents
+
+```python
+def get_num_dependents()
+```
+
+<a id="csdl.core.variable"></a>
+
+# csdl.core.variable
+
+<a id="csdl.core.variable.slice_to_tuple"></a>
+
+### slice\_to\_tuple
+
+```python
+def slice_to_tuple(key: slice, size: int) -> tuple
+```
+
+<a id="csdl.core.variable.Variable"></a>
+
+## Variable Objects
+
+```python
+class Variable(Node)
+```
+
+<a id="csdl.core.variable.Variable.__init__"></a>
+
+### \_\_init\_\_
+
+```python
+def __init__(name, val=1.0, shape=(1, ), src_indices=None, flat_src_indices=None, units=None, desc='', tags=None, shape_by_conn=False, copy_shape=None, distributed=None, *args, **kwargs, *, ,)
+```
+
+<a id="csdl.core.variable.Variable.__pos__"></a>
+
+### \_\_pos\_\_
+
+```python
+def __pos__()
+```
+
+<a id="csdl.core.variable.Variable.__neg__"></a>
+
+### \_\_neg\_\_
+
+```python
+def __neg__()
+```
+
+<a id="csdl.core.variable.Variable.__add__"></a>
+
+### \_\_add\_\_
+
+```python
+def __add__(other)
+```
+
+<a id="csdl.core.variable.Variable.__sub__"></a>
+
+### \_\_sub\_\_
+
+```python
+def __sub__(other)
+```
+
+<a id="csdl.core.variable.Variable.__mul__"></a>
+
+### \_\_mul\_\_
+
+```python
+def __mul__(other)
+```
+
+<a id="csdl.core.variable.Variable.__truediv__"></a>
+
+### \_\_truediv\_\_
+
+```python
+def __truediv__(other)
+```
+
+<a id="csdl.core.variable.Variable.__pow__"></a>
+
+### \_\_pow\_\_
+
+```python
+def __pow__(other)
+```
+
+<a id="csdl.core.variable.Variable.__radd__"></a>
+
+### \_\_radd\_\_
+
+```python
+def __radd__(other)
+```
+
+<a id="csdl.core.variable.Variable.__rsub__"></a>
+
+### \_\_rsub\_\_
+
+```python
+def __rsub__(other)
+```
+
+<a id="csdl.core.variable.Variable.__rmul__"></a>
+
+### \_\_rmul\_\_
+
+```python
+def __rmul__(other)
+```
+
+<a id="csdl.core.variable.Variable.__rtruediv__"></a>
+
+### \_\_rtruediv\_\_
+
+```python
+def __rtruediv__(other)
+```
+
+<a id="csdl.core.variable.Variable.__getitem__"></a>
+
+### \_\_getitem\_\_
+
+```python
+def __getitem__(key: Union[int, slice, Tuple[slice]])
+```
+
+<a id="csdl.core.variable.Variable.add_dependency_node"></a>
+
+### add\_dependency\_node
+
+```python
+def add_dependency_node(dependency)
+```
+

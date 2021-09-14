@@ -1,0 +1,191 @@
+---
+id: faq
+title: Frequently Asked Questions
+---
+
+# Frequently Asked Questions
+
+------------------------------------------------------------------------
+
+
+
+
+## What is CSDL?
+
+CSDL is a domain specific language for specifying mathematical models
+for use in multidisciplinary design analysis and optimization (MDAO).
+CSDL is also a compiled language, which means that user code is
+translated into executable code before running the desired program.
+The CSDL compiler is a three stage compiler with a front end, a middle
+end, and a back end.
+The front end and middle end are implemented in the ``csdl`` package,
+while the user is free to choose a back end from the list of available
+back ends to generate executable code.
+The compilation process takes place within a Python script, and the user
+can run the executable, or simulation, within the same script.
+
+## What is the goal of this project?
+
+The goal of CSDL is to separate model specification from simulation
+implementation, eliminating overhead imposed on the model developer.
+For example, CSDL automatically computes derivatives (necessary for
+gradient-based optimization) across multiple disciplines without any
+additional code from the user.
+Complete separation between model specification and simulation
+implementation allows for the language to evolve to fit user needs
+with little or no additional overhead for the user.
+
+## Why use CSDL?
+
+CSDL is a powerful language that enables users to specify a mathematical
+model of a physical system without regard for how to implement a
+simulation for that specification, or which architecture is used to run
+the simulation.
+CSDL is especially powerful in multidisciplinary design optimization
+where gradient-based approaches outperform gradient-free approaches.
+Many modeling languages exist that excel at solving general nonlinear
+programs, but those languages are typically restricted to a single
+discipline, cannot compute the derivatives required for
+optimization efficiently, or do not fully automate derivative
+computation.
+This leads to overhead for the user to specify a model as a single
+discipline, or implement derivative computation which may be difficult
+to maintain.
+Ultimately, CSDL is about operating at a high level of abstraction.
+
+## What is the difference between CSDL, ``csdl``, and the "back end"?
+
+CSDL is a language for specifying a model of a physical system whose
+behavior a user wants to simulate for the purpose of analysis or
+optimization.
+Like any language, CSDL requires an implementation (compiler or
+interpreter) in order to generate and run software on a computer.
+The ``csdl`` package contains the front end and middle end of the CSDL
+compiler.
+The ``csdl`` package does not provide the complete implementation of the
+CSDL compiler; a separate package is required to supply the compiler
+back end.
+Projects using CSDL can use any of the back ends listed on the home page
+of the documentation for ``csdl``.
+All back ends must provide a ``Simulator`` class, which provides the
+same API as the ``SimulatorBase`` class provided in the ``csdl``
+package.
+Conformance to a single API enables users to switch between back ends by
+changing one line of code, ``from <backend> import Simulator``, where
+``<backend>`` (including angle brackets) is replaced with the name of
+the package that implements the ``Simulator`` class.
+
+## Do I need to use the command line to compile my program?
+
+Not exactly. You can run any Python script from the command line by
+invoking the command installed on your system to run the Python
+interpreter, passing your script as input.
+When running "pure" Python code, there is no compilation step -- a
+single command will run your program.
+Compiled languages like C require users to issue a command to compile
+the code, and then issue a second command to run the code.
+CSDL is an embedded language, so compiling and running CSDL code only
+involves running a Python script, but the user defined Python script
+compiles CSDL code and runs CSDL code.
+The steps are separate within the Python script -- users need to define
+a ``Model`` subclass and instantiate a ``Simulator`` object -- but only
+one command is required at the command line.
+You can avoid the command line altogether by using an Integrated
+Development Environment (IDE) for Python.
+
+## Who is CSDL for?
+
+CSDL is targeted at MDO researchers and practitioners, and as a result,
+is general enough for anyone who wishes to create a mathematical model
+of a physical system and simulate the behavior of that system.
+CSDL is especially powerful in multidisciplinary design optimization,
+where the model is composed of multiple disciplines, whose behavior is
+tightly coupled.
+The tight coupling between disciplines requires computing derivatives of
+the objective and constraints with respect to design variables in order
+for an optimizer to update the values of the design variables.
+CSDL comes with an extensive STDLIB that
+automates derivative computation.
+Users can define their own operations and the corresponding partial
+derivative for each operation as well using
+CUSTOM OPERATIONS.
+
+
+##  Who uses CSDL?
+
+## How do I install ``csdl``?
+
+
+Please follow the instructions on PAGE.
+
+## Why do I need to install two packages to install the CSDL compiler?
+
+The CSDL compiler is a
+`three stage compiler
+<https://en.wikipedia.org/wiki/Compiler#Three-stage_compiler_structure>`_,
+which consists of a front end that generates an intermediate
+representation, a middle end that performs implementation independent
+optimizations on the intermediate representation, and a back end, which
+generates code in a target language, or generates an executable
+directly.
+The ``csdl`` package provides the front end and middle end of the CSDL
+compiler.
+That means that the user is free to choose any CSDL compiler back end
+implementation.
+The flexibility of choosing any back end means that all code written in
+CSDL could in theory run on any hardware, and implementation specific
+code optimizations can be performed by the CSDL compiler without any
+change to the ``csdl`` package or changin the design of the CSDL
+language.
+Choosing an implementation for a project is as simple as changing one
+line of code, ``from <backend> import Simulator``, where ``<backend>``
+(including angle brackets) is replaced with the name of the package that
+implements the ``Simulator`` class.
+
+## What separates CSDL from other tools?
+
+
+## Is CSDL just a Python package?
+
+CSDL is a language, but ``csdl`` is a Python package.
+The difference is that a language can be implemented in multiple ways.
+CSDL is implemented in Python because Python is a popular language for
+scientific computing, and it's also open source.
+CSDL is also an embedded domain specific language (EDSL), which means
+that CSDL is a *language within a language*; Python is the *host*
+language.
+The ``csdl`` package is the implementation of the CSDL compiler front
+end and middle end.
+
+## Where can I run code written using CSDL?
+
+Consult the compiler back end documentation for more information.
+A list of available compiler back ends is available
+`here <../index.html>`_.
+
+## What are some projects that use CSDL?
+
+
+## Who maintains CSDL?
+
+[Victor Gandarillas](mailto:vgandari@eng.ucsd.edu) is the main
+designer of CSDL, developer of ``csdl``, and developer of the
+``csdl_om`` compiler back end (with credit given to the OpenMDAO team).
+As CSDL grows and evolves, we may set up various working groups to
+ensure that CSDL meets the needs of our users.
+
+## Where is CSDL headed?
+
+CSDL is a very young project, so the short answer is, that's up to you!
+We are currently using CSDL in a variety of projects, gathering user
+feedback, and working with potential stakeholders to make sure CSDL
+continues to grow, benefit the MDO community, and make lasting impact.
+Feel free to use CSDL in your project, send us feedback, and engage
+with the community.
+
+## How can I get involved?
+
+As a user, you can help improve CSDL by joining our roundtable meetings
+every [frequency TBD].
+
+## What does CSDL do differently?

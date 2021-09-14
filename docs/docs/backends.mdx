@@ -1,0 +1,35 @@
+---
+title: Compiler Back End
+sidebar_position: 5
+---
+
+------------------------------------------------------------------------
+
+In order to run a simulation defined using CSDL, two packages are
+required.
+The first package is `csdl`.
+The second package comes from the list at the end of this page.
+
+The `csdl` package provides the front end and middle end for the CSDL
+compiler.
+The front end is responsible for building an intermediate representation
+of the user-defined model, while the middle end is responsible for
+performing implementation-independent analyses and optimizations on the
+intermediate representation.
+The `csdl` package provides users with a way to *specify mathematical
+models* of physical systems, but _no way to implement simulations_ to
+simulate the behavior of such systems.
+
+## List of Available Back Ends
+
+In order to generate simulation implementation, a CSDL compiler
+back end is required.
+The CSDL compiler back end is provided by a separate Python package of
+your choosing.
+The links below provide detailed guides for using and designing a CSDL
+compiler back end.
+
+- [csdl_om](https://github.com/lsdolab/csdl_om), which compiles CSDL
+  code to an [OpenMDAO](https://openmdao.org) problem.
+  No additional knowledge of the OpenMDAO API is required.
+  All worked examples in this documentation are built using `csdl_om`

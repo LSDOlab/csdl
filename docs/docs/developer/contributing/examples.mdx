@@ -1,0 +1,162 @@
+---
+title: Adding Examples for Testing and Documentation
+sidebar_position: 2
+---
+
+------------------------------------------------------------------------
+
+## Introduction
+
+To define examples used for testing and documentation, only the example
+class defnition is required.
+Example class definitions are located in `csdl/csdl/examples`.
+`csdl/examples/` contains class definitions that are used to generate
+example functions for running tests and including in documentation.
+Class names must start with either `Example` or `Error`.
+Class names that start with `Example` are meant to be used for testing
+expected values when valid inputs are provided, and class names that
+start with `Error` are meant to be used for testing expected errors when
+invalid inputs are provided.
+These prefixes are used for generating example functions and scripts for
+testing and documentation, respectively.
+
+The same example class definition can be used in both tests and
+documentation.
+
+:::note
+It is not required that all examples be used in tests, or that all
+examples used for testing be used for documentation.
+:::
+
+## Defining Examples with Valid Input
+
+Since example functions and scripts are generated from class
+definitions, there isn't any way by default to signal directly from
+within the class definition that the example script should print a
+variable value in the worked example.
+To make this possible, `csdl` uses the `docstring_parser` package to
+parse docstrings before generating example scripts.
+
+To write an example that prints the value of an output so that
+To get values from a simulation in a test (e.g. `'x'` and `'y'`),
+add
+
+```py
+"""
+:param var: x
+:param var: y
+"""
+```
+
+to the top of the class definition for a class whose name begins with
+`Example` (this will not work for example classes whose names begin with
+`Error`).
+This will add the following to the end of the example function/script:
+
+```py
+sim = Simulator(ExampleName())
+sim.run()
+
+print('x', sim['x'].shape)
+print(sim['x'])
+print('y', sim['y'].shape)
+print(sim['y'])
+```
+
+The next section covers how to generate example functions for use in
+`pytest`.
+Later, we'll cover how to generate worked example scripts from these
+functions to include in the documentation.
+
+## Generating Example Functions for Testing
+
+`csdl` provides a script for generating function definitions that can be
+used in integration tests, `csdl/utils/generate_example_scripts.py`,
+which outputs `.py` files to the directories `csdl/examples/valid/` and
+`csdl/examples/invalid/`.
+The `csdl/examples/valid/` directory contains examples defined by
+classes whose names start with `Example`.
+The function definitions in these files can be used by `pytest` to check
+that the example computes correct values.
+The `csdl/examples/invalid/` directory contains examples defined by
+classes whose names start with `Error`.
+The function definitions in these files can be used by `pytest` to check
+that the example emits the appropriate error for a given invalid input.
+
+### Defining a Test Using an Example
+
+The `csdl/tests` directory contains all the tests.
+Each test suite is a Python file with a name that starts with the
+`test_` prefix.
+`pytest` automatically detects test cases contained within files whose
+names begin with `test_` if no file is passed to `pytest` from the
+terminal/command line.
+
+To write a test suite, create a file with `test_` as a prefix and add
+the following imports:
+
+```py
+import numpy as np
+import pytest
+```
+
+If adding a test case to an existing test suite, you can simply open an
+existing file that already has these imports.
+Then, define a test case:
+
+
+```py
+# Name the function, adding the `test_` prefix to the function name.
+# The `backend` argument (of Simulator class) is required.
+# The `backend` argument is specified on the command line.
+def test_name_of_test(backend):
+    # Import the _generated_ example function.
+    # Note that this example imports from `csdl.example.valid`, not
+    # `csdl.example`.
+    from csdl.examples.valid.ex_average_single_vector import example
+
+    # Use exec to import `Simulator` class.
+    exec('from {} import Simulator'.format(backend))
+
+    # Run the example using the chosen back end
+    sim = example(eval('Simulator'))
+
+    # Compute the desired output without using CSDL.
+    x = ...
+
+    # Compare expected output with actual computed output.
+    np.testing.assert_almost_equal(sim['x'], x)
+
+    # Compute the error for all partial derivatives in the model
+    partials_error = sim.check_partials(
+        includes=['x'],
+        out_stream=None,
+        compact_print=True,
+        method='cs')
+
+    # Check that the partial derivatives are accurate to specified
+    # tolerance.
+    sim.assert_check_partials(partials_error,
+                              atol=1.e-6,
+                              rtol=1.e-6)
+```
+
+The next section covers  how to generate worked example scripts from
+example functions to include in the documentation.
+
+## Generating Worked Example Scripts for Documentation
+
+`csdl` provides a script for generating example scripts from the
+example function definitions, which use the `Simulator` class from the
+`csdl_om` package.
+The difference between an example function and an example script is that
+the example function takes a `Simulator` class (not an object) as an
+argument so that `pytest` can call the function using any back end, and
+the example script runs as a standalone script, using the `Simulator`
+class from the `csdl_om` back end.
+The example script is necessary for generating worked examples shown
+in the final documentation.
+
+## Adding Worked Examples to Documentation
+
+- [ ] TODO: make script robust
