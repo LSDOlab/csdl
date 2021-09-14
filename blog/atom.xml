@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://lsdolab.github.io/csdl/blog</id>
+    <title>The Computational System Design Language Blog</title>
+    <updated>2019-05-28T00:00:00.000Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://lsdolab.github.io/csdl/blog"/>
+    <subtitle>The Computational System Design Language Blog</subtitle>
+    <icon>https://lsdolab.github.io/csdl/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[CSDL Blog Post]]></title>
+        <id>csdl-blog-post</id>
+        <link href="https://lsdolab.github.io/csdl/blog/csdl-blog-post"/>
+        <updated>2019-05-28T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[My first blog about CSDL.]]></summary>
+        <author>
+            <name>Victor Gandarillas</name>
+            <uri>https://github.com/vgandari</uri>
+        </author>
+    </entry>
+</feed>
