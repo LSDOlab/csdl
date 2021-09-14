@@ -17,9 +17,9 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '12.x'
-      # - uses: webfactory/ssh-agent@v0.5.0
-      #   with:
-      #     ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
+      - uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
 
       - name: Prepare environment, install back end
         run: |
@@ -34,7 +34,9 @@ jobs:
 
       - name: Generate Worked Examples
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USE_SSH: true
+          GIT_USER: vgucsd
         run: |
           here=`pwd`
           mkdir -p ${here}/docs/docs/worked_examples
@@ -43,13 +45,13 @@ jobs:
           ls ${here}/docs/docs/worked_examples
         shell: bash
 
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '12.x'
-      - uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
+      # - uses: actions/checkout@v2
+      # - uses: actions/setup-node@v1
+      #   with:
+      #     node-version: '12.x'
+      # - uses: webfactory/ssh-agent@v0.5.3
+      #   with:
+      #     ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
       - name: Release to GitHub Pages
         env:
           USE_SSH: true
