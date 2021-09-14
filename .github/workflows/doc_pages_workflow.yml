@@ -31,20 +31,21 @@ jobs:
         pip3 install -e .
       shell: bash
 
-    - name: Prepare Python repository
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        ls
-        git clone --depth 1 "https://token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" csdl
-        cd csdl
-      shell: bash
+    # - name: Prepare Python repository
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   run: |
+    #     ls
+    #     git clone --depth 1 "https://token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" csdl
+    #     cd csdl
+    #   shell: bash
 
     - name: Generate Worked Examples
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         here=`pwd`
+        echo $here
         mkdir -p ${here}/docs/docs/worked_examples
         python3 ${here}/csdl/utils/generate_worked_examples_mdx.py ${here}
         ls ${here}/docs/docs/worked_examples
