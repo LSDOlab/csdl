@@ -19,6 +19,8 @@ jobs:
 #        pip3 install -e ..
     steps:
     - name: Prepare environment, install back end
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }
       run: |
         echo "-----"
         pwd
