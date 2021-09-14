@@ -9,7 +9,7 @@ const katex = require('rehype-katex');
     title: 'The Computational System Design Language',
     tagline: 'The Language of Multidisciplinary Design Optimization',
     url: 'https://lsdolab.github.io',
-    baseUrl: '/csdl',
+    baseUrl: '/csdl/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
     favicon: 'img/favicon.ico',
