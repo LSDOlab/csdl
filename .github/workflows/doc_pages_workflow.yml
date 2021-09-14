@@ -83,6 +83,7 @@ jobs:
           GIT_USER: vgucsd
         run: |
           echo "BUILDING DOCS..."
+          ls
           git config --global user.email "vgandari@eng.ucsd.edu"
           git config --global user.name "vgucsd"
           if [ -e yarn.lock ]; then
