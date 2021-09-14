@@ -91,9 +91,6 @@ jobs:
           if [ -e yarn.lock ]; then
             echo "yarn i RUNNING"
             yarn install --frozen-lockfile
-          elif [ -e package-lock.json ]; then
-            echo "npm ci RUNNING"
-            npm ci
           else
             echo "npm i RUNNING"
             npm i
