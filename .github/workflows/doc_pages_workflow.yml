@@ -13,13 +13,13 @@ jobs:
     container: debian:buster-slim
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v1
       - uses: actions/setup-node@v1
         with:
           node-version: '12.x'
-      - uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
+      # - uses: webfactory/ssh-agent@v0.5.0
+      #   with:
+      #     ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
 
       - name: Prepare environment, install back end
         run: |
@@ -39,10 +39,20 @@ jobs:
           here=`pwd`
           mkdir -p ${here}/docs/docs/worked_examples
           python3 ${here}/csdl/utils/generate_worked_examples_mdx.py ${here}
-          echo "Worked Examples:"
           ls ${here}/docs/docs/worked_examples
         shell: bash
 
+  gh-release:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
       - name: Release to GitHub Pages
         env:
           USE_SSH: true
@@ -62,7 +72,6 @@ jobs:
             npm i
           fi
           npm run deploy
-        shell: bash
 
   # checks:
   #   needs: setup_repo
