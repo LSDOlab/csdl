@@ -49,7 +49,7 @@ clean_examples_directory = CSDLPATH + '/docs/docs/worked_examples/'
 print('Cleaning examples in {}'.format(examples_directory))
 print('Clean examples will be in {}'.format(clean_examples_directory))
 for filename in os.listdir(examples_directory):
-    # print(filename)
+    print(filename)
     if filename not in do_not_run:
         if filename[-3:] == '.py':
             filestr = open(examples_directory + filename,
