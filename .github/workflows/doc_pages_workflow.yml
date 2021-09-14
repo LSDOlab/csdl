@@ -39,9 +39,9 @@ jobs:
         here=`pwd`
         echo $here
         ls ${here}
-        mkdir -p ${here}/../docs/docs/worked_examples
-        ls ${here}/utils
-        python3 ${here}/utils/generate_worked_examples_mdx.py ${here}
+        mkdir -p ${here}/docs/docs/worked_examples
+        ls ${here}/csdl/utils
+        python3 ${here}/csdl/utils/generate_worked_examples_mdx.py ${here}
         ls ${here}/docs/docs/worked_examples
       shell: bash
 
