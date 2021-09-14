@@ -1,29 +1,175 @@
 name: docs_pages_workflow
 
-# execute this workflow automatically when a we push to master
 on:
+  pull_request:
+    branches: [master]
   push:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
 
-  build_docs_job:
+  setup_repo:
     runs-on: ubuntu-latest
     container: debian:buster-slim
 
     steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+    - uses: webfactory/ssh-agent@v0.5.0
+      with:
+        ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }
+
+    - name: Prepare environment, install back end
+      run: |
+        apt-get update
+        apt-get -y install python3-pip nodejs npm
+        pip3 install redbaron yapf
+        git clone --depth=1 https://github.com/lsdolab/csdl_om.git
+        pip3 install -e csdl_om/
+        pip3 install -e .
+      shell: bash
 
     - name: Prepare Python repository
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        apt-get update
         apt-get -y install git rsync make
         git clone --depth 1 "https://token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" .
       shell: bash
 
-    - name: Build docs and update pages
+    - name: Generate Worked Examples
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: "docs/build-docs.sh"
+      run: |
+        here=`pwd`
+        mkdir -p ${here}/docs/docs/worked_examples
+        python3 ${here}/csdl/utils/generate_worked_examples_mdx.py ${here}
+        ls ${here}/docs/docs/worked_examples
       shell: bash
+
+  checks:
+    needs: setup_repo
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
+      - name: Test Build
+        run: |
+          if [ -e yarn.lock ]; then
+            yarn install --frozen-lockfile
+          elif [ -e package-lock.json ]; then
+            npm ci
+          else
+            npm i
+          fi
+          npm run build
+
+  gh-release:
+    needs: setup_repo
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
+      - name: Release to GitHub Pages
+        env:
+          USE_SSH: true
+          GIT_USER: git
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "gh-actions"
+          if [ -e yarn.lock ]; then
+            yarn install --frozen-lockfile
+          elif [ -e package-lock.json ]; then
+            npm ci
+          else
+            npm i
+          fi
+          npm run deploy
+
+
+# # add README for gh-pages branch
+# cat > README.md <<EOF
+# # csdl
+# This branch contains the generated documentation pages for
+# [csdl](https://lsdolab.github.io/csdl).
+# EOF
+
+# # commit changes
+# ls -a
+# git add .
+# export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+# msg="Updating Docs for commit ${GITHUB_SHA} from ${GITHUB_REF} by ${GITHUB_ACTOR}"
+# git commit -am "${msg}"
+
+# # update gh-pages
+# git push deploy gh-pages --force
+# name: documentation
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  checks:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
+      - name: Test Build
+        run: |
+          if [ -e yarn.lock ]; then
+            yarn install --frozen-lockfile
+          elif [ -e package-lock.json ]; then
+            npm ci
+          else
+            npm i
+          fi
+          npm run build
+  gh-release:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
+      - name: Release to GitHub Pages
+        env:
+          USE_SSH: true
+          GIT_USER: git
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "gh-actions"
+          if [ -e yarn.lock ]; then
+            yarn install --frozen-lockfile
+          elif [ -e package-lock.json ]; then
+            npm ci
+          else
+            npm i
+          fi
+          npm run deploy
