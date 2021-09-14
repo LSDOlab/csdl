@@ -83,7 +83,10 @@ class Variable(Node):
     def __sub__(self, other):
         from csdl.operations.linear_combination import linear_combination
         if isinstance(other, Variable):
-            op = linear_combination(self, other, constant=0, coeffs=[1, -1])
+            op = linear_combination(self,
+                                    other,
+                                    constant=0,
+                                    coeffs=[1, -1])
         elif isinstance(other, (Number, np.ndarray)):
             op = linear_combination(self, constant=-other, coeffs=1)
         else:
@@ -127,7 +130,8 @@ class Variable(Node):
             op = power_combination(self, other, coeff=1, powers=[1, -1])
         elif isinstance(other, (Number, np.ndarray)):
             # TODO: check for near-zero values too
-            if other == 0 or (isinstance(other, np.ndarray) and np.any(other)):
+            if other == 0 or (isinstance(other, np.ndarray)
+                              and np.any(other)):
                 raise ZeroDivisionError(
                     "Dividing by zero-valued compile time constant is guaranteed to cause a divide by zero error at runtime"
                 )
@@ -144,7 +148,8 @@ class Variable(Node):
         from csdl.operations.power_combination import power_combination
         if isinstance(other, Variable):
             raise NotImplementedError(
-                "Raising a variable to a variable power is not yet supported")
+                "Raising a variable to a variable power is not yet supported"
+            )
         elif isinstance(other, (Number, np.ndarray)):
             op = power_combination(self, coeff=1, powers=other)
         else:
@@ -157,9 +162,7 @@ class Variable(Node):
 
     def __radd__(self, other):
         from csdl.operations.linear_combination import linear_combination
-        if isinstance(other, Variable):
-            op = linear_combination(other, self, coeffs=1, constant=0)
-        elif isinstance(other, (Number, np.ndarray)):
+        if isinstance(other, (Number, np.ndarray)):
             op = linear_combination(self, constant=other, coeffs=1)
         else:
             raise TypeError(
@@ -225,7 +228,8 @@ class Variable(Node):
             )
         if isinstance(other, Number):
             # TODO: check for near-zero values too
-            if other == 0 or (isinstance(other, np.ndarray) and np.any(other)):
+            if other == 0 or (isinstance(other, np.ndarray)
+                              and np.any(other)):
                 raise ZeroDivisionError(
                     "Dividing by zero-valued compile time constant is guaranteed to cause a divide by zero error at runtime"
                 )
@@ -253,7 +257,11 @@ class Variable(Node):
         # no duplicate keys are stored
         # NOTE: slices are unhashable, so we can't store slices directly
         if isinstance(key, int):
-            key = ((key, key + 1, None), )
+            if key < 0:
+                size = np.prod(self.shape)
+                key = ((size + key, size + key + 1, None), )
+            else:
+                key = ((key, key + 1, None), )
         elif isinstance(key, slice):
             key = (slice_to_tuple(
                 key,
@@ -300,7 +308,8 @@ class Variable(Node):
 
         # Create and store expression to return
         # TODO: clean up _decomp member names
-        val = self.val[tuple([slice(s[0], s[1], s[2]) for s in list(key)])]
+        val = self.val[tuple(
+            [slice(s[0], s[1], s[2]) for s in list(key)])]
         out = Output(None, op=self._decomp, shape=val.shape, val=val)
         self._decomp.outs.append(out)
         self._decomp.nouts = len(self._decomp.outs)
@@ -316,7 +325,8 @@ class Variable(Node):
     def add_dependency_node(self, dependency):
         if not isinstance(dependency, (Operation, Subgraph)):
             raise TypeError(
-                "Dependency of a Variable object must be an Operation object")
+                "Dependency of a Variable object must be an Operation object"
+            )
         if len(self.dependencies) > 0:
             raise TypeError(
                 "A Variable object can only have a single dependency, as only one operation can be an output for a given variable"
