@@ -14,76 +14,76 @@ jobs:
 
     steps:
 
-    - name: Prepare environment, install back end
-      run: |
-        apt-get update
+#        apt-get update
 #        apt-get -y install python3-pip git
 #        pip3 install redbaron yapf
 #        git clone --depth=1 https://github.com/lsdolab/csdl_om.git
 #        pip3 install -e csdl_om/
+    - name: Prepare environment, install back end
+      run: |
         ls
         pwd
         pip3 install -e .
       shell: bash
 
-  #   - name: Generate Worked Examples
-  #     env:
-  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #     run: |
-  #       here=`pwd`
-  #       mkdir -p ${here}/docs/docs/worked_examples
-  #       python3 ${here}/csdl/utils/generate_worked_examples_mdx.py ${here}
-  #       ls ${here}/docs/docs/worked_examples
-  #     shell: bash
+    - name: Generate Worked Examples
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        here=`pwd`
+        mkdir -p ${here}/docs/docs/worked_examples
+        python3 ${here}/csdl/utils/generate_worked_examples_mdx.py ${here}
+        ls ${here}/docs/docs/worked_examples
+      shell: bash
 
 
-  # checks:
-  #   needs: setup_repo
-  #   if: github.event_name != 'push'
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v1
-  #     - uses: actions/setup-node@v1
-  #       with:
-  #         node-version: '12.x'
-  #     - uses: webfactory/ssh-agent@v0.5.0
-  #       with:
-  #         ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
-  #     - name: Test Build
-  #       run: |
-  #         if [ -e yarn.lock ]; then
-  #           yarn install --frozen-lockfile
-  #         elif [ -e package-lock.json ]; then
-  #           npm ci
-  #         else
-  #           npm i
-  #         fi
-  #         npm run build
+  checks:
+    needs: setup_repo
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
+      - name: Test Build
+        run: |
+          if [ -e yarn.lock ]; then
+            yarn install --frozen-lockfile
+          elif [ -e package-lock.json ]; then
+            npm ci
+          else
+            npm i
+          fi
+          npm run build
 
-  # gh-release:
-  #   needs: setup_repo
-  #   if: github.event_name != 'pull_request'
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v1
-  #     - uses: actions/setup-node@v1
-  #       with:
-  #         node-version: '12.x'
-  #     - uses: webfactory/ssh-agent@v0.5.0
-  #       with:
-  #         ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
-  #     - name: Release to GitHub Pages
-  #       env:
-  #         USE_SSH: true
-  #         GIT_USER: vgucsd
-  #       run: |
-  #         git config --global user.email "vgandari@eng.ucsd.edu"
-  #         git config --global user.name "vgucsd"
-  #         if [ -e yarn.lock ]; then
-  #           yarn install --frozen-lockfile
-  #         elif [ -e package-lock.json ]; then
-  #           npm ci
-  #         else
-  #           npm i
-  #         fi
-  #         npm run deploy
+  gh-release:
+    needs: setup_repo
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
+      - name: Release to GitHub Pages
+        env:
+          USE_SSH: true
+          GIT_USER: vgucsd
+        run: |
+          git config --global user.email "vgandari@eng.ucsd.edu"
+          git config --global user.name "vgucsd"
+          if [ -e yarn.lock ]; then
+            yarn install --frozen-lockfile
+          elif [ -e package-lock.json ]; then
+            npm ci
+          else
+            npm i
+          fi
+          npm run deploy
