@@ -1,4 +1,5 @@
 from docstring_parser import parse
+import pathlib
 import re
 import os
 import inspect
@@ -50,13 +51,13 @@ def get_example_file_name(obj, py_file_path):
     if obj_name_snake_case[:len('error_')] == 'error_':
         prefix = 'error_'
         example_filename = py_file_path.rsplit(
-            '/', 1
-        )[-1][:-len('.py')] + '_' + obj_name_snake_case[len(prefix):] + '.py'
+            '/', 1)[-1][:-len('.py')] + '_' + obj_name_snake_case[
+                len(prefix):] + '.py'
     if obj_name_snake_case[:len('example_')] == 'example_':
         prefix = 'example_'
         example_filename = py_file_path.rsplit(
-            '/', 1
-        )[-1][:-len('.py')] + '_' + obj_name_snake_case[len(prefix):] + '.py'
+            '/', 1)[-1][:-len('.py')] + '_' + obj_name_snake_case[
+                len(prefix):] + '.py'
     return example_filename, prefix
 
 
@@ -68,12 +69,13 @@ def export_examples(
     # Python 3.9: use removesuffix
     example_class_definition_module = pkg_with_example_class_definitions.__name__ + '.examples'
     example_class_definition_directory = inspect.getfile(
-        pkg_with_example_class_definitions)[:-len('__init__.py')] + 'examples/'
+        pkg_with_example_class_definitions
+    )[:-len('__init__.py')] + 'examples/'
     for examples_file in os.listdir(example_class_definition_directory):
         suffix = '.py'
         if examples_file[-len(suffix):] == suffix:
-            example_classes_file_path = (example_class_definition_directory +
-                                         examples_file)
+            example_classes_file_path = (
+                example_class_definition_directory + examples_file)
 
             # gather imports
             import_statements = []
@@ -93,8 +95,8 @@ def export_examples(
             for obj in dict(members).values():
                 if inspect.isclass(obj):
                     print(
-                        'Generating example script for class {} from file {}'.
-                        format(obj.__name__, examples_file))
+                        'Generating example script for class {} from file {}'
+                        .format(obj.__name__, examples_file))
                     example_run_file_name, prefix = \
                         get_example_file_name(
                             obj, example_classes_file_path,
@@ -146,14 +148,15 @@ def export_examples(
                             example_script_string += 'print(sim[\'' + var + '\'])'
                             example_script_string += '\n'
 
-                        example_script_lines = ['def example(Simulator):'] + [
-                            ('    ' + line)
-                            for line in example_script_string.split('\n')
-                        ]
+                        example_script_lines = [
+                            'def example(Simulator):'
+                        ] + [('    ' + line) for line in
+                             example_script_string.split('\n')]
                         if prefix == 'example_':
                             example_script_lines += ['    return sim']
                         with open(example_run_file_path, 'w') as f:
-                            print('writing to file', example_run_file_path)
+                            print('writing to file',
+                                  example_run_file_path)
                             f.write('\n'.join(example_script_lines))
                             f.close()
 
@@ -167,6 +170,10 @@ def export_examples(
 # generate run scripts from examples in CSDL package using this
 # implementation of CSDL
 print('START: implementation-agnostic examples')
+pathlib.Path(lang_test_exceptions_directory).mkdir(parents=True,
+                                                   exist_ok=True)
+pathlib.Path(lang_test_computations_directory).mkdir(parents=True,
+                                                     exist_ok=True)
 export_examples(
     lang_pkg,
     lang_test_exceptions_directory,

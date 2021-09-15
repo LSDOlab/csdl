@@ -1,5 +1,5 @@
 import os
-import sys
+import pathlib
 from yapf.yapflib.yapf_api import FormatCode
 import inspect
 import csdl
@@ -43,11 +43,13 @@ do_not_run = [
     'ex_implicit_with_subsystems_visualize_internal_model.py'
 ]
 
-CSDLPATH = sys.argv[1]
-examples_directory = CSDLPATH + '/csdl/examples/valid/'
-clean_examples_directory = CSDLPATH + '/docs/docs/worked_examples/'
+CSDLPATH = inspect.getfile(lang_pkg)[:-len('__init__.py')]
+# CSDLPATH = sys.argv[1]
+examples_directory = CSDLPATH + 'examples/valid/'
+test_cases_directory = CSDLPATH + '../docs/docs/worked_examples/'
+pathlib.Path(test_cases_directory).mkdir(parents=True, exist_ok=True)
 print('Cleaning examples in {}'.format(examples_directory))
-print('Clean examples will be in {}'.format(clean_examples_directory))
+print('Clean examples will be in {}'.format(test_cases_directory))
 for filename in os.listdir(examples_directory):
     print(filename)
     if filename not in do_not_run:
@@ -59,7 +61,7 @@ for filename in os.listdir(examples_directory):
             for line in filestr[1:-1]:
                 clean_filestr_lines.append(unindent(line))
             trimlines(clean_filestr_lines)
-            new_path = clean_examples_directory + filename[:-3] + '.mdx'
+            new_path = test_cases_directory + filename[:-3] + '.mdx'
             print(new_path)
             outfile = open(new_path, 'w')
             clean_filestr, changed = FormatCode(
