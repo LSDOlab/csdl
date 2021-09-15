@@ -1,5 +1,4 @@
 # TODO: create workflow to check pull requests
-# TODO: remove unnecessary dependencies
 name: docs_pages_workflow
 
 on:
@@ -28,8 +27,6 @@ jobs:
         run: |
           # install required packages -- not sure if all are required
           sudo apt-get update
-          # sudo apt-get -y install python3-pip nodejs npm git rsync make
-          # pip3 install redbaron yapf
           sudo apt-get -y install python3-pip git
           pip3 install yapf
           ls
