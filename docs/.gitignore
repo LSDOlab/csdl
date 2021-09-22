@@ -21,3 +21,5 @@ yarn-error.log*
 
 # worked examples
 /docs/worked_examples
+
+*.mdx-e
