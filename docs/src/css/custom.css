@@ -7,15 +7,19 @@
 
 /* You can override the default Infima variables here. */
 
+
+/* UCSD colors */
+/* https://brand.ucsd.edu/logos-and-brand-elements/color-palette/index.html
+*/
+
 :root {
-    --ifm-color-primary: #FF4F00;
-    --ifm-color-primary-dark: #e64700;
-    --ifm-color-primary-darker: #d94300;
-    --ifm-color-primary-darkest: #b33700;
-    --ifm-color-primary-light: #ff611a;
-    --ifm-color-primary-lighter: #ff6926;
-    --ifm-color-primary-lightest: #ff844d;
-    --ifm-code-font-size: 95%;
+    --ifm-color-primary: #00629b;
+    --ifm-color-primary-dark: #00588b;
+    --ifm-color-primary-darker: #005384;
+    --ifm-color-primary-darkest: #00456d;
+    --ifm-color-primary-light: #006cab;
+    --ifm-color-primary-lighter: #0071b2;
+    --ifm-color-primary-lightest: #007fca;
 }
 
 .docusaurus-highlight-code-line {
