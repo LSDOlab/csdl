@@ -12,7 +12,7 @@ const katex = require('rehype-katex');
     baseUrl: '/csdl/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
-    favicon: 'img/favicon.ico',
+    favicon: 'img/favicon.svg',
     organizationName: 'lsdolab',
     projectName: 'csdl',
     trailingSlash: 'false',
@@ -49,10 +49,12 @@ const katex = require('rehype-katex');
     themeConfig:
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
+            hideableSidebar: true,
             navbar: {
                 logo: {
                     alt: 'CSDL',
                     src: 'img/logo.svg',
+                    srcDark: 'img/logo-dark.svg',
                 },
                 items: [
                     {
@@ -119,20 +121,25 @@ const katex = require('rehype-katex');
                     },
                     {
                         label: 'Zulip',
-                        href: 'https://twitter.com/docusaurus',
+                        href: 'https://csdl.zulipchat.com/',
                     },
                     ],
                 },
                 {
                     title: 'More',
-                    items: [{
-                        label: 'Blog',
-                        to: '/blog',
-                    },
-                    {
-                        label: 'GitHub',
-                        href: 'https://github.com/lsdolab/csdl',
-                    },
+                    items: [
+                        {
+                            label: 'Publications',
+                            to: '/publications',
+                        },
+                        {
+                            label: 'Blog',
+                            to: '/blog',
+                        },
+                        {
+                            label: 'GitHub',
+                            href: 'https://github.com/lsdolab/csdl',
+                        },
                     ],
                 },
                 ],
