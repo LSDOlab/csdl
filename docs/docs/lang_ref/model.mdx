@@ -10,8 +10,6 @@ sidebar_position: 1
 
 # csdl.core.model
 
-Model docs
-
 <a id="csdl.core.model.Model"></a>
 
 ## Model Objects
@@ -81,24 +79,26 @@ def define()
 ```
 
 User defined method to define runtime behavior.
+Note: the user never _calls_ this method. Only the `Simulator`
+class constructor calls this method.
 
 **Example**
 
-.. code-block:: python
+```py
+class Example(Model):
+    def define(self):
+        self.create_input('x')
+        m = 5
+        b = 3
+        y = m*x + b
+        self.register_output('y', y)
 
-    class Example(Model):
-        def define(self):
-            self.create_input('x')
-            m = 5
-            b = 3
-            y = m*x + b
-            self.register_output('y', y)
-
-    # compile using Simulator imported from back end...
-    sim = Simulator(Example())
-    sim['x'] = -3/5
-    sim.run()
-    print(sim['y']) # expect 0
+# compile using Simulator imported from back end...
+sim = Simulator(Example())
+sim['x'] = -3/5
+sim.run()
+print(sim['y']) # expect 0
+```
 
 <a id="csdl.core.model.Model.print_var"></a>
 

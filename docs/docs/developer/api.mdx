@@ -9,8 +9,6 @@ title: Developer API
 
 # csdl.core.model
 
-Model docs
-
 <a id="csdl.core.model.build_symbol_table"></a>
 
 ### build\_symbol\_table
@@ -135,24 +133,26 @@ def define()
 ```
 
 User defined method to define runtime behavior.
+Note: the user never _calls_ this method. Only the `Simulator`
+class constructor calls this method.
 
 **Example**
 
-.. code-block:: python
+```py
+class Example(Model):
+    def define(self):
+        self.create_input('x')
+        m = 5
+        b = 3
+        y = m*x + b
+        self.register_output('y', y)
 
-    class Example(Model):
-        def define(self):
-            self.create_input('x')
-            m = 5
-            b = 3
-            y = m*x + b
-            self.register_output('y', y)
-
-    # compile using Simulator imported from back end...
-    sim = Simulator(Example())
-    sim['x'] = -3/5
-    sim.run()
-    print(sim['y']) # expect 0
+# compile using Simulator imported from back end...
+sim = Simulator(Example())
+sim['x'] = -3/5
+sim.run()
+print(sim['y']) # expect 0
+```
 
 <a id="csdl.core.model.Model.print_var"></a>
 
@@ -438,6 +438,9 @@ def add_diag(A, nodes, indices=dict(), implicit_nodes=dict(), p=0, indent='')
 def add_off_diag(A, model, indices)
 ```
 
+
+
+
 <a id="csdl.core.simulator_base"></a>
 
 # csdl.core.simulator\_base
@@ -602,8 +605,8 @@ result: Return type of ``check_partials``
 def visualize_model()
 ```
 
-A for the back end to provide its own visualization of the
-model.
+A method for the back end to provide its own visualization of
+the model.
 
 <a id="csdl.core.simulator_base.SimulatorBase.objective"></a>
 
@@ -687,6 +690,9 @@ def residuals_jacobian()
 
 Method to provide optimizer with total derivatives of
 residuals with respect to design variables
+
+
+
 
 <a id="csdl.core.explicit_operation"></a>
 
@@ -779,6 +785,9 @@ matrix-vector product
                     d_inputs['length'] += inputs['width'] * d_outputs['area']
                 if 'width' in d_inputs:
                     d_inputs['width'] += inputs['length'] * d_outputs['area']
+
+
+
 
 <a id="csdl.core.implicit_operation"></a>
 
@@ -943,6 +952,9 @@ matrix-vector product.
                         d_inputs['b'] += x * d_residuals['x']
                     if 'c' in d_inputs:
                         d_inputs['c'] += d_residuals['x']
+
+
+
 
 <a id="csdl.core.node"></a>
 
@@ -1263,6 +1275,9 @@ Print the graph starting at this node (debugging tool)
 def get_num_dependents()
 ```
 
+
+
+
 <a id="csdl.core.variable"></a>
 
 # csdl.core.variable
@@ -1388,6 +1403,401 @@ def __getitem__(key: Union[int, slice, Tuple[slice]])
 ```
 
 <a id="csdl.core.variable.Variable.add_dependency_node"></a>
+
+### add\_dependency\_node
+
+```python
+def add_dependency_node(dependency)
+```
+
+
+
+
+<a id="csdl.core.output"></a>
+
+# csdl.core.output
+
+<a id="csdl.core.output.Output"></a>
+
+## Output Objects
+
+```python
+class Output(Variable)
+```
+
+Base class for outputs; used to prevent circular imports
+
+<a id="csdl.core.output.Output.__init__"></a>
+
+### \_\_init\_\_
+
+```python
+def __init__(name, val=1.0, shape=(1, ), src_indices=None, flat_src_indices=None, units=None, desc='', tags=None, shape_by_conn=False, copy_shape=None, distributed=None, op=None, res_units=None, lower=None, upper=None, ref=1.0, ref0=0.0, res_ref=1.0, *args, **kwargs, *, ,)
+```
+
+
+
+
+<a id="csdl.core.explicit_output"></a>
+
+# csdl.core.explicit\_output
+
+<a id="csdl.core.explicit_output.ExplicitOutput"></a>
+
+## ExplicitOutput Objects
+
+```python
+class ExplicitOutput(Output)
+```
+
+Class for creating an explicit output
+
+<a id="csdl.core.explicit_output.ExplicitOutput.__init__"></a>
+
+### \_\_init\_\_
+
+```python
+def __init__(name, val=1.0, shape: Tuple[int] = (1, ), units=None, desc='', tags=None, shape_by_conn=False, copy_shape=None, res_units=None, lower=None, upper=None, ref=1.0, ref0=0.0, res_ref=1.0, *args, **kwargs, *, ,)
+```
+
+Initialize explicit output
+
+**Parameters**
+
+name: str
+    Name of variable to compute explicitly
+shape: Tuple[int]
+    Shape of variable to compute explicitly
+val: Number or ndarray
+    Initial value of variable to compute explicitly
+
+<a id="csdl.core.explicit_output.ExplicitOutput.define"></a>
+
+### define
+
+```python
+def define(var: Variable)
+```
+
+Define expression (in terms of ``self``) that computes value for
+this output. This method defines a cyclic relationship, which
+requires an iterative solver to converge.
+
+**Parameters**
+
+var: Variable
+    The expression to compute iteratively until convergence
+
+<a id="csdl.core.explicit_output.ExplicitOutput.__setitem__"></a>
+
+### \_\_setitem\_\_
+
+```python
+def __setitem__(key: Union[int, slice, Tuple[slice]], var: Variable)
+```
+
+
+
+
+<a id="csdl.core.operation"></a>
+
+# csdl.core.operation
+
+<a id="csdl.core.operation.Operation"></a>
+
+## Operation Objects
+
+```python
+class Operation(Node)
+```
+
+<a id="csdl.core.operation.Operation.__init__"></a>
+
+### \_\_init\_\_
+
+```python
+def __init__(*args, **kwargs, *, ,)
+```
+
+<a id="csdl.core.operation.Operation.add_dependency_node"></a>
+
+### add\_dependency\_node
+
+```python
+def add_dependency_node(dependency)
+```
+
+
+
+
+<a id="csdl.core.standard_operation"></a>
+
+# csdl.core.standard\_operation
+
+<a id="csdl.core.standard_operation.StandardOperation"></a>
+
+## StandardOperation Objects
+
+```python
+class StandardOperation(Operation)
+```
+
+<a id="csdl.core.standard_operation.StandardOperation.__init__"></a>
+
+### \_\_init\_\_
+
+```python
+def __init__(*args, **kwargs)
+```
+
+<a id="csdl.core.standard_operation.StandardOperation.define_compute_strings"></a>
+
+### define\_compute\_strings
+
+```python
+def define_compute_strings()
+```
+
+
+
+
+<a id="csdl.core.custom_operation"></a>
+
+# csdl.core.custom\_operation
+
+<a id="csdl.core.custom_operation.CustomOperation"></a>
+
+## CustomOperation Objects
+
+```python
+class CustomOperation(Operation)
+```
+
+<a id="csdl.core.custom_operation.CustomOperation.__init__"></a>
+
+### \_\_init\_\_
+
+```python
+def __init__(*args, **kwargs)
+```
+
+<a id="csdl.core.custom_operation.CustomOperation.initialize"></a>
+
+### initialize
+
+```python
+def initialize()
+```
+
+User defined method to declare parameter values. Parameters are
+compile time constants (neither inputs nor outputs to the model)
+and cannot be updated at runtime. Parameters are intended to
+make a ``CustomOperation`` subclass definition generic, and therefore
+reusable. The example below shows how a ``CustomOperation`` subclass
+definition uses parameters and how the user can set parameters
+when constructing the example ``CustomOperation`` subclass. Note
+that the user never instantiates nor inherits directly from the
+``CustomOperation`` base class.
+
+**Example**
+
+.. code-block:: python
+
+    # in this example, we inherit from ExplicitOperation, but
+    # the user can also inherit from ImplicitOperation
+    class Example(ExplicitOperation):
+        def initialize(self):
+            self.parameters.declare('in_name', types=str)
+            self.parameters.declare('out_name', types=str)
+
+        def define(self):
+            # use parameters declared in ``initialize``
+            in_name = self.parameters['in_name']
+            out_name = self.parameters['out_name']
+
+            self.add_input(in_name)
+            self.add_output(out_name)
+            self.declare_derivatives(out_name, in_name)
+
+        # define run time behavior by defining other methods...
+
+    # compile using Simulator imported from back end...
+    sim = Simulator(
+        Example(
+            in_name='x',
+            out_name='y',
+        ),
+    )
+
+<a id="csdl.core.custom_operation.CustomOperation.define"></a>
+
+### define
+
+```python
+def define()
+```
+
+User defined method to define custom operation
+
+**Example**
+
+.. code-block:: python
+
+    def define(self):
+        self.add_input('Cl')
+        self.add_input('Cd')
+        self.add_input('rho')
+        self.add_input('V')
+        self.add_input('S')
+        self.add_output('L')
+        self.add_output('D')
+
+        # declare derivatives of all outputs wrt all inputs
+        self.declare_derivatives('*', '*'))
+
+<a id="csdl.core.custom_operation.CustomOperation.add_input"></a>
+
+### add\_input
+
+```python
+def add_input(name, val=1.0, shape=None, src_indices=None, flat_src_indices=None, units=None, desc='', tags=None, shape_by_conn=False, copy_shape=None)
+```
+
+Add an input to this operation.
+
+**Example**
+
+.. code-block:: python
+
+    class Example(ExplicitOperation):
+        def define(self):
+            self.add_input('Cl')
+            self.add_input('Cd')
+            self.add_input('rho')
+            self.add_input('V')
+            self.add_input('S')
+            self.add_output('L')
+            self.add_output('D')
+
+        # ...
+
+    class Example(ImplicitOperation):
+        def define(self):
+            self.add_input('a', val=1.)
+            self.add_input('b', val=-4.)
+            self.add_input('c', val=3.)
+            self.add_output('x', val=0.)
+
+        # ...
+
+<a id="csdl.core.custom_operation.CustomOperation.add_output"></a>
+
+### add\_output
+
+```python
+def add_output(name, val=1.0, shape=None, units=None, res_units=None, desc='', lower=None, upper=None, ref=1.0, ref0=0.0, res_ref=1.0, tags=None, shape_by_conn=False, copy_shape=None)
+```
+
+Add an output to this operation.
+
+**Example**
+
+.. code-block:: python
+
+    class Example(ExplicitOperation):
+        def define(self):
+            self.add_input('Cl')
+            self.add_input('Cd')
+            self.add_input('rho')
+            self.add_input('V')
+            self.add_input('S')
+            self.add_output('L')
+            self.add_output('D')
+
+        # ...
+
+    class Example(ImplicitOperation):
+        def define(self):
+            self.add_input('a', val=1.)
+            self.add_input('b', val=-4.)
+            self.add_input('c', val=3.)
+            self.add_output('x', val=0.)
+
+        # ...
+
+<a id="csdl.core.custom_operation.CustomOperation.declare_derivatives"></a>
+
+### declare\_derivatives
+
+```python
+def declare_derivatives(of, wrt, dependent=True, rows=None, cols=None, val=None, method='exact', step=None, form=None, step_calc=None)
+```
+
+Declare partial derivatives of each output with respect to each
+input (ExplicitOperation) or each residual associated with an output with
+respect to the input/output (ImplicitOperation).
+
+.. code-block:: python
+
+    class Example(ExplicitOperation):
+        def define(self):
+            self.add_input('Cl')
+            self.add_input('Cd')
+            self.add_input('rho')
+            self.add_input('V')
+            self.add_input('S')
+            self.add_output('L')
+            self.add_output('D')
+
+            # declare derivatives of all outputs wrt all inputs
+            self.declare_derivatives('*', '*')
+
+        # ...
+
+    class Example(ImplicitOperation):
+        def define(self):
+            self.add_input('a', val=1.)
+            self.add_input('b', val=-4.)
+            self.add_input('c', val=3.)
+            self.add_output('x', val=0.)
+            # declare derivative of residual associated with x
+            # wrt x
+            self.declare_derivatives('x', 'x')
+            # declare derivative of residual associated with x
+            # wrt a, b, c
+            self.declare_derivatives('x', ['a','b','c'])
+
+            self.linear_solver = ScipyKrylov()
+            self.nonlinear_solver = NewtonSolver(solve_subsystems=False)
+
+        # ...
+
+
+
+
+<a id="csdl.core.subgraph"></a>
+
+# csdl.core.subgraph
+
+<a id="csdl.core.subgraph.Subgraph"></a>
+
+## Subgraph Objects
+
+```python
+class Subgraph(Node)
+```
+
+Class for declaring an input variable
+
+<a id="csdl.core.subgraph.Subgraph.__init__"></a>
+
+### \_\_init\_\_
+
+```python
+def __init__(name: str, submodel, *args, *, promotes=None, promotes_inputs=None, promotes_outputs=None, min_procs=1, max_procs=None, proc_weight=1.0, **kwargs, ,)
+```
+
+<a id="csdl.core.subgraph.Subgraph.add_dependency_node"></a>
 
 ### add\_dependency\_node
 

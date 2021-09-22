@@ -6,6 +6,212 @@ sidebar_position: 3
 ------------------------------------------------------------------------
 
 
+<a id="csdl.core.custom_operation"></a>
+
+# csdl.core.custom\_operation
+
+<a id="csdl.core.custom_operation.CustomOperation"></a>
+
+## CustomOperation Objects
+
+```python
+class CustomOperation(Operation)
+```
+
+<a id="csdl.core.custom_operation.CustomOperation.initialize"></a>
+
+### initialize
+
+```python
+def initialize()
+```
+
+User defined method to declare parameter values. Parameters are
+compile time constants (neither inputs nor outputs to the model)
+and cannot be updated at runtime. Parameters are intended to
+make a ``CustomOperation`` subclass definition generic, and therefore
+reusable. The example below shows how a ``CustomOperation`` subclass
+definition uses parameters and how the user can set parameters
+when constructing the example ``CustomOperation`` subclass. Note
+that the user never instantiates nor inherits directly from the
+``CustomOperation`` base class.
+
+**Example**
+
+.. code-block:: python
+
+    # in this example, we inherit from ExplicitOperation, but
+    # the user can also inherit from ImplicitOperation
+    class Example(ExplicitOperation):
+        def initialize(self):
+            self.parameters.declare('in_name', types=str)
+            self.parameters.declare('out_name', types=str)
+
+        def define(self):
+            # use parameters declared in ``initialize``
+            in_name = self.parameters['in_name']
+            out_name = self.parameters['out_name']
+
+            self.add_input(in_name)
+            self.add_output(out_name)
+            self.declare_derivatives(out_name, in_name)
+
+        # define run time behavior by defining other methods...
+
+    # compile using Simulator imported from back end...
+    sim = Simulator(
+        Example(
+            in_name='x',
+            out_name='y',
+        ),
+    )
+
+<a id="csdl.core.custom_operation.CustomOperation.define"></a>
+
+### define
+
+```python
+def define()
+```
+
+User defined method to define custom operation
+
+**Example**
+
+.. code-block:: python
+
+    def define(self):
+        self.add_input('Cl')
+        self.add_input('Cd')
+        self.add_input('rho')
+        self.add_input('V')
+        self.add_input('S')
+        self.add_output('L')
+        self.add_output('D')
+
+        # declare derivatives of all outputs wrt all inputs
+        self.declare_derivatives('*', '*'))
+
+<a id="csdl.core.custom_operation.CustomOperation.add_input"></a>
+
+### add\_input
+
+```python
+def add_input(name, val=1.0, shape=None, src_indices=None, flat_src_indices=None, units=None, desc='', tags=None, shape_by_conn=False, copy_shape=None)
+```
+
+Add an input to this operation.
+
+**Example**
+
+.. code-block:: python
+
+    class Example(ExplicitOperation):
+        def define(self):
+            self.add_input('Cl')
+            self.add_input('Cd')
+            self.add_input('rho')
+            self.add_input('V')
+            self.add_input('S')
+            self.add_output('L')
+            self.add_output('D')
+
+        # ...
+
+    class Example(ImplicitOperation):
+        def define(self):
+            self.add_input('a', val=1.)
+            self.add_input('b', val=-4.)
+            self.add_input('c', val=3.)
+            self.add_output('x', val=0.)
+
+        # ...
+
+<a id="csdl.core.custom_operation.CustomOperation.add_output"></a>
+
+### add\_output
+
+```python
+def add_output(name, val=1.0, shape=None, units=None, res_units=None, desc='', lower=None, upper=None, ref=1.0, ref0=0.0, res_ref=1.0, tags=None, shape_by_conn=False, copy_shape=None)
+```
+
+Add an output to this operation.
+
+**Example**
+
+.. code-block:: python
+
+    class Example(ExplicitOperation):
+        def define(self):
+            self.add_input('Cl')
+            self.add_input('Cd')
+            self.add_input('rho')
+            self.add_input('V')
+            self.add_input('S')
+            self.add_output('L')
+            self.add_output('D')
+
+        # ...
+
+    class Example(ImplicitOperation):
+        def define(self):
+            self.add_input('a', val=1.)
+            self.add_input('b', val=-4.)
+            self.add_input('c', val=3.)
+            self.add_output('x', val=0.)
+
+        # ...
+
+<a id="csdl.core.custom_operation.CustomOperation.declare_derivatives"></a>
+
+### declare\_derivatives
+
+```python
+def declare_derivatives(of, wrt, dependent=True, rows=None, cols=None, val=None, method='exact', step=None, form=None, step_calc=None)
+```
+
+Declare partial derivatives of each output with respect to each
+input (ExplicitOperation) or each residual associated with an output with
+respect to the input/output (ImplicitOperation).
+
+.. code-block:: python
+
+    class Example(ExplicitOperation):
+        def define(self):
+            self.add_input('Cl')
+            self.add_input('Cd')
+            self.add_input('rho')
+            self.add_input('V')
+            self.add_input('S')
+            self.add_output('L')
+            self.add_output('D')
+
+            # declare derivatives of all outputs wrt all inputs
+            self.declare_derivatives('*', '*')
+
+        # ...
+
+    class Example(ImplicitOperation):
+        def define(self):
+            self.add_input('a', val=1.)
+            self.add_input('b', val=-4.)
+            self.add_input('c', val=3.)
+            self.add_output('x', val=0.)
+            # declare derivative of residual associated with x
+            # wrt x
+            self.declare_derivatives('x', 'x')
+            # declare derivative of residual associated with x
+            # wrt a, b, c
+            self.declare_derivatives('x', ['a','b','c'])
+
+            self.linear_solver = ScipyKrylov()
+            self.nonlinear_solver = NewtonSolver(solve_subsystems=False)
+
+        # ...
+
+
+
+
 <a id="csdl.core.explicit_operation"></a>
 
 # csdl.core.explicit\_operation
