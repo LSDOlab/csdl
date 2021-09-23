@@ -108,10 +108,10 @@ class SimulatorBase:
         """
         raise NotImplementedError(msg)
 
-    def visualize_model(self):
+    def visualize_implementation(self):
         """
-        A for the back end to provide its own visualization of the
-        model.
+        A method for the back end to provide its own visualization of
+        the model.
         """
         raise NotImplementedError(msg)
 
