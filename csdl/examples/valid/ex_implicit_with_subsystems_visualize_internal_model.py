@@ -1,9 +1,9 @@
 def example(Simulator):
-    from csdl import Model, ImplicitModel, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     import numpy as np
     
     
-    class ExampleWithSubsystemsVisualizeInternalModel(ImplicitModel):
+    class ExampleWithSubsystemsVisualizeInternalModel(Model):
         def define(self):
             self.visualize = True
     

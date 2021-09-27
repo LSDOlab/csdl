@@ -1,9 +1,9 @@
 def example(Simulator):
-    from csdl import Model, NonlinearBlockGS, ScipyKrylov, NewtonSolver
-    import csdl
+    from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     import numpy as np
-
-    class ExampleCycles(Model):
+    
+    
+    class ExampleFixedPointIteration(Model):
         def define(self):
             # x == (3 + x - 2 * x**2)**(1 / 4)
             m1 = Model()
@@ -18,12 +18,11 @@ def example(Simulator):
                 # nonlinear_solver=NonlinearBlockGS(maxiter=100),
                 linear_solver=ScipyKrylov(),
             )
-
+    
             # x == ((x + 3 - x**4) / 2)**(1 / 4)
             m2 = Model()
             x = m2.declare_variable('b')
-            r = m2.register_output('r',
-                                   x - ((x + 3 - x**4) / 2)**(1 / 4))
+            r = m2.register_output('r', x - ((x + 3 - x**4) / 2)**(1 / 4))
             m2.print_var(r)
             b = self.implicit_operation(
                 states=['b'],
@@ -33,7 +32,7 @@ def example(Simulator):
                 # nonlinear_solver=NonlinearBlockGS(maxiter=100),
                 linear_solver=ScipyKrylov(),
             )
-
+    
             # x == 0.5 * x
             m3 = Model()
             x = m3.declare_variable('c')
@@ -47,21 +46,16 @@ def example(Simulator):
                 # nonlinear_solver=NonlinearBlockGS(maxiter=100),
                 linear_solver=ScipyKrylov(),
             )
-
-    sim = Simulator(ExampleCycles())
+    
+    
+    sim = Simulator(ExampleFixedPointIteration())
     sim.run()
-
+    
     print('a', sim['a'].shape)
     print(sim['a'])
     print('b', sim['b'].shape)
     print(sim['b'])
     print('c', sim['c'].shape)
     print(sim['c'])
-
+    
     return sim
-
-
-from csdl_om import Simulator
-
-sim = example(Simulator)
-# sim.visualize_implementation(recursive=True)

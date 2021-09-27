@@ -1,25 +1,29 @@
 def example(Simulator):
-    from csdl import Model, ImplicitModel, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     import numpy as np
     
     
-    class ExampleBracketedArray(ImplicitModel):
+    class ExampleBracketedArray(Model):
         def define(self):
-            with self.create_model('sys') as model:
-                model.create_input('a', val=[1, -1])
-                model.create_input('b', val=[-4, 4])
-                model.create_input('c', val=[3, -3])
+            with self.create_submodel('sys') as model:
+                a = model.declare_variable('a', val=[1, -1])
+                b = model.declare_variable('b', val=[-4, 4])
+                c = model.declare_variable('c', val=[3, -3])
+                x = model.declare_variable('x', shape=(2, ))
+                y = a * x**2 + b * x + c
+                model.register_output('y', y)
+    
             a = self.declare_variable('a', shape=(2, ))
             b = self.declare_variable('b', shape=(2, ))
             c = self.declare_variable('c', shape=(2, ))
-    
-            x = self.create_implicit_output('x', shape=(2, ))
-            y = a * x**2 + b * x + c
-    
-            x.define_residual_bracketed(
-                y,
-                x1=[0, 2.],
-                x2=[2, np.pi],
+            x = self.bracketed_search(
+                a,
+                b,
+                c,
+                states=['x'],
+                residuals=['y'],
+                model=model,
+                brackets=dict(y=([0, 2.], [2, np.pi])),
             )
     
     
