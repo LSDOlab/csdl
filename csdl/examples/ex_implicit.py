@@ -42,7 +42,6 @@ class ExampleFixedPointIteration(Model):
         m1 = Model()
         x = m1.declare_variable('a')
         r = m1.register_output('r', x - (3 + x - 2 * x**2)**(1 / 4))
-        m1.print_var(r)
         a = self.implicit_operation(
             states=['a'],
             residuals=['r'],
@@ -56,7 +55,6 @@ class ExampleFixedPointIteration(Model):
         m2 = Model()
         x = m2.declare_variable('b')
         r = m2.register_output('r', x - ((x + 3 - x**4) / 2)**(1 / 4))
-        m2.print_var(r)
         b = self.implicit_operation(
             states=['b'],
             residuals=['r'],
@@ -70,7 +68,6 @@ class ExampleFixedPointIteration(Model):
         m3 = Model()
         x = m3.declare_variable('c')
         r = m3.register_output('r', x - 0.5 * x)
-        m3.print_var(r)
         c = self.implicit_operation(
             states=['c'],
             residuals=['r'],
@@ -162,7 +159,6 @@ class ExampleWithSubsystems(Model):
         r = m3.declare_variable('r')
         y = m3.declare_variable('y')
         m3.register_output('z', a * y**2 + b * y + c - r)
-        m3.print_var(y)
 
         a = self.implicit_operation(
             states=['a'],

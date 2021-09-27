@@ -28,7 +28,6 @@ def example(Simulator):
             r = m3.declare_variable('r')
             y = m3.declare_variable('y')
             m3.register_output('z', a * y**2 + b * y + c - r)
-            m3.print_var(y)
     
             a = self.implicit_operation(
                 states=['a'],

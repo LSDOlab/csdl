@@ -9,7 +9,6 @@ def example(Simulator):
             m1 = Model()
             x = m1.declare_variable('a')
             r = m1.register_output('r', x - (3 + x - 2 * x**2)**(1 / 4))
-            m1.print_var(r)
             a = self.implicit_operation(
                 states=['a'],
                 residuals=['r'],
@@ -23,7 +22,6 @@ def example(Simulator):
             m2 = Model()
             x = m2.declare_variable('b')
             r = m2.register_output('r', x - ((x + 3 - x**4) / 2)**(1 / 4))
-            m2.print_var(r)
             b = self.implicit_operation(
                 states=['b'],
                 residuals=['r'],
@@ -37,7 +35,6 @@ def example(Simulator):
             m3 = Model()
             x = m3.declare_variable('c')
             r = m3.register_output('r', x - 0.5 * x)
-            m3.print_var(r)
             c = self.implicit_operation(
                 states=['c'],
                 residuals=['r'],
