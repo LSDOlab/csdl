@@ -62,8 +62,6 @@ class Variable(Node):
     def __neg__(self):
         from csdl.operations.linear_combination import linear_combination
         op = linear_combination(self, coeffs=-1, constant=0)
-        for out in op.outs:
-            out.add_dependency_node(op)
         return op.outs[0]
 
     def __add__(self, other):
@@ -76,8 +74,6 @@ class Variable(Node):
             raise TypeError(
                 "Cannot add {} to an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
         return op.outs[0]
 
     def __sub__(self, other):
@@ -93,8 +89,6 @@ class Variable(Node):
             raise TypeError(
                 "Cannot subtract an object from {} other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
         return op.outs[0]
 
     def __mul__(self, other):
@@ -115,8 +109,6 @@ class Variable(Node):
             raise TypeError(
                 "Cannot multiply {} by an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
         return op.outs[0]
 
     def __truediv__(self, other):
@@ -140,8 +132,6 @@ class Variable(Node):
             raise TypeError(
                 "Cannot multiply {} by an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
         return op.outs[0]
 
     def __pow__(self, other):
@@ -156,8 +146,6 @@ class Variable(Node):
             raise TypeError(
                 "Cannot multiply {} by an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
         return op.outs[0]
 
     def __radd__(self, other):
@@ -168,8 +156,6 @@ class Variable(Node):
             raise TypeError(
                 "Cannot add {} to an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
         return op.outs[0]
 
     def __rsub__(self, other):
@@ -184,8 +170,6 @@ class Variable(Node):
             raise TypeError(
                 "Cannot add {} to an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
         return op.outs[0]
 
     def __rmul__(self, other):
@@ -211,8 +195,6 @@ class Variable(Node):
             raise TypeError(
                 "Cannot multiply {} by an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
         return op.outs[0]
 
     def __rtruediv__(self, other):
@@ -238,8 +220,6 @@ class Variable(Node):
             raise TypeError(
                 "Cannot divide {} by an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
         return op.outs[0]
 
     def __getitem__(
@@ -314,7 +294,6 @@ class Variable(Node):
         self._decomp.outs.append(out)
         self._decomp.nouts = len(self._decomp.outs)
         self._decomp._key_out_pairs[key] = out
-        out.add_dependency_node(self._decomp)
         self._decomp.src_indices[out] = src_indices
 
         return out

@@ -17,13 +17,67 @@ class CustomOperation(Operation):
 
     def initialize(self):
         """
-        Optional user defined method to set parameters
+        User defined method to declare parameter values. Parameters are
+        compile time constants (neither inputs nor outputs to the model)
+        and cannot be updated at runtime. Parameters are intended to
+        make a ``CustomOperation`` subclass definition generic, and therefore
+        reusable. The example below shows how a ``CustomOperation`` subclass
+        definition uses parameters and how the user can set parameters
+        when constructing the example ``CustomOperation`` subclass. Note
+        that the user never instantiates nor inherits directly from the
+        ``CustomOperation`` base class.
+
+        **Example**
+
+        .. code-block:: python
+
+            # in this example, we inherit from ExplicitOperation, but
+            # the user can also inherit from ImplicitOperation
+            class Example(ExplicitOperation):
+                def initialize(self):
+                    self.parameters.declare('in_name', types=str)
+                    self.parameters.declare('out_name', types=str)
+
+                def define(self):
+                    # use parameters declared in ``initialize``
+                    in_name = self.parameters['in_name']
+                    out_name = self.parameters['out_name']
+
+                    self.add_input(in_name)
+                    self.add_output(out_name)
+                    self.declare_derivatives(out_name, in_name)
+
+                # define run time behavior by defining other methods...
+
+            # compile using Simulator imported from back end...
+            sim = Simulator(
+                Example(
+                    in_name='x',
+                    out_name='y',
+                ),
+            )
         """
         pass
 
     def define(self):
         """
         User defined method to define custom operation
+
+        **Example**
+
+        .. code-block:: python
+
+            def define(self):
+                self.add_input('Cl')
+                self.add_input('Cd')
+                self.add_input('rho')
+                self.add_input('V')
+                self.add_input('S')
+                self.add_output('L')
+                self.add_output('D')
+
+                # declare derivatives of all outputs wrt all inputs
+                self.declare_derivatives('*', '*'))
         """
         pass
 
@@ -40,6 +94,34 @@ class CustomOperation(Operation):
         shape_by_conn=False,
         copy_shape=None,
     ):
+        """
+        Add an input to this operation.
+
+        **Example**
+
+        .. code-block:: python
+
+            class Example(ExplicitOperation):
+                def define(self):
+                    self.add_input('Cl')
+                    self.add_input('Cd')
+                    self.add_input('rho')
+                    self.add_input('V')
+                    self.add_input('S')
+                    self.add_output('L')
+                    self.add_output('D')
+
+                # ...
+
+            class Example(ImplicitOperation):
+                def define(self):
+                    self.add_input('a', val=1.)
+                    self.add_input('b', val=-4.)
+                    self.add_input('c', val=3.)
+                    self.add_output('x', val=0.)
+
+                # ...
+        """
         if name in self.input_meta.keys():
             raise KeyError(name +
                            ' was already declared an input of this Operation')
@@ -75,6 +157,34 @@ class CustomOperation(Operation):
         shape_by_conn=False,
         copy_shape=None,
     ):
+        """
+        Add an output to this operation.
+
+        **Example**
+
+        .. code-block:: python
+
+            class Example(ExplicitOperation):
+                def define(self):
+                    self.add_input('Cl')
+                    self.add_input('Cd')
+                    self.add_input('rho')
+                    self.add_input('V')
+                    self.add_input('S')
+                    self.add_output('L')
+                    self.add_output('D')
+
+                # ...
+
+            class Example(ImplicitOperation):
+                def define(self):
+                    self.add_input('a', val=1.)
+                    self.add_input('b', val=-4.)
+                    self.add_input('c', val=3.)
+                    self.add_output('x', val=0.)
+
+                # ...
+        """
         if name in self.input_meta.keys():
             raise KeyError(name +
                            ' was already declared an input of this Operation')
@@ -111,6 +221,46 @@ class CustomOperation(Operation):
         form=None,
         step_calc=None,
     ):
+        """
+        Declare partial derivatives of each output with respect to each
+        input (ExplicitOperation) or each residual associated with an output with
+        respect to the input/output (ImplicitOperation).
+
+        .. code-block:: python
+
+            class Example(ExplicitOperation):
+                def define(self):
+                    self.add_input('Cl')
+                    self.add_input('Cd')
+                    self.add_input('rho')
+                    self.add_input('V')
+                    self.add_input('S')
+                    self.add_output('L')
+                    self.add_output('D')
+
+                    # declare derivatives of all outputs wrt all inputs
+                    self.declare_derivatives('*', '*')
+
+                # ...
+
+            class Example(ImplicitOperation):
+                def define(self):
+                    self.add_input('a', val=1.)
+                    self.add_input('b', val=-4.)
+                    self.add_input('c', val=3.)
+                    self.add_output('x', val=0.)
+                    # declare derivative of residual associated with x
+                    # wrt x
+                    self.declare_derivatives('x', 'x')
+                    # declare derivative of residual associated with x
+                    # wrt a, b, c
+                    self.declare_derivatives('x', ['a','b','c'])
+
+                    self.linear_solver = ScipyKrylov()
+                    self.nonlinear_solver = NewtonSolver(solve_subsystems=False)
+
+                # ...
+            """
         # check argument types
         if not isinstance(of, (str, list)):
             raise TypeError('of must be a string or list; {} given'.format(

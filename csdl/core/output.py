@@ -51,16 +51,11 @@ class Output(Variable):
         self.ref0 = ref0
         self.res_ref = res_ref
 
-        # An Output object within an ImplicitModel can be an but residuals in
-        # implicit models can be constructed from CSDL expressions, in
-        # which case, those outputs need to be flagged as residuals
-        self.is_residual = False
-
         from csdl.core.explicit_output import ExplicitOutput
-        from csdl.core.implicit_output import ImplicitOutput
-        if not isinstance(self, ExplicitOutput) and not isinstance(
-                self, ImplicitOutput):
+        if not isinstance(self, ExplicitOutput):
             if not isinstance(op, Operation):
                 raise ValueError(
-                    "Output object must depend on an Operation object by construction"
+                    "Output object not defined by indexed assignment"
+                    "must depend on an Operation object by construction"
                 )
+            self.add_dependency_node(op)

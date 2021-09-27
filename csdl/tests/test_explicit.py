@@ -94,22 +94,3 @@ def test_explicit_with_subsystems(backend):
                                 compact_print=True,
                                 method='cs')
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
-
-
-def test_explicit_cycles(backend):
-    from csdl.examples.valid.ex_explicit_cycles import example
-    exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
-    np.testing.assert_approx_equal(
-        sim['cycle_1.x'],
-        1.1241230297043157,
-    )
-    np.testing.assert_approx_equal(
-        sim['cycle_2.x'],
-        1.0798960718178603,
-    )
-    np.testing.assert_almost_equal(sim['cycle_3.x'], 0.)
-    result = sim.check_partials(out_stream=None,
-                                compact_print=True,
-                                method='cs')
-    sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)

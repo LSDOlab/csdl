@@ -63,54 +63,11 @@ class ExplicitOutput(Output):
         self.copy_shape = copy_shape
 
         self.defined: bool = False
-        self.indexed_assignment: bool = False
         self._tgt_indices: Dict[str, Tuple[Tuple[int],
                                            np.ndarray]] = dict()
         self.checked_indices: Set[np.ndarray] = set()
         self.overlapping_indices: Set[np.ndarray] = set()
         self._tgt_vals: Dict[str, np.ndarray] = dict()
-
-    # TODO: automatically create model with NLBGS solver
-    def define(self, var: Variable):
-        """
-        Define expression (in terms of ``self``) that computes value for
-        this output. This method defines a cyclic relationship, which
-        requires an iterative solver to converge.
-
-        **Parameters**
-
-        var: Variable
-            The expression to compute iteratively until convergence
-        """
-        if var is self:
-            raise ValueError(
-                "Variable for output {} cannot be self".format(
-                    self.name), )
-        if self.indexed_assignment == True and self.defined == True:
-            raise ValueError(
-                "Variable for output {}"
-                "is already defined using indexed assignment; use index assignment to concatenate expression outputs"
-                .format(self.name))
-
-        if self.defined == True:
-            raise ValueError(
-                "Variable for output {}"
-                ", which forms a cycle to be computed iteratively, is already defined"
-                .format(self.name))
-        self.defined = True
-
-        # create passthrough operation for back end to recover edges that
-        # form cycles
-        op = passthrough(var, output=self)
-        self.add_dependency_node(op)
-
-        # replace references to this output with references to variable
-        # of same name; guarantees that IR is a DAG
-        replace_output_leaf_nodes(
-            self,
-            self,
-            Variable(self.name, shape=self.shape, val=self.val),
-        )
 
     # TODO: index by tuple, not expression?
     # TODO: allow negative indices
@@ -121,7 +78,6 @@ class ExplicitOutput(Output):
         key: Union[int, slice, Tuple[slice]],
         var: Variable,
     ):
-
         # will generate a list [of lists] of ints, and then convert to
         # ndarray
         tgt_indices: Union[List[int], List[List[int]], np.ndarray] = []
@@ -198,8 +154,8 @@ class ExplicitOutput(Output):
             # vals = self._tgt_vals,
 
         # create indexed passthrough operation to compute this output
-        if self.indexed_assignment is False:
-            self.indexed_assignment = True
+        if self.defined is False:
+            self.defined = True
             op = indexed_passthrough(
                 var,
                 output=self,
@@ -207,5 +163,3 @@ class ExplicitOutput(Output):
             self.dependencies = [op]
         else:
             self.dependencies[0].add_dependency_node(var)
-
-        self.defined = True

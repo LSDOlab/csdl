@@ -1,60 +1,87 @@
-from csdl.core.custom_operation import CustomOperation
+from typing import Dict, List, Set
+from csdl.core.variable import Variable
+from csdl.core.output import Output
+from csdl.core.operation import Operation
+from csdl.solvers.linear_solver import LinearSolver
+from csdl.solvers.nonlinear_solver import NonlinearSolver
 
 
-class ImplicitOperation(CustomOperation):
-    def __init__(self, *args, **kwargs):
+class ImplicitOperation(Operation):
+    """
+    Class for creating `ImplicitOperation` objects that solve implicit
+    functions.
+    """
+    def __init__(
+        self,
+        model,
+        nonlinear_solver: NonlinearSolver,
+        linear_solver: LinearSolver,
+        out_res_map: Dict[str, Output],
+        res_out_map: Dict[str, Variable],
+        out_in_map: Dict[str, List[Variable]],
+        *args,
+        **kwargs,
+    ):
+        self.nouts = len(out_res_map.keys())
+        in_vars: Set[Variable] = set()
+        for _, v in out_in_map.items():
+            in_vars = in_vars.union(set(v))
+        self.nargs = len(in_vars)
         super().__init__(*args, **kwargs)
-        self.linear_solver = None
-        self.nonlinear_solver = None
+        self._model = model
+        self.nonlinear_solver = nonlinear_solver
+        self.linear_solver = linear_solver
+        self.res_out_map: Dict[str, Variable] = res_out_map
+        self.out_res_map: Dict[str, Output] = out_res_map
+        self.out_in_map: Dict[str, List[Variable]] = out_in_map
 
-    def evaluate_residuals(
+
+from typing import Tuple, Union
+import numpy as np
+
+
+class BracketedSearchOperation(Operation):
+    """
+    Class for creating `ImplicitOperation` objects that solve implicit
+    functions.
+    """
+    def __init__(
         self,
-        inputs,
-        outputs,
-        residuals,
+        model,
+        out_res_map: Dict[str, Output],
+        res_out_map: Dict[str, Variable],
+        out_in_map: Dict[str, List[Variable]],
+        brackets: Dict[str, Tuple[Union[float, np.ndarray]]],
+        *args,
+        **kwargs,
     ):
-        """
-        User defined method to evaluate residuals
-        """
-        pass
+        self.nouts = len(out_res_map.keys())
+        in_vars: Set[Variable] = set()
+        for _, v in out_in_map.items():
+            in_vars = in_vars.union(set(v))
+        self.nargs = len(in_vars)
+        super().__init__(*args, **kwargs)
+        self._defined = False
+        self._model = model
+        self.res_out_map: Dict[str, Variable] = res_out_map
+        self.out_res_map: Dict[str, Output] = out_res_map
+        self.out_in_map: Dict[str, List[Variable]] = out_in_map
+        for k, v in brackets.items():
+            if len(v) != 2:
+                raise ValueError(
+                    "Bracket for state {} is not a tuple of two values".
+                    format(k))
+            if isinstance(v[0], np.ndarray) and isinstance(
+                    v[1], np.ndarray):
+                if v[0].shape != v[1].shape:
+                    raise ValueError(
+                        "Bracket values for {} are not the same shape; {} != {}"
+                        .format(k, v[0].shape, v[1].shape))
+            elif not isinstance(v[0], float) and not isinstance(
+                    v[1], float):
+                raise TypeError(
+                    "Bracket values for {} are not of the same type; type must be float or ndarray"
+                    .format(k))
 
-    def compute_derivatives(self, inputs, outputs, derivatives):
-        """
-        User defined method to evaluate derivatives of residuals wrt
-        inputs and outputs
-        """
-        pass
-
-    def solve_residual_equations(self, inputs, outputs):
-        """
-        User defined method to solve residual equations, converging
-        residuals to compute outputs.
-        """
-        pass
-
-    def apply_inverse_jacobian(
-        self,
-        d_outputs,
-        d_residuals,
-        mode,
-    ):
-        """
-        Optional. Solve linear system. Invoked when solving coupled
-        linear system; i.e. when solving Newton system to update
-        implicit state variables, and when computing total derivatives
-        """
-        pass
-
-    def compute_jacvec_product(
-        self,
-        inputs,
-        outputs,
-        d_inputs,
-        d_outputs,
-        d_residuals,
-        mode,
-    ):
-        """
-        Optional.
-        """
-        pass
+        self.brackets: Dict[str, Tuple[Union[float,
+                                             np.ndarray]]] = brackets

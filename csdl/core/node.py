@@ -47,62 +47,62 @@ class Node():
 
     def __iadd__(self, other):
         raise NotImplementedError(
-            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, create a `Model`/`ImplicitModel` and assign a solver."
+            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, use `Model.implicit_operation`."
         )
 
     def __iand__(self, other):
         raise NotImplementedError(
-            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, create a `Model`/`ImplicitModel` and assign a solver."
+            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, use `Model.implicit_operation`."
         )
 
     def __idiv__(self, other):
         raise NotImplementedError(
-            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, create a `Model`/`ImplicitModel` and assign a solver."
+            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, use `Model.implicit_operation`."
         )
 
     def __ifloordiv__(self, other):
         raise NotImplementedError(
-            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, create a `Model`/`ImplicitModel` and assign a solver."
+            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, use `Model.implicit_operation`."
         )
 
     def __ilshift__(self, other):
         raise NotImplementedError(
-            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, create a `Model`/`ImplicitModel` and assign a solver."
+            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, use `Model.implicit_operation`."
         )
 
     def __imod__(self, other):
         raise NotImplementedError(
-            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, create a `Model`/`ImplicitModel` and assign a solver."
+            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, use `Model.implicit_operation`."
         )
 
     def __imul__(self, other):
         raise NotImplementedError(
-            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, create a `Model`/`ImplicitModel` and assign a solver."
+            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, use `Model.implicit_operation`."
         )
 
     def __ior__(self, other):
         raise NotImplementedError(
-            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, create a `Model`/`ImplicitModel` and assign a solver."
+            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, use `Model.implicit_operation`."
         )
 
     def __ipow__(self, other):
         raise NotImplementedError(
-            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, create a `Model`/`ImplicitModel` and assign a solver."
+            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, use `Model.implicit_operation`."
         )
 
     def __irshift__(self, other):
         raise NotImplementedError(
-            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, create a `Model`/`ImplicitModel` and assign a solver."
+            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, use `Model.implicit_operation`."
         )
 
     def __isub__(self, other):
         raise NotImplementedError(
-            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, create a `Model`/`ImplicitModel` and assign a solver."
+            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, use `Model.implicit_operation`."
         )
 
     def __ixor__(self, other):
         raise NotImplementedError(
-            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, create a `Model`/`ImplicitModel` and assign a solver."
+            "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, use `Model.implicit_operation`."
         )
 
     def add_fwd_edges(self):

@@ -77,35 +77,6 @@ class ExampleBinaryOperations(Model):
         self.register_output('y12', y12)
 
 
-class ExampleCycles(Model):
-    """
-    :param var: cycle_1.x
-    :param var: cycle_2.x
-    :param var: cycle_3.x
-    """
-    def define(self):
-        # x == (3 + x - 2 * x**2)**(1 / 4)
-        model = Model()
-        x = model.create_output('x')
-        x.define((3 + x - 2 * x**2)**(1 / 4))
-        model.nonlinear_solver = NonlinearBlockGS(maxiter=100)
-        self.add(model, name='cycle_1', promotes=[])
-
-        # x == ((x + 3 - x**4) / 2)**(1 / 4)
-        model = Model()
-        x = model.create_output('x')
-        x.define(((x + 3 - x**4) / 2)**(1 / 4))
-        model.nonlinear_solver = NonlinearBlockGS(maxiter=100)
-        self.add(model, name='cycle_2', promotes=[])
-
-        # x == 0.5 * x
-        model = Model()
-        x = model.create_output('x')
-        x.define(0.5 * x)
-        model.nonlinear_solver = NonlinearBlockGS(maxiter=100)
-        self.add(model, name='cycle_3', promotes=[])
-
-
 class ExampleNoRegisteredOutput(Model):
     """
     :param var: prod

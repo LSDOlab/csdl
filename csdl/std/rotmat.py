@@ -31,7 +31,7 @@ def rotmat(var: Variable, axis: str):
         op=op,
         shape=shape,
     ), )
-    for out in op.outs:
-        out.add_dependency_node(op)
+    # for out in op.outs:
+    #         out.add_dependency_node(op)
 
     return op.outs[0]

@@ -1,49 +1,81 @@
 def example(Simulator):
-    from csdl import Model, ImplicitModel, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     import numpy as np
-    
-    
-    class ExampleWithSubsystems(ImplicitModel):
+
+    class ExampleWithSubsystems(Model):
         def define(self):
-            # define a subsystem (this is a very simple example)
-            model = Model()
-            p = model.create_input('p', val=7)
-            q = model.create_input('q', val=8)
-            r = p + q
-            model.register_output('r', r)
-    
-            # add child system
-            self.add(model, name='R')
-            # declare output of child system as input to parent system
+            with self.create_submodel('R') as model:
+                p = model.create_input('p', val=7)
+                q = model.create_input('q', val=8)
+                r = p + q
+                model.register_output('r', r)
             r = self.declare_variable('r')
-    
-            c = self.declare_variable('c', val=18)
-    
-            # a == (3 + a - 2 * a**2)**(1 / 4)
-            model = Model()
-            a = model.create_output('a')
-            a.define((3 + a - 2 * a**2)**(1 / 4))
-            model.nonlinear_solver = NonlinearBlockGS(iprint=0, maxiter=100)
-            self.add(model, name='coeff_a')
-    
-            a = self.declare_variable('a')
-    
-            model = Model()
-            model.create_input('b', val=-4)
-            self.add(model, name='coeff_b')
-    
-            b = self.declare_variable('b')
-            y = self.create_implicit_output('y')
-            z = a * y**2 + b * y + c - r
-            y.define_residual(z)
-            self.linear_solver = ScipyKrylov()
-            self.nonlinear_solver = NewtonSolver(
-                solve_subsystems=False,
-                maxiter=100,
+
+            m2 = Model()
+            a = m2.declare_variable('a')
+            m2.register_output('r', a - (3 + a - 2 * a**2)**(1 / 4))
+
+            # x == ((x + 3 - x**4) / 2)**(1 / 4)
+            m2 = Model()
+            x = m2.declare_variable('a')
+            r = m2.register_output('r',
+                                   x - ((x + 3 - x**4) / 2)**(1 / 4))
+
+            m3 = Model()
+            a = m3.declare_variable('a')
+            b = m3.declare_variable('b')
+            c = m3.declare_variable('c')
+            r = m3.declare_variable('r')
+            y = m3.declare_variable('y')
+            m3.register_output('z', a * y**2 + b * y + c - r)
+            m3.print_var(y)
+
+            a = self.implicit_operation(
+                states=['a'],
+                residuals=['r'],
+                model=m2,
+                nonlinear_solver=NewtonSolver(
+                    solve_subsystems=False,
+                    maxiter=100,
+                    iprint=False,
+                ),
+                # nonlinear_solver=NonlinearBlockGS(maxiter=100),
+                linear_solver=ScipyKrylov(),
             )
-    
-    
+
+            b = self.create_input('b', val=-4)
+            c = self.declare_variable('c', val=18)
+            y = self.implicit_operation(
+                a,
+                b,
+                c,
+                r,
+                states=['y'],
+                residuals=['z'],
+                model=m3,
+                nonlinear_solver=NewtonSolver(
+                    solve_subsystems=False,
+                    maxiter=100,
+                    iprint=False,
+                ),
+                linear_solver=ScipyKrylov(),
+            )
+
     sim = Simulator(ExampleWithSubsystems())
+    # sim.visualize_implementation()
     sim.run()
-    
+
     return sim
+
+
+from csdl_om import Simulator
+
+sim = example(Simulator)
+# sim['y'] = 0.9
+# sim.run()
+print(sim['a'])
+print(sim['y'])
+# sim['y'] = 2.1
+# sim.run()
+# print(sim['a'])
+# print(sim['y'])

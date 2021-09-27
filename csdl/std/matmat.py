@@ -39,7 +39,7 @@ def matmat(mat1, mat2):
             shape=(mat1.shape[0], mat2.shape[1]),
         ),
     ]
-    for out in op.outs:
-        out.add_dependency_node(op)
+    # for out in op.outs:
+    #         out.add_dependency_node(op)
 
     return op.outs[0]

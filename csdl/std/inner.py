@@ -51,7 +51,7 @@ def inner(a: Variable, b: Variable, axes=None):
         op=op,
         shape=shape,
     ), )
-    for out in op.outs:
-        out.add_dependency_node(op)
+    # for out in op.outs:
+    #         out.add_dependency_node(op)
 
     return op.outs[0]

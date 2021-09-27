@@ -28,7 +28,7 @@ def reshape(var: Variable, new_shape: tuple):
         op=op,
         shape=new_shape,
     ), )
-    for out in op.outs:
-        out.add_dependency_node(op)
+    # for out in op.outs:
+    #         out.add_dependency_node(op)
 
     return op.outs[0]

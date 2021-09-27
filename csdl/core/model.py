@@ -1,27 +1,29 @@
 from collections.abc import Iterable
 from contextlib import contextmanager
-from typing import Callable, Tuple, List, Union
+from typing import Callable, Tuple, List, Union, Dict
 
-# from csdl.core._group import _Group
-from csdl.core.explicit_output import ExplicitOutput
 from csdl.utils.graph import (
     remove_indirect_dependencies,
     modified_topological_sort,
     # remove_duplicate_nodes,
 )
-from csdl.core.implicit_output import ImplicitOutput
+from csdl.core.implicit_operation import ImplicitOperation
 from csdl.core.node import Node
 from csdl.core.variable import Variable
 from csdl.core.input import Input
 from csdl.core.output import Output
+from csdl.core.explicit_output import ExplicitOutput
 from csdl.core.operation import Operation
 from csdl.core.custom_operation import CustomOperation
 from csdl.core.subgraph import Subgraph
+from csdl.solvers.nonlinear_solver import NonlinearSolver
+from csdl.solvers.linear_solver import LinearSolver
 from csdl.operations.print_var import print_var
 from csdl.utils.gen_hex_name import gen_hex_name
 from csdl.utils.parameters import Parameters
 from csdl.utils.combine_operations import combine_operations
 from csdl.utils.set_default_values import set_default_values
+from csdl.utils.collect_terminals import collect_terminals
 from warnings import warn
 import numpy as np
 import matplotlib.pylab as plt
@@ -72,6 +74,18 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
             self._defined = True
             run_front_end(self)
 
+            # TODO: get name of model to make error/warning more clear
+            # check for empty model
+            if self.registered_outputs == [] and self.subgraphs == []:
+                if self.inputs == []:
+                    raise ValueError(
+                        "This model doesn't do anything. Either register outputs, or create a model hierarchy."
+                    )
+                else:
+                    warn(
+                        "This model only creates inputs for the top level model"
+                    )
+
             # Check if all design variables are inputs
             # input_names = set(
             #     filter(lambda x: isinstance(x, Input),
@@ -83,6 +97,25 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
                         "{} is not the CSDL name of an input to the model"
                         .format(name))
             del input_names
+
+            # # check promotions
+            # for subgraph in self.subgraphs:
+            #     promoted_ins = find_promoted_inputs(subgraph)
+            #     promoted_outs = find_promoted_outputs(subgraph)
+            #     # if promoted_ins contains a name that's already in
+            #     # self.promoted_ins, check shape; if shape mismatch,
+            #     # error
+            #     # if promoted_outs contains a name that's already in
+            #     # self.promoted_outs, error
+            #     seta = set(promoted_ins)
+            #     setb = set(promoted_outs)
+            #     intersection = seta & setb
+            #     if intersection != set():
+            #         raise ValueError("invalid {}".format(
+            #             [name for name in intersection]))
+            #     self.promoted_ins.extend(promoted_ins)
+            #     self.promoted_outs.extend(promoted_outs)
+            #     # **need to check for mismatched shapes among duplicates and emit error**
 
             # check that all connections are valid
             # output_names = set([n.name for n in nodes if isinstance(n, Output)], )
@@ -106,7 +139,7 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
             #                 b, a, b))
 
             # Check that all outputs are defined
-            # for output in self.sorted_expressions:
+            # for output in self.sorted_nodes:
             for output in self.registered_outputs:
                 if isinstance(output, ExplicitOutput):
                     if output.defined is False:
@@ -122,14 +155,14 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
             # remove_duplicate_nodes(self.nodes, self.registered_outputs)
 
             # combine elementwise operations and use complex step
-            terminate = False
-            if len(self.registered_outputs) == 0:
-                terminate = True
-            while terminate is False:
-                for r in self.registered_outputs:
-                    terminate = combine_operations(
-                        self.registered_outputs, r)
-                terminate = True
+            # terminate = False
+            # if len(self.registered_outputs) == 0:
+            #     terminate = True
+            # while terminate is False:
+            #     for r in self.registered_outputs:
+            #         terminate = combine_operations(
+            #             self.registered_outputs, r)
+            #     terminate = True
 
             # Create record of all nodes in DAG
             for r in self.registered_outputs:
@@ -140,13 +173,13 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
             if True:
                 # Use modified Kahn's algorithm to sort nodes, reordering
                 # expressions except where user registers outputs out of order
-                self.sorted_expressions = modified_topological_sort(
+                self.sorted_nodes = modified_topological_sort(
                     self.registered_outputs)
             # else:
             # Use Kahn's algorithm to sort nodes, reordering
             # expressions without regard for the order in which user
             # registers outputs
-            # self.sorted_expressions =
+            # self.sorted_nodes =
             # topological_sort(self.registered_outputs)
 
             # Define child models recursively
@@ -174,7 +207,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self._defined = False
         self.symbol_table: dict = {}
         self.input_vals: dict = {}
-        self.sorted_expressions = []
+        self.sorted_nodes = []
         self.reverse_branch_sorting: bool = False
         self._most_recently_added_subgraph: Subgraph = None
         self.brackets_map = None
@@ -182,12 +215,11 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self.subgraphs: List[Subgraph] = []
         self.variables_promoted_from_children: List[Variable] = []
         self.inputs: List[Input] = []
-        self.variables: List[Variable] = []
-        self.registered_outputs: List[Union[Output, ExplicitOutput,
-                                            Subgraph]] = []
+        self.declared_variables: List[Variable] = []
+        self.registered_outputs: List[Union[Output]] = []
         self.objective = None
         self.constraints = dict()
-        self.design_variables = dict()
+        self.design_variables: Dict[str, Dict[Any]] = dict()
         self.connections: List[Tuple[str, str]] = []
         self.parameters = Parameters()
         self.initialize()
@@ -247,6 +279,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
     def define(self):
         """
         User defined method to define runtime behavior.
+        Note: the user never _calls_ this method. Only the `Simulator`
+        class constructor calls this method.
 
         **Example**
 
@@ -303,7 +337,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             distributed=var.distributed,
             op=op,
         )
-        out.add_dependency_node(op)
         self.register_output(out.name, out)
 
     def add_objective(
@@ -492,7 +525,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         )
         if self._most_recently_added_subgraph is not None:
             v.add_dependency_node(self._most_recently_added_subgraph)
-        self.variables.append(v)
+        self.declared_variables.append(v)
         return v
 
     def create_input(
@@ -584,30 +617,29 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         ExplicitOutput
             An object to use in expressions
         """
-        ex = ExplicitOutput(
+        return self.register_output(
             name,
-            val=val,
-            shape=shape,
-            units=units,
-            desc=desc,
-            tags=tags,
-            shape_by_conn=shape_by_conn,
-            copy_shape=copy_shape,
-            res_units=res_units,
-            lower=lower,
-            upper=upper,
-            ref=ref,
-            ref0=ref0,
-            res_ref=res_ref,
-            distributed=distributed,
+            ExplicitOutput(
+                name,
+                val=val,
+                shape=shape,
+                units=units,
+                desc=desc,
+                tags=tags,
+                shape_by_conn=shape_by_conn,
+                copy_shape=copy_shape,
+                res_units=res_units,
+                lower=lower,
+                upper=upper,
+                ref=ref,
+                ref0=ref0,
+                res_ref=res_ref,
+                distributed=distributed,
+            ),
         )
-        if ex in self.registered_outputs:
-            raise ValueError(
-                "cannot create the same output in the same model")
-        self.registered_outputs.append(ex)
-        return ex
 
-    def register_output(self, name: str, var: Variable) -> Variable:
+    def register_output(self, name: str,
+                        var: Variable) -> Union[Output, ExplicitOutput]:
         """
         Register ``var`` as an output of the ``Model``.
         When adding subsystems, each of the submodel's inputs requires
@@ -635,7 +667,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         if not isinstance(var, Output):
             warn(
                 "Registering variable {} has no effect, as it does not depend on an operation."
-                .format(var.name))
+                "If using an output from a submodel, use a connection.".
+                format(var.name))
         else:
             if var in self.registered_outputs:
                 raise ValueError(
@@ -646,6 +679,11 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             self.registered_outputs.append(var)
         return var
 
+    # TODO: call submodel.define() -- what to do about create_model?
+    # TODO: never add subgraph to registered_outputs
+    # TODO: check for duplicate subgraph names
+    # TODO: establish dependencies based on promotions and connections
+    # (middle end)
     def add(
         self,
         submodel,
@@ -680,12 +718,11 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         System
             Subsystem to add to `Model`
         """
-        from csdl.core.implicit_model import ImplicitModel
-        if not isinstance(submodel,
-                          (Model, ImplicitModel, CustomOperation)):
+        if not isinstance(submodel, (Model, CustomOperation)):
             raise TypeError(
-                "{} is not a Model, ImplicitModel, or CustomOperation".
-                format(submodel))
+                "{} is not a Model or CustomOperation".format(submodel))
+
+        submodel.define()
 
         # promote by default
         if promotes == [] and (promotes_inputs is not None) or (
@@ -728,8 +765,352 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
         return submodel
 
+    def implicit_operation(
+        self,
+        *arguments: Variable,
+        states: List[str],
+        residuals: List[str],
+        model,
+        nonlinear_solver: NonlinearSolver,
+        linear_solver: Union[LinearSolver, None] = None,
+        expose: List[str] = [],
+    ):
+        """
+        Create an implicit operation whose residuals are defined by a
+        `Model`.
+        An implicit operation is an operation that solves an equation
+        $f(x,y)=0$ for $y$, given some value of $x$.
+        CSDL solves $f(x,y)=0$ by defining a residual $r=f(x,y)$ and
+        updating $y$ until $r$ converges to zero.
+
+        **Parameters**
+
+        `arguments: List[Variable]`
+
+            List of variables to use as arguments for the implicit
+            operation.
+            Variables must have the same name as a declared variable
+            within the `model`'s class definition.
+
+            :::note
+            The declared variable _must_ be declared within `model`
+            _and not_ promoted from a child submodel.
+            :::
+
+        `states: List[str]`
+
+            Names of states to compute using the implicit operation.
+            The order of the names of these states corresponds to the
+            order of the output variables returned by
+            `implicit_operation`.
+            The order of the names in `states` must also match the order
+            of the names of the residuals associated with each state in
+            `residuals`.
+
+            :::note
+            The declared variable _must_ be declared within `model`
+            _and not_ promoted from a child submodel.
+            :::
+
+        `residuals: List[str]`
+
+            The residuals associated with the states.
+            The name of each residual must match the name of a
+            registered output in `model`.
+
+            :::note
+            The registered output _must_ be registered within `model`
+            _and not_ promoted from a child submodel.
+            :::
+
+        `model: Model`
+
+            The `Model` object to use to define the residuals.
+            Residuals may be defined via functional composition and/or
+            hierarchical composition.
+
+            :::note
+            _Any_ `Model` object may be used to define residuals for an
+            implicit operation
+            :::
+
+        `nonlinear_solver: NonlinearSolver`
+
+            The nonlinear solver to use to converge the residuals
+
+        `linear_solver: LinearSolver`
+
+            The linear solver to use to solve the linear system
+
+        `expose: List[str]`
+
+            List of intermediate variables inside `model` that are
+            required for computing residuals to which it is desirable
+            to have access outside of the implicit operation.
+
+            For example, if a trajectory is computed using time marching
+            and a residual is computed from the final state of the
+            trajectory, it may be desirable to plot that trajectory
+            after the conclusion of a simulation, e.g. after an
+            iteration during an optimization process.
+
+            :::note
+            The variable names in `expose` may be any name within the
+            model hierarchy defined in `model`, but the variable names
+            in `expose` are neither declared variables, nor registered
+            outputs in `model`, although they may be declared
+            variables/registered outputs in a submodel (i.e. they are
+            neither states nor residuals in the, implicit operation).
+            :::
+
+        **Returns**
+
+        `Tuple[Ouput]`
+
+            Variables to use in this `Model`.
+            The variables are named according to `states` and `expose`,
+            and are returned in the same order in which they are
+            declared.
+            For example, if `states=['a', 'b', 'c']` and
+            `expose=['d', 'e', 'f']`, then the outputs
+            `a, b, c, d, e, f` in
+            `a, b, c, d, e, f = self.implcit_output(...)`
+            will be named
+            `'a', 'b', 'c', 'd', 'e', 'f'`, respectively.
+            This enables use of exposed intermediate variables (in
+            addition to the states computed by converging the
+            residuals) from `model` in this `Model`.
+            Unused outputs will be ignored, so
+            `a, b, c = self.implcit_output(...)`
+            will make the variables declared in `expose` available for
+            recording/analysis and promotion/connection, but they will
+            be unused by this `Model`.
+            Note that these variables are already registered as outputs
+            in this `Model`, so there is no need to call
+            `Model.register_output` for any of these variables.
+        """
+        if not isinstance(model, (Model, )):
+            raise TypeError("{} is not a Model".format(model))
+
+        # check for duplicate arguments, states, and residuals
+        arg_names = [var.name for var in arguments]
+        if len(set(arg_names)) < len(arg_names):
+            raise ValueError("Duplicate arguments found")
+        if len(set(states)) < len(states):
+            raise ValueError("Duplicate names for states found")
+        if len(set(residuals)) < len(residuals):
+            raise ValueError("Duplicate names for residuals found")
+
+        if len(states) != len(residuals):
+            raise ValueError(
+                "Number of states and residuals must be equal")
+
+        # We need to have access to lists of declared variables and
+        # registered outputs, so we run the compiler front end and
+        # middle end for the internal model that defines the residuals
+        model.define()
+
+        # NOTE: top level inputs will be unused, so we don't allow them
+        if len(model.inputs) > 0:
+            raise ValueError(
+                "The model that defines residuals is not allowed to"
+                "define top level inputs (i.e. calls to"
+                "`Model.create_input`).")
+
+        # ignore optimization problem defined in model, if any;
+        # this instance of the model is not defining an optimization
+        # problem
+        model.design_variables = dict()
+        model.objective = None
+        model.constraints = dict()
+
+        # After this runs, the internal model only computes
+        # residuals and exposed outputs
+        # NOTE: model.sorted_nodes is unaffected; remove_unused_outputs
+        # will have no effect on performance
+        # remove_unused_outputs(
+        #     model,
+        #     residuals,
+        #     expose,
+        # )
+
+        # TODO: expose residuals automatically (SURF)
+
+        # TODO: transfer metadata to declared variables in model
+        # check that name and shape of each argument matches name and
+        # shape of a declared variable in internal model
+        for arg in arguments:
+            arg_name_match = False
+            for var in model.declared_variables:
+                if arg.name == var.name:
+                    arg_name_match = True
+                    if arg.shape != var.shape:
+                        raise ValueError(
+                            "The argumet {} has shape {}, which does not match the shape {} of the declared variable of the model used to define an implicit operation"
+                            .format(arg.name, arg.shape, var.shape))
+                    var.val = arg.val
+            if arg_name_match is False:
+                raise ValueError(
+                    "The argument {} is not a declared variable of the model used to define an implicit operation"
+                    .format(arg.name))
+
+        # check that name of each state matches name of a declared
+        # variable in internal model
+        for state_name in states:
+            state_name_match = False
+            for var in model.declared_variables:
+                if state_name == var.name:
+                    state_name_match = True
+                    # TODO: initialize state value from outside the model
+            if not state_name_match:
+                raise ValueError(
+                    "The state {} is not a declared variable of the model used to define an implicit operation"
+                    .format(state_name))
+
+        # check that name of each residual matches name of a registered
+        # output in internal model
+        for residual_name in residuals:
+            residual_name_match = False
+            for var in model.registered_outputs:
+                if residual_name == var.name:
+                    residual_name_match = True
+            if not residual_name_match:
+                raise ValueError(
+                    "The residual {} is not a registered output of the model used to define an implicit operation"
+                    .format(residual_name))
+
+        # TODO: this needs to be more involved because user is allowed to
+        # expose any variable in the hierarchy
+        # check that name of each exposed intermediate output matches
+        # name of a registered output in internal model
+        # for expose_name in expose:
+        #     expose_name_match = False
+        #     for var in model.registered_outputs:
+        #         if expose_name == var.name:
+        #             expose_name_match = True
+        #     if not expose_name_match:
+        #         raise ValueError(
+        #             "The intermediate output {} is not a registered output of the model used to define an implicit operation"
+        #             .format(expose_name))
+
+        # TODO: always expose residuals (SURF)
+
+        # make some maps to do some things more efficiently later
+        registered_output_map: Dict[str, Output] = dict()
+        declared_variables_map: Dict[str, Variable] = dict()
+        for res in model.registered_outputs:
+            registered_output_map[res.name] = res
+        for dv in model.declared_variables:
+            declared_variables_map[dv.name] = dv
+
+        # create two-way mapping between state objects and residual
+        # objects
+        # TODO: explain why
+        out_res_map: Dict[str, Output] = dict()
+        res_out_map: Dict[str, Variable] = dict()
+        for s, r in zip(states, residuals):
+            if registered_output_map[r].shape != declared_variables_map[
+                    s].shape:
+                raise ValueError(
+                    "Shape of state {} and residual {} do not match.".
+                    format(s, r))
+            out_res_map[s] = registered_output_map[r]
+            res_out_map[r] = declared_variables_map[s]
+
+        # TODO: check if residuals depend on each other
+        # Associate outputs with the inputs they depend on
+        # Collect residual expressions and their corresponding inputs
+        # and outputs
+        out_in_map: Dict[str, List[Variable]] = dict()
+        for state_name, residual in out_res_map.items():
+            # Collect inputs (terminal nodes) for this residual only; no
+            # duplicates
+            in_vars = list(
+                set(collect_terminals(
+                    [],
+                    residual,
+                    residual,
+                )))
+
+            print('state', state_name, 'inputs',
+                  [var.name for var in in_vars])
+            if state_name not in [var.name for var in in_vars]:
+                raise ValueError(
+                    "Residual {} does not depend on state {}".format(
+                        residual.name, state_name))
+
+            # Store inputs for this implicit output
+            out_in_map[state_name] = in_vars
+
+        # # check that exposed variable are valid choices
+        # # use model.sorted_nodes
+        # f = filter(lambda x: isinstance(x, Variable),
+        #            model.sorted_nodes)
+        # # collect all variables in model hierarchy
+        # all_variable_names = [var.name for var in f]
+        # all_variable_names.extend(
+        #     model.variables_promoted_from_children)
+
+        # # remove top level declared variables, registered outputs
+        # # these are arguments, states, and residuals
+        # names_of_variables_not_to_expose = set([
+        #     var.name for var in list(
+        #         set(model.declared_variables).union(
+        #             set(model.registered_outputs)))
+        # ])
+        # intermediate_variable_names = set(
+        #     all_variable_names).difference(
+        #         names_of_variables_not_to_expose)
+
+        # # check that variables user requests to expose are defined
+        # for name in expose:
+        #     if name not in intermediate_variable_names:
+        #         raise ValueError(
+        #             "Cannot expose {} because it is not an intermediate variable"
+        #             .format(name))
+
+        # create operation, establish dependencies on arguments
+        op = ImplicitOperation(
+            model=model,
+            nonlinear_solver=nonlinear_solver,
+            linear_solver=linear_solver,
+            out_res_map=out_res_map,
+            res_out_map=res_out_map,
+            out_in_map=out_in_map,
+        )
+        for arg in arguments:
+            op.add_dependency_node(arg)
+        print(op.name, [var.name for var in op.dependencies])
+
+        # create outputs of operation, establish dependencies on
+        # operation, and register outputs
+        # TODO: include exposed intermediate outputs
+        outs = []
+        for s, r in zip(states, residuals):
+            out = Output(
+                s,
+                op=op,
+            )
+            print(out.name, [var.name for var in out.dependencies])
+            # out.add_dependency_node(op)
+            self.register_output(state_name, out)
+            outs.append(out)
+
+        # return outputs
+        print('outputs', [var.name for var in outs])
+        if len(outs) > 1:
+            return outs
+        else:
+            return outs[0]
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.define()
+
     @contextmanager
-    def create_model(self, name: str):
+    def create_submodel(self, name: str):
         """
         Create a ``Model`` object and add as a submodel, promoting all
         inputs and outputs.
@@ -745,22 +1126,20 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         **Returns**
 
         Model
-            Child ``Model`` object whosevariables are all promoted
+            Child ``Model`` object whose variables are all promoted
         """
         try:
-            m = Model()
-            self.add(m, name=name, promotes=['*'])
-            yield m
+            with Model() as m:
+                yield m
         finally:
-            # m.define()
-            pass
+            self.add(m, name=name)
 
     def visualize_sparsity(self):
         """
         Visualize the sparsity pattern of jacobian for this model
         """
         self.define()
-        nodes = self.sorted_expressions
+        nodes = self.sorted_nodes
         n = len(nodes)
         A = sparse.lil_matrix((n, n))
         A, _, indices, implicit_nodes = add_diag(A, nodes)
@@ -868,7 +1247,7 @@ def add_diag(A,
              implicit_nodes=dict(),
              p=0,
              indent=''):
-    from csdl.core.implicit_model import ImplicitModel
+    from csdl.core.implicit_operation import ImplicitOperation
     # NOTE: A must have shape (len(nodes), len(nodes))
     print(p)
     i = p
@@ -878,7 +1257,7 @@ def add_diag(A,
             if isinstance(node, Subgraph):
                 # TODO: check CustomOperation
                 if isinstance(node.submodel, Model):
-                    m = len(node.submodel.sorted_expressions)
+                    m = len(node.submodel.sorted_nodes)
                     q = A.get_shape()[0] + m - 1
                     C = sparse.lil_matrix((q, q))
                     C[:i, :i] = A[:i, :i]
@@ -886,15 +1265,15 @@ def add_diag(A,
                           C.get_shape())
                     A, i, indices, implicit_nodes = add_diag(
                         C,
-                        node.submodel.sorted_expressions,
+                        node.submodel.sorted_nodes,
                         implicit_nodes=implicit_nodes,
                         p=i,
                         indent=indent + ' ',
                     )
-                elif isinstance(node.submodel, ImplicitModel):
+                elif isinstance(node.submodel, ImplicitOperation):
                     variables = list(
                         filter(lambda x: len(x.dependencies) == 0,
-                               node.submodel._model.variables))
+                               node.submodel._model.declared_variables))
                     m = len(variables) + len(
                         node.submodel.implicit_outputs) + 1
                     if m > 0:
@@ -924,7 +1303,7 @@ def add_diag(A,
 
 # TODO: make triangular only if there are no cycles
 def add_off_diag(A, model, indices):
-    for node in reversed(model.sorted_expressions):
+    for node in reversed(model.sorted_nodes):
         if isinstance(node, Subgraph):
             if isinstance(node.submodel, Model):
                 add_off_diag(A, node.submodel, indices)

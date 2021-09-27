@@ -1,5 +1,5 @@
-from typing import Union
-from csdl.core.operation import Operation
+from typing import Union, List
+from csdl.core.custom_operation import CustomOperation
 from csdl.core.node import Node
 
 
@@ -22,14 +22,14 @@ class Subgraph(Node):
     ):
         super().__init__(*args, **kwargs)
         from csdl.core.model import Model
-        from csdl.core.implicit_model import ImplicitModel
-        if not isinstance(submodel, (Model, ImplicitModel, Operation)):
+        from csdl.core.implicit_operation import ImplicitOperation
+        if not isinstance(submodel, (Model, CustomOperation)):
             TypeError("subsys must be a Model or Operation")
         self.name: str = name
         self.promotes = promotes
         self.promotes_inputs = promotes_inputs
         self.promotes_outputs = promotes_outputs
-        self.submodel: Union[Model, ImplicitModel, Operation] = submodel
+        self.submodel: Union[Model, CustomOperation] = submodel
 
     def add_dependency_node(self, dependency):
         from csdl.core.variable import Variable

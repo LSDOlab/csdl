@@ -16,9 +16,9 @@ sed -i -e 's/#### /### /g' ../../docs/docs/lang_ref/simulator_base.mdx
 echo "---\ntitle: Custom Operations\nsidebar_position: 3\n---\n\n------------------------------------------------------------------------\n\n" > ../../docs/docs/lang_ref/custom.mdx
 pydoc-markdown -m csdl.core.custom_operation user.yml >> ../../docs/docs/lang_ref/custom.mdx
 echo "\n\n" >> ../../docs/docs/lang_ref/custom.mdx
-pydoc-markdown -m csdl.core.explicit_operation user.yml >> ../../docs/docs/lang_ref/custom.mdx
+pydoc-markdown -m csdl.core.custom_explicit_operation user.yml >> ../../docs/docs/lang_ref/custom.mdx
 echo "\n\n" >> ../../docs/docs/lang_ref/custom.mdx
-pydoc-markdown -m csdl.core.implicit_operation user.yml >>../../docs/docs/lang_ref/custom.mdx
+pydoc-markdown -m csdl.core.custom_implicit_operation user.yml >>../../docs/docs/lang_ref/custom.mdx
 sed -i -e 's/#### /### /g' ../../docs/docs/lang_ref/custom.mdx
 
 # developer api
@@ -27,9 +27,9 @@ pydoc-markdown -m csdl.core.model dev.yml >> ../../docs/docs/developer/api.mdx
 echo "\n\n" >> ../../docs/docs/developer/api.mdx
 pydoc-markdown -m csdl.core.simulator_base dev.yml >> ../../docs/docs/developer/api.mdx
 echo "\n\n" >> ../../docs/docs/developer/api.mdx
-pydoc-markdown -m csdl.core.explicit_operation dev.yml >> ../../docs/docs/developer/api.mdx
+pydoc-markdown -m csdl.core.custom_explicit_operation dev.yml >> ../../docs/docs/developer/api.mdx
 echo "\n\n" >> ../../docs/docs/developer/api.mdx
-pydoc-markdown -m csdl.core.implicit_operation dev.yml >>../../docs/docs/developer/api.mdx
+pydoc-markdown -m csdl.core.custom_implicit_operation dev.yml >>../../docs/docs/developer/api.mdx
 echo "\n\n" >> ../../docs/docs/developer/api.mdx
 pydoc-markdown -m csdl.core.node dev.yml >> ../../docs/docs/developer/api.mdx
 echo "\n\n" >> ../../docs/docs/developer/api.mdx
