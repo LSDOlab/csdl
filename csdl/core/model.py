@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from contextlib import contextmanager
 from typing import Callable, Tuple, List, Union, Dict
+from copy import deepcopy
 
 from csdl.utils.graph import (
     remove_indirect_dependencies,
@@ -8,6 +9,7 @@ from csdl.utils.graph import (
     # remove_duplicate_nodes,
 )
 from csdl.core.implicit_operation import ImplicitOperation
+from csdl.core.bracketed_search_operation import BracketedSearchOperation
 from csdl.core.node import Node
 from csdl.core.variable import Variable
 from csdl.core.input import Input
@@ -765,6 +767,182 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
         return submodel
 
+    def bracketed_search(
+        self,
+        *arguments: Variable,
+        states: List[str],
+        residuals: List[str],
+        model,
+        brackets: Dict[str, Tuple[Union[float, np.ndarray]]],
+        expose: List[str] = [],
+        maxiter: int = 100,
+    ):
+        """
+        Create an implicit operation whose residuals are defined by a
+        `Model`.
+        An implicit operation is an operation that solves an equation
+        $f(x,y)=0$ for $y$, given some value of $x$.
+        CSDL solves $f(x,y)=0$ by defining a residual $r=f(x,y)$ and
+        updating $y$ until $r$ converges to zero.
+
+        **Parameters**
+
+        `arguments: List[Variable]`
+
+            List of variables to use as arguments for the implicit
+            operation.
+            Variables must have the same name as a declared variable
+            within the `model`'s class definition.
+
+            :::note
+            The declared variable _must_ be declared within `model`
+            _and not_ promoted from a child submodel.
+            :::
+
+        `states: List[str]`
+
+            Names of states to compute using the implicit operation.
+            The order of the names of these states corresponds to the
+            order of the output variables returned by
+            `implicit_operation`.
+            The order of the names in `states` must also match the order
+            of the names of the residuals associated with each state in
+            `residuals`.
+
+            :::note
+            The declared variable _must_ be declared within `model`
+            _and not_ promoted from a child submodel.
+            :::
+
+        `residuals: List[str]`
+
+            The residuals associated with the states.
+            The name of each residual must match the name of a
+            registered output in `model`.
+
+            :::note
+            The registered output _must_ be registered within `model`
+            _and not_ promoted from a child submodel.
+            :::
+
+        `model: Model`
+
+            The `Model` object to use to define the residuals.
+            Residuals may be defined via functional composition and/or
+            hierarchical composition.
+
+            :::note
+            _Any_ `Model` object may be used to define residuals for an
+            implicit operation
+            :::
+
+        `nonlinear_solver: NonlinearSolver`
+
+            The nonlinear solver to use to converge the residuals
+
+        `linear_solver: LinearSolver`
+
+            The linear solver to use to solve the linear system
+
+        `expose: List[str]`
+
+            List of intermediate variables inside `model` that are
+            required for computing residuals to which it is desirable
+            to have access outside of the implicit operation.
+
+            For example, if a trajectory is computed using time marching
+            and a residual is computed from the final state of the
+            trajectory, it may be desirable to plot that trajectory
+            after the conclusion of a simulation, e.g. after an
+            iteration during an optimization process.
+
+            :::note
+            The variable names in `expose` may be any name within the
+            model hierarchy defined in `model`, but the variable names
+            in `expose` are neither declared variables, nor registered
+            outputs in `model`, although they may be declared
+            variables/registered outputs in a submodel (i.e. they are
+            neither states nor residuals in the, implicit operation).
+            :::
+
+        **Returns**
+
+        `Tuple[Ouput]`
+
+            Variables to use in this `Model`.
+            The variables are named according to `states` and `expose`,
+            and are returned in the same order in which they are
+            declared.
+            For example, if `states=['a', 'b', 'c']` and
+            `expose=['d', 'e', 'f']`, then the outputs
+            `a, b, c, d, e, f` in
+            `a, b, c, d, e, f = self.implcit_output(...)`
+            will be named
+            `'a', 'b', 'c', 'd', 'e', 'f'`, respectively.
+            This enables use of exposed intermediate variables (in
+            addition to the states computed by converging the
+            residuals) from `model` in this `Model`.
+            Unused outputs will be ignored, so
+            `a, b, c = self.implcit_output(...)`
+            will make the variables declared in `expose` available for
+            recording/analysis and promotion/connection, but they will
+            be unused by this `Model`.
+            Note that these variables are already registered as outputs
+            in this `Model`, so there is no need to call
+            `Model.register_output` for any of these variables.
+        """
+        out_res_map, res_out_map, out_in_map = self._something(
+            model,
+            arguments,
+            states,
+            residuals,
+        )
+
+        states_without_brackets = deepcopy(states)
+        for k, v in brackets.items():
+            if k not in states:
+                raise ValueError(
+                    "No state {} for specified brackets".format(k))
+            if k in states_without_brackets:
+                states_without_brackets.remove(k)
+
+            if len(v) != 2:
+                raise ValueError(
+                    "Bracket for state {} is not a tuple of two values".
+                    format(k))
+            if isinstance(v[0], np.ndarray) and isinstance(
+                    v[1], np.ndarray):
+                if v[0].shape != v[1].shape:
+                    raise ValueError(
+                        "Bracket values for {} are not the same shape; {} != {}"
+                        .format(k, v[0].shape, v[1].shape))
+            else:
+                if not isinstance(v[0], (int, float)) or not isinstance(
+                        v[1], (int, float)):
+                    raise TypeError(
+                        "Bracket values for {} are not int, float, or ndarray"
+                        .format(k))
+        if len(states_without_brackets) > 0:
+            raise ValueError(
+                "The following states are missing brackets: {}".format(
+                    states_without_brackets))
+
+        op = BracketedSearchOperation(
+            model=model,
+            out_res_map=out_res_map,
+            res_out_map=res_out_map,
+            out_in_map=out_in_map,
+            brackets=brackets,
+            maxiter=maxiter,
+        )
+
+        return self._return_implicit_outputs(
+            op,
+            arguments,
+            states,
+            residuals,
+        )
+
     def implicit_operation(
         self,
         *arguments: Variable,
@@ -772,7 +950,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         residuals: List[str],
         model,
         nonlinear_solver: NonlinearSolver,
-        linear_solver: Union[LinearSolver, None] = None,
+        linear_solver: LinearSolver,
         expose: List[str] = [],
     ):
         """
@@ -889,6 +1067,30 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             in this `Model`, so there is no need to call
             `Model.register_output` for any of these variables.
         """
+        out_res_map, res_out_map, out_in_map = self._something(
+            model,
+            arguments,
+            states,
+            residuals,
+        )
+
+        # create operation, establish dependencies on arguments
+        op = ImplicitOperation(
+            model=model,
+            nonlinear_solver=nonlinear_solver,
+            linear_solver=linear_solver,
+            out_res_map=out_res_map,
+            res_out_map=res_out_map,
+            out_in_map=out_in_map,
+        )
+        return self._return_implicit_outputs(
+            op,
+            arguments,
+            states,
+            residuals,
+        )
+
+    def _something(self, model, arguments, states, residuals):
         if not isinstance(model, (Model, )):
             raise TypeError("{} is not a Model".format(model))
 
@@ -1068,19 +1270,17 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         #         raise ValueError(
         #             "Cannot expose {} because it is not an intermediate variable"
         #             .format(name))
+        return (out_res_map, res_out_map, out_in_map)
 
-        # create operation, establish dependencies on arguments
-        op = ImplicitOperation(
-            model=model,
-            nonlinear_solver=nonlinear_solver,
-            linear_solver=linear_solver,
-            out_res_map=out_res_map,
-            res_out_map=res_out_map,
-            out_in_map=out_in_map,
-        )
+    def _return_implicit_outputs(
+        self,
+        op,
+        arguments,
+        states,
+        residuals,
+    ):
         for arg in arguments:
             op.add_dependency_node(arg)
-        print(op.name, [var.name for var in op.dependencies])
 
         # create outputs of operation, establish dependencies on
         # operation, and register outputs
@@ -1091,13 +1291,10 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
                 s,
                 op=op,
             )
-            print(out.name, [var.name for var in out.dependencies])
-            # out.add_dependency_node(op)
-            self.register_output(state_name, out)
+            self.register_output(s, out)
             outs.append(out)
 
         # return outputs
-        print('outputs', [var.name for var in outs])
         if len(outs) > 1:
             return outs
         else:

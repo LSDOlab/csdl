@@ -17,6 +17,7 @@ class BracketedSearchOperation(Operation):
         res_out_map: Dict[str, Variable],
         out_in_map: Dict[str, List[Variable]],
         brackets: Dict[str, Tuple[Union[float, np.ndarray]]],
+        maxiter: int = 100,
         *args,
         **kwargs,
     ):
@@ -26,27 +27,10 @@ class BracketedSearchOperation(Operation):
             in_vars = in_vars.union(set(v))
         self.nargs = len(in_vars)
         super().__init__(*args, **kwargs)
-        self._defined = False
         self._model = model
         self.res_out_map: Dict[str, Variable] = res_out_map
         self.out_res_map: Dict[str, Output] = out_res_map
         self.out_in_map: Dict[str, List[Variable]] = out_in_map
-        for k, v in brackets.items():
-            if len(v) != 2:
-                raise ValueError(
-                    "Bracket for state {} is not a tuple of two values".
-                    format(k))
-            if isinstance(v[0], np.ndarray) and isinstance(
-                    v[1], np.ndarray):
-                if v[0].shape != v[1].shape:
-                    raise ValueError(
-                        "Bracket values for {} are not the same shape; {} != {}"
-                        .format(k, v[0].shape, v[1].shape))
-            elif not isinstance(v[0], float) and not isinstance(
-                    v[1], float):
-                raise TypeError(
-                    "Bracket values for {} are not of the same type; type must be float or ndarray"
-                    .format(k))
-
         self.brackets: Dict[str, Tuple[Union[float,
                                              np.ndarray]]] = brackets
+        self.maxiter: int = maxiter
