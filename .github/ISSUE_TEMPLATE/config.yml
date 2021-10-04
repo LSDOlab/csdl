@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question
+    url: https://csdl.zulipchat.com/login/
+    about: Please ask and answer questions about CSDL on the community forum.
+  - name: Feature Request
+    url: https://csdl.zulipchat.com/login/
+    about: Please discuss language feature requests on the community forum.
