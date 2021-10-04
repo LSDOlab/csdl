@@ -1,3 +1,7 @@
+from typing import Dict, Any, Tuple
+from collections import OrderedDict
+
+
 class _ReprClass(object):
     """
     Class for defining objects with a simple constant string __repr__.
@@ -72,7 +76,7 @@ class SimulatorBase:
         """
         raise NotImplementedError(msg)
 
-    def compute_total_derivatives(self):
+    def compute_total_derivatives(self) -> OrderedDict[str, Any]:
         """
         Method to compute total derivatives for use by an optimizer
         """
@@ -108,26 +112,26 @@ class SimulatorBase:
         """
         raise NotImplementedError(msg)
 
-    def visualize_model(self):
+    def visualize_implementation(self):
         """
-        A for the back end to provide its own visualization of the
-        model.
+        A method for the back end to provide its own visualization of
+        the model.
         """
         raise NotImplementedError(msg)
 
-    def objective(self):
+    def objective(self) -> Dict[str, Any]:
         """
         Method to provide optimizer with objective
         """
         raise NotImplementedError(msg)
 
-    def design_variables(self):
+    def design_variables(self) -> OrderedDict[str, Dict[str, Any]]:
         """
         Method to provide optimizer with design variables
         """
         raise NotImplementedError(msg)
 
-    def constraints(self):
+    def constraints(self) -> OrderedDict[str, Dict[str, Any]]:
         """
         Method to provide optimizer with constraints
         """
@@ -145,14 +149,14 @@ class SimulatorBase:
         """
         raise NotImplementedError(msg)
 
-    def objective_gradient(self):
+    def objective_gradient(self) -> OrderedDict[Tuple[str, str], Any]:
         """
         Method to provide optimizer with total derivative of objective
         with respect to design variables
         """
         raise NotImplementedError(msg)
 
-    def constraint_jacobian(self):
+    def constraint_jacobian(self) -> OrderedDict[Tuple[str, str], Any]:
         """
         Method to provide optimizer with total derivatives of
         constraints with respect to design variables

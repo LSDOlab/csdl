@@ -1,0 +1,45 @@
+# Building and Updating Documentation
+
+## Building Documentation
+
+The documentation for `csdl` is built using
+[Docusaurus](https://docusaurus.io/).
+To build the documentation locally, you will first need to generate the
+[API docs](#generating-api-docs) and the
+[worked examples](#generating-worked-examples) below.
+Without the generated files, Docusaurus will fail to build the
+documentation website.
+
+Once the files are generated, you may run
+
+```sh
+cd docs
+npx docusaurus run
+```
+
+The website will be hosted at
+[localhost:3000/csdl](localhost:3000/csdl).
+
+## Generating API Docs
+
+When making changes to the API, the `generate_api_docs.sh` script is
+required to generate the API documentation.
+The `csdl/utils/generate_api_docs.sh` script relies on pydoc-markdown to
+generate Markdown files containing the API documentation.
+
+The `csdl/utils/generate_api_docs.sh` script uses the config files
+`csdl/utils/user.yml` and `csdl/utils/def.yml` to generate the user API
+and developer API, respectively.
+
+## Generating Worked Examples
+
+The `docs/.gitignore` file is set to ignore worked examples.
+GitHub automatically generates the worked examples to include in
+documentation from the test cases.
+
+## Deployment
+
+The `.github/workflows/doc_pages_workflow.yml` file defines the workflow
+for a GitHub Action that generates the website for `csdl`.
+The workflow follows the instructions given in
+[Docusaurus](https://docusaurus.io/docs/deployment#deploying-to-github-pages).

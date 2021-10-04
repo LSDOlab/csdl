@@ -92,56 +92,61 @@ const katex = require('rehype-katex');
             },
             footer: {
                 style: 'dark',
-                links: [{
-                    title: 'Docs',
-                    items: [
-                        {
-                            label: 'Tutorial',
-                            to: '/docs/tutorial/install',
-                        },
-                        // {
-                        //     label: 'CSDL by Example',
-                        //     to: '/docs/examples/intro',
-                        // },
-                        {
-                            label: 'Language Reference',
-                            to: '/docs/lang_ref/model',
-                        },
-                        {
-                            label: 'Developer API',
-                            to: '/docs/developer/api',
-                        },
-                    ],
-                },
-                {
-                    title: 'Community',
-                    items: [{
-                        label: 'Stack Overflow',
-                        href: 'https://stackoverflow.com/questions/tagged/csdl-mdo',
+                links: [
+                    {
+                        title: 'Docs',
+                        items: [
+                            {
+                                label: 'Tutorial',
+                                to: '/docs/tutorial/install',
+                            },
+                            {
+                                label: 'CSDL by Example',
+                                to: '/docs/examples/intro',
+                            },
+                            {
+                                label: 'Language Reference',
+                                to: '/docs/lang_ref/model',
+                            },
+                            {
+                                label: 'Developer API',
+                                to: '/docs/developer/api',
+                            },
+                        ],
                     },
                     {
-                        label: 'Zulip',
-                        href: 'https://csdl.zulipchat.com/',
+                        title: 'Community',
+                        items: [{
+                            label: 'Stack Overflow',
+                            href: 'https://stackoverflow.com/questions/tagged/csdl-mdo',
+                        },
+                        {
+                            label: 'Zulip',
+                            href: 'https://csdl.zulipchat.com/',
+                        },
+                        ],
                     },
-                    ],
-                },
-                {
-                    title: 'More',
-                    items: [
-                        {
-                            label: 'Publications',
-                            to: '/publications',
-                        },
-                        {
-                            label: 'Blog',
-                            to: '/blog',
-                        },
-                        {
-                            label: 'GitHub',
-                            href: 'https://github.com/lsdolab/csdl',
-                        },
-                    ],
-                },
+                    {
+                        title: 'More',
+                        items: [
+                            {
+                                label: 'Publications',
+                                to: '/publications',
+                            },
+                            {
+                                label: 'Blog',
+                                to: '/blog',
+                            },
+                            {
+                                label: 'GitHub',
+                                href: 'https://github.com/lsdolab/csdl',
+                            },
+                            {
+                                label: 'LSDO Lab',
+                                href: 'https://lsdo.eng.ucsd.edu/',
+                            },
+                        ],
+                    },
                 ],
                 copyright: `Copyright © ${new Date().getFullYear()} Large Scale Design Optimization Lab, University of California San Diego`,
             },

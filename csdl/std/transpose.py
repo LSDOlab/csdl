@@ -23,7 +23,7 @@ def transpose(var: Variable):
         op=op,
         shape=var.shape[::-1],
     ), )
-    for out in op.outs:
-        out.add_dependency_node(op)
+    # for out in op.outs:
+    #         out.add_dependency_node(op)
 
-    return out
+    return op.outs[0]

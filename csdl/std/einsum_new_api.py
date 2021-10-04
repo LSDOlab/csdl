@@ -43,7 +43,7 @@ def einsum_new_api(*operands: List[Variable],
     shape = compute_einsum_shape(operation_aslist,
                                  [expr.shape for expr in operands])
     op.outs = (Output(None, op=op, shape=shape), )
-    for out in op.outs:
-        out.add_dependency_node(op)
+    # for out in op.outs:
+    #         out.add_dependency_node(op)
 
-    return out
+    return op.outs[0]

@@ -216,7 +216,7 @@ Input
 ### create\_output
 
 ```python
-def create_output(name, val=1.0, shape=(1, ), units=None, res_units=None, desc='', lower=None, upper=None, ref=1.0, ref0=0.0, res_ref=1.0, tags=None, shape_by_conn=False, copy_shape=None, distributed=None) -> ExplicitOutput
+def create_output(name, val=1.0, shape=(1, ), units=None, res_units=None, desc='', lower=None, upper=None, ref=1.0, ref0=0.0, res_ref=1.0, tags=None, shape_by_conn=False, copy_shape=None, distributed=None) -> Concatenation
 ```
 
 Create a value that is computed explicitly, either through
@@ -239,7 +239,7 @@ shape: Tuple[int]
 
 **Returns**
 
-ExplicitOutput
+Concatenation
     An object to use in expressions
 
 <a id="csdl.core.model.Model.register_output"></a>
@@ -247,7 +247,7 @@ ExplicitOutput
 ### register\_output
 
 ```python
-def register_output(name: str, var: Variable) -> Variable
+def register_output(name: str, var: Variable) -> Output
 ```
 
 Register ``var`` as an output of the ``Model``.
@@ -273,7 +273,7 @@ Variable
 ### add
 
 ```python
-def add(submodel, name: str = '', promotes: Iterable = None, promotes_inputs: Iterable = None, promotes_outputs: Iterable = None)
+def add(submodel, name: str = '', promotes: Iterable[str] = None, promotes_inputs: Iterable[str] = None, promotes_outputs: Iterable[str] = None)
 ```
 
 Add a submodel to the ``Model``.
@@ -301,13 +301,13 @@ promotes_outputs: Iterable
 System
     Subsystem to add to `Model`
 
-<a id="csdl.core.model.Model.create_model"></a>
+<a id="csdl.core.model.Model.create_submodel"></a>
 
-### create\_model
+### create\_submodel
 
 ```python
 @contextmanager
-def create_model(name: str)
+def create_submodel(name: str)
 ```
 
 Create a ``Model`` object and add as a submodel, promoting all
@@ -324,7 +324,7 @@ name: str
 **Returns**
 
 Model
-    Child ``Model`` object whosevariables are all promoted
+    Child ``Model`` object whose variables are all promoted
 
 <a id="csdl.core.model.Model.visualize_sparsity"></a>
 

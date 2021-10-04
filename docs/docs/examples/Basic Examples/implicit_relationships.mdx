@@ -1,7 +1,7 @@
 Implicit Relationships
 ======================
 
-The ``ImplicitModel`` class provides users with a way to solve for
+The ``ImplicitOperation`` class provides users with a way to solve for
 variables in implicit relationships.
 It is possible to compute outputs implicitly by defining a residual
 variable in terms of the output and inputs.
@@ -44,7 +44,7 @@ print(sim['x'])
 ```
 
 The expressions for the residuals will will be part of a ``Model``
-within the generated ``ImplicitModel`` object.
+within the generated ``ImplicitOperation`` object.
 
 For problems where the residual may converge for multiple solutions, or
 where the residual is difficult to converge over some interval, ``csdl``

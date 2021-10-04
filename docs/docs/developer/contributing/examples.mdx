@@ -9,9 +9,11 @@ sidebar_position: 2
 
 To define examples used for testing and documentation, only the example
 class defnition is required.
-Example class definitions are located in `csdl/csdl/examples`.
+Example class definitions are located in `csdl/examples`.
 `csdl/examples/` contains class definitions that are used to generate
-example functions for running tests and including in documentation.
+example functions for running test cases.
+Worked examples for including in documentation can also be generated
+from test cases.
 Class names must start with either `Example` or `Error`.
 Class names that start with `Example` are meant to be used for testing
 expected values when valid inputs are provided, and class names that
@@ -30,16 +32,18 @@ examples used for testing be used for documentation.
 
 ## Defining Examples with Valid Input
 
-Since example functions and scripts are generated from class
-definitions, there isn't any way by default to signal directly from
+Example functions and scripts are generated from class
+definitions, so if a variable value is not printed using
+ there isn't any way by default to signal directly from
 within the class definition that the example script should print a
 variable value in the worked example.
-To make this possible, `csdl` uses the `docstring_parser` package to
-parse docstrings before generating example scripts.
+To set up an example class so that the worked example prints values
+without the use of `Model.print_var`, `csdl` uses the `docstring_parser`
+package to parse docstrings before generating example scripts.
 
-To write an example that prints the value of an output so that
-To get values from a simulation in a test (e.g. `'x'` and `'y'`),
-add
+To write an example class so that the generated test case does not print
+run time values, but the worked example in the documentation does, (e.g.
+`'x'` and `'y'`), add
 
 ```py
 """
@@ -157,6 +161,16 @@ class from the `csdl_om` back end.
 The example script is necessary for generating worked examples shown
 in the final documentation.
 
-## Adding Worked Examples to Documentation
+To include the worked examples in CSDL by Example, add
 
-- [ ] TODO: make script robust
+```jsx
+import WorkedExample from './../../../worked_examples/ex_name_of_worked_example_file.mdx';
+```
+
+to the Markdown file that should show the worked example, and
+
+```jsx
+<WorkedExample />
+```
+
+where the worked example should appear.

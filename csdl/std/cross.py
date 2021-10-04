@@ -35,7 +35,7 @@ def cross(in1, in2, axis: int):
         op=op,
         shape=op.dependencies[0].shape,
     ), )
-    for out in op.outs:
-        out.add_dependency_node(op)
+    # for out in op.outs:
+    #         out.add_dependency_node(op)
 
     return op.outs[0]

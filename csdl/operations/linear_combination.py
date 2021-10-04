@@ -14,17 +14,10 @@ class linear_combination(StandardOperation):
         for dep in self.dependencies:
             if dep0.shape != dep.shape:
                 raise ValueError(
-                    "Shapes of inputs to linear_combination do not match")
+                    "Shapes of inputs to linear_combination do not match"
+                )
         self.properties['iterative'] = False
         self.properties['elementwise'] = True
-
-        self.outs = [
-            Output(
-                None,
-                op=self,
-                shape=self.dependencies[0].shape,
-            )
-        ]
 
         self.literals['constant'] = constant
         self.literals['coeffs'] = coeffs
@@ -48,10 +41,12 @@ class linear_combination(StandardOperation):
             if isinstance(coeff, (int, float)):
                 if coeff > 1:
                     if first and np.all(constant == 0):
-                        self.compute_string += '{}*{}'.format(coeff, arg.name)
+                        self.compute_string += '{}*{}'.format(
+                            coeff, arg.name)
                         first = False
                     else:
-                        self.compute_string += '+{}*{}'.format(coeff, arg.name)
+                        self.compute_string += '+{}*{}'.format(
+                            coeff, arg.name)
                 elif coeff > 0:
                     if first and np.all(constant == 0):
                         self.compute_string += '{}'.format(arg.name)
@@ -59,13 +54,16 @@ class linear_combination(StandardOperation):
                     else:
                         self.compute_string += '+{}'.format(arg.name)
                 elif coeff < -1:
-                    self.compute_string += '{}*{}'.format(coeff, arg.name)
+                    self.compute_string += '{}*{}'.format(
+                        coeff, arg.name)
                 elif coeff < 0:
                     self.compute_string += '-{}'.format(arg.name)
             else:
                 if not np.all(coeff == 0):
                     if first and np.all(constant == 0):
-                        self.compute_string += '{}*{}'.format(coeff, arg.name)
+                        self.compute_string += '{}*{}'.format(
+                            coeff, arg.name)
                         first = False
                     else:
-                        self.compute_string += '+{}*{}'.format(coeff, arg.name)
+                        self.compute_string += '+{}*{}'.format(
+                            coeff, arg.name)

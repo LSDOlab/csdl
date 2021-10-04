@@ -1,0 +1,259 @@
+---
+title: Object Oriented Programming
+---
+
+------------------------------------------------------------------------
+
+## The Model Hierarchy
+
+- [ ] model hierarchy figure
+
+All CSDL models exist within a hierarchy.
+A single model is the simplest hierarchy.
+The model at the top of the model hierarchy is the "main" model,
+representing the entire system (e.g. a vehicle) and the models further
+down the hierarchy, or submodels, represent subsystems, or disciplines
+(e.g. aerodynamics, structures, propulsion).
+The model hierarchy has a tree structure; each model has at most one
+parent (the "main" model has zero parents), and any number of children.
+Assembling a model hierarchy is done using the
+[`Model.add`](/docs/lang_ref/model#add) method.
+
+```py
+class Example(Model):
+  def define(self):
+    self.add(Aerodynamics())
+    self.add(Structures())
+    self.add(Propulsion())
+```
+
+Just as each variable in CSDL has a name, each model has a name.
+CSDL models names are automatically generated unless the user provides a
+name via the `name` option in `Model.add`.
+
+```py
+class Example(Model):
+  def define(self):
+    self.add(Aerodynamics(), name='aero')
+    self.add(Structures(), name='structures')
+    self.add(Propulsion(), name='prop')
+```
+
+:::note
+If users do not assign a name to a variable or model, a name will be
+generated automatically and the user will not know what the CSDL name of
+a particular variable is, making that variable's run time value
+effectively inaccessible from outside the `Simulator` object.
+It is not recommended to name all variables (i.e. register all outputs),
+but care must be taken to name all variables _of interest_.
+:::
+
+Run time values are accessed using the namespaces assigned to the models
+that contain the variables.
+For example, `'A.B.C.x'` can be used to access data from variable `'x'`
+in model `'C'`, which is contained in model `'B'`, which is contained in
+model `'A'`.
+To assign a value to `'A.B.C.x'` in the `Simulator` object,
+
+```py
+sim = Simulator(UserDefinedModel())
+sim['A.B.C.x'] = x
+sim.run()
+```
+
+To read a value to `'A.B.C.x'` in the `Simulator` object,
+
+```py
+sim = Simulator(UserDefinedModel())
+print(sim['A.B.C.x'])
+```
+
+:::note
+To access (read or write) a variable's run time value, use
+
+- `sim['A.x']` for variable `'x'` in model `'A'`
+- `sim['A.B.y']` for variable `'y'` in model `'B'` in model `'A'`
+:::
+
+Whenever possible, CSDL will _promote_ variables.
+Promoting a variable in CSDL shortens its name.
+In the example with `'A.B.C.x'`, if `'x'` can be promoted to model
+`'A'`, it will be promoted, and it may be accessed using the key
+`'A.x'`.
+Automatic promotion rules are described in [Promotions](#promotions).
+
+Sometimes it is necessary to declare a connection between two models at
+different branches and/or levels in the model hierarchy.
+
+## Promotions
+
+:::caution
+Automatic promotions are currently handled by the CSDL compiler back
+end, and not yet implemented in `csdl`.
+This caution will be removed when these features are implemented in
+`csdl`.
+:::
+
+All variable names exist within a namespace corresponding to the `Model`
+that contains them.
+In most cases, the model names are not necessary to access (read or
+write) a variable's value, because CSDL _promotes_ names automatically
+whenever possible.
+Promotion involves moving a variable to a different namespace.
+Automatically promoting all variables when possible makes accessing
+variables less verbose.
+If a declared `Variable` and either an `Input` or an `Output` are
+promoted to the same level, then they form a _connection_; i.e. the data
+from the `Input`/`Output` will transfer to the declared `Variable`.
+Otherwise, the connection is left open.
+Promotions are possible in the following cases:
+
+- An `Input` can be promoted from a `Model` to its parent `Model` if both:
+  - no other sibling `Model` promotes an `Input`, declared `Variable`,
+    or `Output` with the same name to the parent level.
+  - the parent `Model` does not contain an `Input` or `Output` with the
+    same name.
+- An `Output` can be promoted from a `Model` to its parent `Model` if both:
+  - no other sibling `Model` promotes an `Input` or `Output` name to the
+    parent level.
+  - the parent `Model` does not contain an `Input` or `Output` with the
+    same name.
+- A declared `Variable` can be promoted from a `Model` to its parent
+  `Model` if both:
+  - no other sibling `Model` promotes an `Input`, declared `Variable`,
+    or `Output` with the same name and different shape to the parent
+    level.
+  - the parent `Model` does not contain an `Input`, declared `Variable`,
+    or `Output` with the same name and different shape.
+
+These promotion rules are illustrated below.
+
+![](/img/automatic-promotions.svg)
+
+CSDL users can always suppress promotion by selectively promoting
+variables.
+CSDL users may only promote variables that are allowed to be promoted,
+however.
+If the user promotes variables, all variables not promoted by the user
+that could otherwise be promoted are not promoted.
+In some cases, CSDL users may suppress some promotions so that other
+promotions that would have otherwise not been possible are now possible.
+
+To promote selectively, use the `promotes` option:
+
+```py
+class Example(Model):
+  def define(self):
+    # promote two variables
+    self.add(Aerodynamics(), name='aero', promotes=['lift', 'drag'])
+    # promote automatically
+    self.add(Structures(), name='structures')
+    # suppress all promotion
+    self.add(Propulsion(), name='prop', promotes=[])
+```
+
+:::note
+Promotions do not change the model definition or "move" variables from
+one model to another.
+They only
+- Make accessing run time values less verbose
+- Ensure data is transfered between models without requiring explicit
+  connections
+:::
+
+:::note
+If two variables with the same name can be promoted, then they are
+connected; i.e. their values are equal.
+This occurs when when the output of one model is an input to another
+model, including when the output of one model is an input to many other
+models.
+CSDL automatically avoids promotion when there is a naming conflict.
+:::
+
+## Connections
+
+:::caution
+The process of verifying that connections are valid presented in this
+section are not yet implemented in `csdl` and rely on the back end.
+The process of verifying that connections do not introduce cycles is not
+yet implemented.
+For now, please use `Simulator.visualize_implementation` to check that
+your `Model` does not contain unnecessary feedback or cycles.
+This caution will be removed when these features are implemented in
+`csdl`.
+:::
+
+The purpose of connections is to transfer data from one branch of the
+model hierarchy to another, especially between two variables with
+different names (i.e. when promotion would not automatically form a
+connection).
+
+Connections between models are issued via the
+[`Model.connect`](/docs/lang_ref/model#connect) method.
+Connections represent equality between variables declared or defined in
+different submodels, particularly submodels that are located in
+different branches and/or levels of the model hierarchy.
+For example, one discipline could compute the load on a wing due to
+aerodynamic forces, and another discipline could use that load as an
+input to compute the wing deflection.
+These two disciplines may not be represented by submodels that are
+childred of the same model, so any connection between them cannot be
+defined in the same model where they are added.
+
+Most of the time, connections are unnecessary.
+
+- [ ] connections figure
+
+The purpose of connections is to transfer data from a `Model` in one
+branch of the model hierarchy to another `Model` in another branch of
+the model heirarchy, especially between two variables with different
+names (i.e. when promotion would not automatically form a connection).
+
+An input/output can be connected to a declared variable if
+  - the shapes match
+  - a connection does not already exist (including by promotion)
+
+The variable names (_sans_ namespace) do not need to match.
+
+:::important
+You may only issue connections between variables using promoted names,
+and only at the lowest level possible in the model hierarchy.
+
+Instead of
+
+```py
+self.connect('A.B.C.x', 'A.B.y')
+```
+
+use
+
+```py
+self.connect('B.C.x', 'B.y')
+```
+
+within the `Model` named `'A'`.
+This may change with future versions of CSDL, but either way, this is
+[good practice](/docs/tutorial/best-practices#connections).
+:::
+
+Connections are not allowed between models if the connection would form
+a cycle.
+This is to maintain the DAG structure of a `Model`.
+If your model specification includes a cycle, you will need to create a
+`Model` that computes the difference between the source (the first
+argument in `Model.connect`) and the sink (the second argument in
+`Model.connect`) and use that `Model` to define an implicit operation.
+
+:::warning
+When defining relationships of the form $x=f(x)$, this type of
+connection will form a cycle and the compiler will emit an error
+explaining that the `Model` that defines this relationship needs to be
+redefined so that it has an output of the form $r=x-f(x)$.
+If $x=f(x)$ is a fixed point iteration and you are not using a Newton
+type solver, take care not to reverse the order so that $r=f(x)-x$, or
+the residual will not converge.
+:::
+
+## Mixing Functional and Object Oriented Styles
+
+- [ ] declare/register

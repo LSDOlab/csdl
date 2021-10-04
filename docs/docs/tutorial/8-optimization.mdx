@@ -1,0 +1,167 @@
+---
+title: Optimization
+---
+
+------------------------------------------------------------------------
+
+Up to this point in the tutorial, the focus has been on using CSDL to
+specify mathematical models for simulation.
+Simulations are useful for engineering analysis, but CSDL goes a step
+further by automating derivative computation, making CSDL a great choice
+for solving optimization problems.
+This section shows how to define an optimization problem using CSDL.
+Whenever a user defines an optimization problem in CSDL, the resulting
+`Simulator` object provides external code access to derivatives.
+The schematic below shows how a `Simulator` object can be connected to
+an optimizer to solve an optimization problem.
+
+![img](/img/tutorial/opt.svg)
+
+The role of the optimizer is to update the design variables $x$ until
+the objective $f$ is minimized and the constraints $c_i$ are satisfied.
+This is an iterative process that requires calling `Simulator.run`
+repeatedly to run a new simulation each time the optimizer updates the
+design variables.
+
+CSDL does not provide an optimizer, but the `SimulatorBase` class does
+specify the necessary interfaces for integrating a `Simulator` object
+with external code.
+
+In the rest of this section, we'll cover how to define an general
+nonlinear programs (NLPs) in CSDL.
+
+## Unconstrained Optimization
+
+Let's start with a simple unconstrained problem.
+
+$$
+\displaystyle\min_{x\in\mathbb{R^n}} x^Tx
+$$
+
+Here, we want to minimize the objective, $x^Tx$ with respect to a design
+variable $x\in\mathbb{R^n}$.
+Note that the objective is a scalar function of the design variable.
+
+This example is simple enough that CSDL is not required to find a
+solution quickly ($x^*=0$), but we can still define it using CSDL:
+
+```py
+class Example(Model):
+    def initialize(self):
+        self.parameters.declare('n', types=int)
+
+    def define(self):
+        n = self.parameters['n']
+
+        x = self.create_input('x', shape=(n,))
+        self.add_design_variable('x')
+
+        self.register_output('y', csdl.dot(x,x))
+        self.add_objective('y')
+```
+
+The variable `'x'` is an input to the main model (the model at the
+root/top of the model hierarchy).
+In this example, there is only one `Model` object in the model
+hierarchy, so an instance of `Example` would be the main model, and
+`'x'` would be an input to the `Simulator` constructed from an `Example`
+object.
+The variable `'y'` is registered as an output.
+
+There are two methods that are not required to specify a model intended
+for use in an analysis, but they are required to define an optimization
+problem.
+
+The first, `Model.add_design_variable` is required to specify which
+inputs are allowed to change from one simulation to the next during
+optimization.
+The idea is that some external code will interact with the `Simulator`
+object, which runs the model and computes derivatives necessary for the
+external code to update the design variables.
+If an input is not a design variable, then that signals to the external
+code that that input should be held constant across optimization
+iterations.
+
+Second, a call to the `Model.add_objective` method is required to define
+the objective.
+In this case, `'y'` is the variable that represents the objective,
+$x^Tx$.
+
+:::note
+If a `Model` subclass doesn't declare any design variables, you can
+still call `Model.add_design_variable` on the `Model` object using the
+name of the input; you don't need access to the `Input` object itself.
+:::
+
+## Constrained Optimization
+
+To define a constrained optimization problem, the `Model.add_constraint`
+method is used.
+Suppose we want to solve a linear program (LP)
+
+$$
+\displaystyle\min_{x} -c^Tx\\
+\text{s.t.  }  Ax \le b\\
+  x \ge 0\\
+$$
+
+Then we could write,
+
+```py
+class Example(Model):
+    def initialize(self):
+        self.parameters.declare('n', types=int)
+        self.parameters.declare('b', types=float)
+
+    def define(self):
+        n = self.parameters['n']
+        b = self.parameters['b']
+
+        c = self.create_input('c', shape=(n,))
+        A = self.create_input('A', shape=(n,n))
+
+        x = self.create_input('x', shape=(n,))
+        self.add_design_variable('x')
+
+        self.register_output('f', -csdl.dot(c,x))
+        self.add_objective('f')
+
+        self.register_output('inequality_constraint', csdl.matvec(A,x))
+        self.add_constraint('inequality_constraint', upper=b)
+        self.add_constraint('x', lower=0)
+```
+
+
+In the example above, we define a `Model` subclass with inputs
+(`'c'`, `'A'`) that external code used to solve the LP is not
+allowed to modify across optimization iterations, and an input `'x'`
+that external code used to solve the LP is allowed to modify -- the
+design variable.
+To define constraints, the `Model.add_constraint` method is called on
+each variable to be constrained.
+In this case, the constraint `'inequality_constraint'` has an upper
+bound, defined by the `upper` option.
+The `upper` and `lower` options are provided for defining inequality
+constraints and the `equals` option is provided for definining equality
+constraints.
+All three options only accept compile-time constants.
+Note that `b` is a parameter, not a CSDL variable whose value is unkown
+at compile time.
+
+:::note
+The first argument to `Model.add_design_variable`, must be an input that
+has already been created.
+Likewise, the first argument to `Model.add_objective`, and
+`Model.add_constraint` must be an output that has already been
+registered.
+:::
+
+## Solving an Optimization Problem
+
+Solving an optimization problem requires constructing a `Simulator`
+object from a `Model` object.
+The `SimulatorBase` class provides an interface to which CSDL compiler
+back ends must conform in their implementations of the `Simulator`
+class.
+The interfaces provided by `SimulatorBase` are sufficient to run an
+optimization algorithm.

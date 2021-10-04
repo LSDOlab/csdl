@@ -1,9 +1,9 @@
-from csdl import ExplicitOperation, ImplicitOperation, NewtonSolver, ScipyKrylov
+from csdl import CustomExplicitOperation, CustomImplicitOperation, NewtonSolver, ScipyKrylov
 import csdl
 import numpy as np
 
 
-class ExampleImplicitSimple(ImplicitOperation):
+class ExampleImplicitSimple(CustomImplicitOperation):
     """
     :param var: x
     """

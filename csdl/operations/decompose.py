@@ -6,7 +6,6 @@ import numpy as np
 
 class decompose(StandardOperation):
     def __init__(self, *args, **kwargs):
-        name = 'decompose'
         self.nargs = 1
         self.nouts = 1
         super().__init__(*args, **kwargs)

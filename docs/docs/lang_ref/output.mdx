@@ -6,21 +6,21 @@ sidebar_position: 2
 ------------------------------------------------------------------------
 
 
-<a id="csdl.core.explicit_output"></a>
+<a id="csdl.core.concatenation"></a>
 
-# csdl.core.explicit\_output
+# csdl.core.concatenation
 
-<a id="csdl.core.explicit_output.ExplicitOutput"></a>
+<a id="csdl.core.concatenation.Concatenation"></a>
 
-## ExplicitOutput Objects
+## Concatenation Objects
 
 ```python
-class ExplicitOutput(Output)
+class Concatenation(Output)
 ```
 
 Class for creating an explicit output
 
-<a id="csdl.core.explicit_output.ExplicitOutput.__init__"></a>
+<a id="csdl.core.concatenation.Concatenation.__init__"></a>
 
 #### \_\_init\_\_
 
@@ -38,21 +38,4 @@ shape: Tuple[int]
     Shape of variable to compute explicitly
 val: Number or ndarray
     Initial value of variable to compute explicitly
-
-<a id="csdl.core.explicit_output.ExplicitOutput.define"></a>
-
-#### define
-
-```python
-def define(var: Variable)
-```
-
-Define expression (in terms of ``self``) that computes value for
-this output. This method defines a cyclic relationship, which
-requires an iterative solver to converge.
-
-**Parameters**
-
-var: Variable
-    The expression to compute iteratively until convergence
 

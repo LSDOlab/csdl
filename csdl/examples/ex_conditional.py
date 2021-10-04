@@ -1,6 +1,6 @@
-from csdl import Model, ImplicitModel
-import csdl
-import numpy as np
+# from csdl import Model, ImplicitOperation
+# import csdl
+# import numpy as np
 
 # class ExampleLiterals(Model):
 #     def define(self):

@@ -212,19 +212,19 @@ respect to the input/output (ImplicitOperation).
 
 
 
-<a id="csdl.core.explicit_operation"></a>
+<a id="csdl.core.custom_explicit_operation"></a>
 
-# csdl.core.explicit\_operation
+# csdl.core.custom\_explicit\_operation
 
-<a id="csdl.core.explicit_operation.ExplicitOperation"></a>
+<a id="csdl.core.custom_explicit_operation.CustomExplicitOperation"></a>
 
-## ExplicitOperation Objects
+## CustomExplicitOperation Objects
 
 ```python
-class ExplicitOperation(CustomOperation)
+class CustomExplicitOperation(CustomOperation)
 ```
 
-<a id="csdl.core.explicit_operation.ExplicitOperation.compute"></a>
+<a id="csdl.core.custom_explicit_operation.CustomExplicitOperation.compute"></a>
 
 ### compute
 
@@ -242,7 +242,7 @@ Define outputs as an explicit function of the inputs
         outputs['L'] = 1/2 * inputs['Cl'] * inputs['rho'] * inputs['V']**2 * inputs['S']
         outputs['D'] = 1/2 * inputs['Cd'] * inputs['rho'] * inputs['V']**2 * inputs['S']
 
-<a id="csdl.core.explicit_operation.ExplicitOperation.compute_derivatives"></a>
+<a id="csdl.core.custom_explicit_operation.CustomExplicitOperation.compute_derivatives"></a>
 
 ### compute\_derivatives
 
@@ -272,7 +272,7 @@ operation
         derivatives['D', 'V'] = inputs['Cd'] * inputs['rho'] * inputs['V'] * inputs['S']
         derivatives['D', 'S'] = 1/2 * inputs['Cd'] * inputs['rho'] * inputs['V']**2
 
-<a id="csdl.core.explicit_operation.ExplicitOperation.compute_jacvec_product"></a>
+<a id="csdl.core.custom_explicit_operation.CustomExplicitOperation.compute_jacvec_product"></a>
 
 ### compute\_jacvec\_product
 
@@ -307,19 +307,19 @@ matrix-vector product
 
 
 
-<a id="csdl.core.implicit_operation"></a>
+<a id="csdl.core.custom_implicit_operation"></a>
 
-# csdl.core.implicit\_operation
+# csdl.core.custom\_implicit\_operation
 
-<a id="csdl.core.implicit_operation.ImplicitOperation"></a>
+<a id="csdl.core.custom_implicit_operation.CustomImplicitOperation"></a>
 
-## ImplicitOperation Objects
+## CustomImplicitOperation Objects
 
 ```python
-class ImplicitOperation(CustomOperation)
+class CustomImplicitOperation(CustomOperation)
 ```
 
-<a id="csdl.core.implicit_operation.ImplicitOperation.evaluate_residuals"></a>
+<a id="csdl.core.custom_implicit_operation.CustomImplicitOperation.evaluate_residuals"></a>
 
 ### evaluate\_residuals
 
@@ -340,7 +340,7 @@ User defined method to evaluate residuals
         c = inputs['c']
         residuals['x'] = a * x**2 + b * x + c
 
-<a id="csdl.core.implicit_operation.ImplicitOperation.compute_derivatives"></a>
+<a id="csdl.core.custom_implicit_operation.CustomImplicitOperation.compute_derivatives"></a>
 
 ### compute\_derivatives
 
@@ -368,7 +368,7 @@ residuals wrt inputs and outputs
         # only necessary if implementing `apply_inverse_jacobian`
         self.inv_jac = 1.0 / (2 * a * x + b)
 
-<a id="csdl.core.implicit_operation.ImplicitOperation.solve_residual_equations"></a>
+<a id="csdl.core.custom_implicit_operation.CustomImplicitOperation.solve_residual_equations"></a>
 
 ### solve\_residual\_equations
 
@@ -391,7 +391,7 @@ cause `evaluate_residual_equations` to run instead.
         c = inputs['c']
         outputs['x'] = (-b + (b ** 2 - 4 * a * c) ** 0.5) / (2 * a)
 
-<a id="csdl.core.implicit_operation.ImplicitOperation.apply_inverse_jacobian"></a>
+<a id="csdl.core.custom_implicit_operation.CustomImplicitOperation.apply_inverse_jacobian"></a>
 
 ### apply\_inverse\_jacobian
 
@@ -414,7 +414,7 @@ implicit state variables, and when computing total derivatives
         elif mode == 'rev':
             d_residuals['x'] = self.inv_jac * d_outputs['x']
 
-<a id="csdl.core.implicit_operation.ImplicitOperation.compute_jacvec_product"></a>
+<a id="csdl.core.custom_implicit_operation.CustomImplicitOperation.compute_jacvec_product"></a>
 
 ### compute\_jacvec\_product
 

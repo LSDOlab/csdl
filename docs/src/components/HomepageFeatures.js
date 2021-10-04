@@ -4,26 +4,66 @@ import styles from './HomepageFeatures.module.css';
 
 const FeatureList = [
     {
-        title: 'Easy to Use',
-        Svg: require('../../static/img/undraw_drone.svg').default,
+        title: 'Automatically compute derivatives',
+        Svg: require('/img/derivatives.svg').default,
+        throwIfNamespace: false,
         description: (
-            <>Use CSDL in any project.</>
+            <>
+                Trust CSDL's fully intrusive design to compute exact
+                derivatives for each operation with no additional code
+                required.
+            </>
         ),
     },
+    // {
+    //     title: 'Work at a high level of abstraction',
+    //     Svg: require('/img/undraw_rocket.svg').default,
+    //     description: (
+    //         <>
+    //             The CSDL compiler builds an intermediate representation of
+    //             your model, performing implementation independent code
+    //             optimizations, letting you focus on modeling, and not
+    //             low level implementation.
+    //         </>
+    //     ),
+    // },
     {
         title: 'Work with large scale systems',
-        Svg: require('../../static/img/undraw_aircraft.svg').default,
+        Svg: require('/img/undraw_aircraft.svg').default,
         description: (
-            <>CSDL automates derivative computation across multiple disciplines without any overhead imposed on the user, making project code easy to write, easy to read, and easy to maintain.</>
+            <>
+                CSDL relies on the Modular Analysis and Unified
+                Derivatives (MAUD) architecture, enabling efficient
+                derivative computation for large scale systems, even
+                when external solvers are used for model evaluation.
+            </>
         ),
     },
     {
-        title: 'Helpful Error messages',
-        Svg: require('../../static/img/undraw_rocket.svg').default,
+        title: 'Get off the ground quickly',
+        Svg: require('/img/undraw_rocket.svg').default,
         description: (
-            <>CSDL has early, helpful error messages to prevent users from making modeling errors early in the design process.</>
+            <>
+                Focus on modeling physical systems, not implementing
+                algorithms.
+                Use a functional and/or object oriented style to define
+                system models, and take advantage of CSDL's early,
+                helpful error messages to build correct model
+                specifications.
+            </>
         ),
     },
+    // {
+    //     title: 'Control compile time execution',
+    //     Svg: require('/img/Python_Outline.svg').default,
+    //     description: (
+    //         <>
+    //             Harness the full power of Python to control compile time
+    //             behavior, and use parameters to make model definitions
+    //             more generic and reusable.
+    //         </>
+    //     ),
+    // },
 ];
 
 function Feature({ Svg, title, description }) {
@@ -43,17 +83,16 @@ function Feature({ Svg, title, description }) {
 export default function HomepageFeatures() {
     return (<
         section className={styles.features} >
-        <
-        div className="container" >
-            <
-        div className="row" > {
+        <div className="container">
+            <div className="row">
+                {
                     FeatureList.map((props, idx) => (<
                         Feature key={idx} {...props}
                     />
                     ))
-                } <
-        /div> < /
-        div > <
-        /section>
-                );
+                }
+            </div>
+        </div>
+    </section>
+    );
 }

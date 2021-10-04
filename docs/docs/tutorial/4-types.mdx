@@ -4,10 +4,135 @@ title: Variable Types
 
 ------------------------------------------------------------------------
 
-When you call create_output, you don't need to call register_output
+## (Declared) Variable
 
+All variables are instances of the `Variable` base class or one of its
+subclasses.
+In order to use a variable, it must first be declared using
+`Model.declare_variable`, which returns a `Variable` object.
+Only declared variables are instances of the `Variable` base class.
 
-- promotions
-- difference between variable and input
-  - automatic promotions
-  - declare/register
+A declared variable represents an input to the model from either a
+_parent model_ or a _child model_.
+(Constructing model hierarchies is covered in detail in
+the section on [Object Oriented Programming](/docs/tutorial/oo).)
+A declared variable is so called because it may or may not be defined
+until the model hierarchy is defined.
+
+:::note
+Any object of `Variable` class or its subclasses supports establishing a
+dependency on an element or a slice of the array that will be
+constructed at run time using the same syntax as NumPy.
+
+```py
+a = b[:9]
+```
+:::
+
+:::important
+Unlike NumPy, indexing a `Variable` does not automatically remove an axis with
+dimension `1`.
+This can lead to problems in user code that may be resolved similar to
+[how this is resolved](/docs/troubleshooting#broadcasting).
+:::
+
+Each variable in CSDL has a name.
+CSDL variable names are automatically generated unless the user provides
+a name by calling `Model.declare_variable`, `Model.create_input`,
+`Model.create_output`, or `Model.register_output`.
+
+## Input
+
+Declared variables provide a way for models in different levels and
+branches of the model hierarchy to specify data transfers between
+corresponding parts of a simulation.
+They do not however, provide a way to enforce that data be transfered
+_into_ the simulation, _from outside_ the simulation.
+The `Model.create_input` method provides a way to signal to CSDL that
+data _must_ be provided as an input to the simulation, and not as a data
+transfer between different parts of a simulation.
+This is useful for defining optimization problems, where an optimizer
+updates the [design variables](/docs/tutorial/optimization).
+
+:::note
+An input to the main model in CSDL can be thought of as an entry point
+to the resulting simulation, like an argument to the `main` function in
+C.
+:::
+
+CSDL inputs do not have to be created at the top level, or "main" model,
+however.
+Values for inputs can be set for a `Simulator` after compile time
+before each simulation, regardless of where they are created in the
+hierarchy.
+
+:::important
+A declared `Variable` is also _allowed_ to be an input to the
+overall simulation, but an `Input` is _required_  to be an input to the
+overall simulation.
+Remember that an `Input` object represents an input whose source is
+_outside_ the simulation, and is thus an input to the _entire_
+simulation.
+In contrast, a declared `Variable` is a data transfer within the
+simulation at a point corresponding to the _current_ model, and may be
+an output of a _parent model_, _child model_, or external code.
+:::
+
+## Output
+
+Models define variables in terms of other variables.
+The resulting variable is an output, which is represented by an `Output`
+object.
+To create an output, simply define a new variable using basic
+mathematical expressions or the standard library.
+
+```py
+x = self.declare_variable('x')
+y = csdl.sin(x)
+self.register_output('x', x)
+self.register_output('y', y)
+```
+
+The `Model.register_output` method provides a way to name an output.
+In order to ensure that an `Output` generates executable code, it or one
+of its dependencies must be registered as an output.
+
+## Concatenation
+
+The `Model.create_output` returns a `Concatenation` for concatenating
+values.
+The `Concatenation` class inherits from `Output`
+An object of class `Concatenation` differs from an `Output` in that an
+`Output` is defined in terms of other `Variable` objects, and then
+registered, but a `Concatenation` object is registered first, and then
+defined in terms of other `Variable` objects.
+The `Concatenation` class also supports multidimensional indexed
+assignment, which behaves the same way that NumPy indexed assignment
+does, except that
+[broadcasting](/docs/troubleshooting#broadcasting) is not supported.
+
+```py
+p = self.create_output('p', shape=(2,))
+p[0] = x
+p[1] = y
+```
+
+In [Getting Started](/docs/tutorial/getting-started), we mentioned that
+CSDL variables are immutable.
+This is still true of `Concatenation` because each index can have at
+most one assignment.
+There can be no overlap between indices used in assignment in different
+parts of the code.
+Some indices may be left to their default values.
+
+:::important
+You don't need to call `Model.create_output` if your `Output` is not a
+concatenation of variables.
+See
+[Troubleshooting](/docs/troubleshooting#i-get-an-output-not-defined-error-but-i-defined-my-output).
+:::
+
+:::important
+When you call `Model.create_output`, you don't need to call
+`Model.register_output` later.
+:::

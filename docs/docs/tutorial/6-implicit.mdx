@@ -1,0 +1,225 @@
+---
+title: Implicit Operations
+---
+
+------------------------------------------------------------------------
+
+So far, we have shown how to use CSDL to define variable computations
+explicitly; i.e. of the form $y = f(x)$.
+This is not always the case, however.
+Some variables are defined using implicit functions of the form
+$f(x, y)=0$ (again, $x$ an input, and $y$ an output).
+Unlike explicit functions, in general, solving implicit functions
+requires an iterative method, such as Newton's method.
+In order to use a nonlinear solver, CSDL requires defining a residual,
+$r=f(x, y)$ that an iterarive solver updates by updating $y$ until $r$
+converges.
+
+![implicit operation](/img/tutorial/implicit.svg)
+
+CSDL defines an implicit operation whose residuals are defined by an
+internal `Model` object.
+
+:::note
+CSDL allows arbitrarily complex [model hierarchies](/docs/tutorial/oo)
+in the internal model.
+:::
+
+The implicit operation is added to the intermediate representation so
+that it depends on the input arguments, and the states depend on the
+implicit operation.
+The term "state" is used to distinguish an output of the implicit
+operation we are defining from the output of the internal model.
+This dependency structure is reflected in the language itself.
+
+## A Simple Example
+
+In order to define a residual, users must define a `Model` subclass that
+computes residuals from declared variables.
+
+```py
+class Quadratic(Model):
+  def define(self):
+    a = self.declare_variable('a')
+    b = self.declare_variable('b')
+    c = self.declare_variable('c')
+
+    x = self.declare_variable('x')
+    y = a*x**2 + b*x + c
+    self.register_output('y', y)
+```
+
+This model can be used to compute the value of a quadratic function
+$y=ax^2+bx+c$ explicitly.
+This model can also be used to find the value of $x$
+when $y=0$.
+(Obviously, for this example, the quadratic formula can find the roots
+of $y=ax^2+bx+c$, but for more complicated models, the solution must be
+approximated).
+
+CSDL provides an API for expressing $x$ as an _explicit_ function of
+$y$:
+
+```py
+a = self.declare_variable('a')
+b = self.declare_variable('b')
+c = self.declare_variable('c')
+x = solve_quadratic(a, b, c)
+```
+
+This looks like `solve_quadratic` is a function that takes `a`, `b`, and
+`c` and returns `x`, but how the quadratic equation is solved is
+completely hidden.
+
+:::important
+`'a'`, `'b'`, `'c'`, and `'x'` are all names of
+_declared variables_ in the `Quadratic` class.
+Both the input arguments `'a'`, `'b'`, `'c'`, and the state `'x'` must
+all be declared variables in the `Model` class used as an internal model
+for the implicit operation.
+There muse _not_ be `Input` variables in the internal model.
+:::
+
+In order to achieve this, the user first needs to create and define
+`solve_quadratic`:
+
+```py
+class Quadratic(Model):
+  def define(self):
+    # ...
+
+class Example(Model):
+  def define(self):
+    solve_quadratic = self.create_implicit_operation(Quadratic())
+    solve_quadratic.declare_state('x', residual='y')
+    solve_quadratic.nonlinear_solver = NewtonSolver(
+      solve_subsystems=False,
+      maxiter=100,
+      iprint=False,
+    )
+    solve_quadratic.linear_solver = ScipyKrylov()
+
+    # ...
+```
+
+The method `Model.create_implicit_operation` creates a
+[callable object](https://docs.python.org/3/reference/datamodel.html#object.__call__),
+`solve_quadratic`.
+The object `solve_quadratic` looks like a function when it is used, as
+shown in the previous code snippet, but it's not exactly a function.
+Once `solve_quadratic` is created, the user is free to modify some
+properties of `solve_quadratic` in order to get the desired result when
+calling `solvex_quadratic`.
+
+The `declare_state` method signals to CSDL that one of the declared
+variables in `Quadratic` will be used as an output of the implicit
+operation.
+The term "state" is used to distinguish an output of the implicit
+operation we are defining from the output of the internal model.
+Each state must have a residual associated with it.
+Each residual must be an output of the internal model, in this case,
+an output `'y'` of `Quadratic`.
+
+:::important
+Residuals may have common dependencies, but they must not depend on each
+other.
+Not all residuals must be used to declare states.
+:::
+
+:::note
+`declare_state` automatically registers the output in the current
+model, in this case, `Example`), so there is no need to register `x`,
+or rewrite the name.
+:::
+
+Finally, the user needs to select the solver that CSDL will use to
+converge the residuals.
+
+That completes the definition of `solve_quadratic`.
+When we call `solve_quadratic`, we only need to supply the variable
+arguments.
+The variable arguments must have the same name as one of the declared
+variables in the internal model, in this case `Quadratic`.
+
+Putting it all together, here's what it looks like:
+
+```py
+from csdl import Model
+
+class Quadratic(Model):
+  def define(self):
+    a = self.declare_variable('a')
+    b = self.declare_variable('b')
+    c = self.declare_variable('c')
+
+    x = self.declare_variable('x')
+    y = a*x**2 + b*x + c
+    self.register_output('y', y)
+
+class Example(Model):
+  def define(self):
+    solve_quadratic = self.create_implicit_operation(Quadratic())
+    solve_quadratic.declare_state('x', residual='y')
+    solve_quadratic.nonlinear_solver = NewtonSolver(
+      solve_subsystems=False,
+      maxiter=100,
+      iprint=False,
+    )
+    solve_quadratic.linear_solver = ScipyKrylov()
+
+    a = self.declare_variable('a')
+    b = self.declare_variable('b')
+    c = self.declare_variable('c')
+    x = solve_quadratic(a, b, c)
+```
+
+:::important
+Calling `solve_something` returns `Output` objects corresponding to the
+states, followed by the [exposed variables](#expose).
+The first `Output` objects correspond to the states
+_in the order in which they are declared_.
+The last `Output` objects correspond to the exposed intermediate
+variables
+_in the order in which they are listed_ in the `expose` option.
+:::
+
+We can also define an initial guess for each state:
+
+```py
+solve_quadratic.declare_state('x', residual='y', default=7)
+```
+
+## Exposing Intermediate Variables {#expose}
+
+Sometimes a user might want to expose variables that are defined as
+intermediate variables between the arguments/states and residuals, that
+are computed iteratively, but do not have a residual associated with
+them.
+These intermediate variables can be any registered output that is not
+a residual associated with a state.
+
+```py
+solve_something = self.create_implicit_operation(model)
+solve_something.declare_state('x', residual='t')
+solve_something.declare_state('y', residual='u')
+solve_something.nonlinear_solver = NewtonSolver(
+  solve_subsystems=False,
+  maxiter=100,
+  iprint=False,
+)
+solve_something.linear_solver = ScipyKrylov()
+x, y, p, q, r = solve_something(a, b, c, expose=['p', 'q', 'r'])
+```
+
+The variables `p`, `q`, `r` are now available for use outside the
+implicit operation.
+
+:::important
+Calling `solve_something` returns `Output` objects corresponding to the
+states, followed by the exposed variables.
+The first `Output` objects correspond to the states
+_in the order in which they are declared_.
+The last `Output` objects correspond to the exposed intermediate
+variables
+_in the order in which they are listed_ in the `expose` option.
+:::

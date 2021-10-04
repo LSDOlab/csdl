@@ -59,7 +59,7 @@ def topological_sort(
         List of ``Variable`` objects sorted from root to leaf. When
         overriding ``csdl.Model.setup``, the first node will be
         ``Group._root``, and the last will be an ``DocInput``,
-        ``ExplicitOutput``, ``ImplicitOutput``, or ``IndepVar``.
+        ``Concatenation``, ``ImplicitOutput``, or ``IndepVar``.
     """
     sorted_nodes = []
     stack = registered_nodes
@@ -108,7 +108,7 @@ def paper_topological_sort(
         List of ``Variable`` objects sorted from root to leaf. When
         overriding ``csdl.Model.setup``, the first node will be
         ``Group._root``, and the last will be an ``DocInput``,
-        ``ExplicitOutput``, ``ImplicitOutput``, or ``IndepVar``.
+        ``Concatenation``, ``ImplicitOutput``, or ``IndepVar``.
     """
     sorted_nodes = []
     stack = copy(registered_nodes)
@@ -161,7 +161,7 @@ def modified_topological_sort(
         List of ``Variable`` objects sorted from root to leaf. When
         overriding ``csdl.Model.setup``, the first node will be
         ``Group._root``, and the last will be an ``DocInput``,
-        ``ExplicitOutput``, ``ImplicitOutput``, or ``IndepVar``.
+        ``Concatenation``, ``ImplicitOutput``, or ``IndepVar``.
     """
     print_operations = []
     sorted_nodes = []

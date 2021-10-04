@@ -15,17 +15,10 @@ class power_combination(StandardOperation):
         for dep in self.dependencies:
             if dep0.shape != dep.shape:
                 raise ValueError(
-                    "Shapes of inputs to linear_combination do not match")
+                    "Shapes of inputs to linear_combination do not match"
+                )
         self.properties['iterative'] = False
         self.properties['elementwise'] = True
-
-        self.outs = [
-            Output(
-                None,
-                op=self,
-                shape=self.dependencies[0].shape,
-            )
-        ]
 
         self.literals['powers'] = powers
         self.literals['coeff'] = coeff

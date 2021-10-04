@@ -103,3 +103,79 @@ or at different levels within the model hierarchy.
 self.connect('child_1.a', 'child_2.b')
 self.connect('child_1.c', 'child_2.grandchild.b')
 ```
+
+## Don't redefine variables
+
+Python does not enforce variable immutability, so if a variable is redefined (or
+in Python parlance, if a variable name is bound to a new reference),
+then the object in memory storing the variable data is not in use in
+later parts of the code.
+
+This means that your `Model` will lose track of the original variable.
+Either the original variable will be ignored during dead code removal,
+or the original variable will not be used in other parts of the code
+where it should have been, leading to unexpected/incorrect behavior in
+the final simulation.
+
+## When creating multiple variables in a compile time loop to aggregate later, store them in a list
+
+In Python, you might be used to mutating
+
+```py
+for i, obj in enumerate(iterable):
+    v[i] += obj
+```
+
+use
+
+```py
+l = []
+for i, obj in enumerate(iterable):
+    l.append(obj)
+s = csdl.sum(*l)
+```
+
+or better yet,
+
+```py
+x = self.create_ouput('x', shape=(n,))
+# concatenate some variables in x...
+s = csdl.sum(*filter(lambda x: True, [x[i] for i in range(n)]))
+```
+
+## Issue connections at the lowest possible level in the model hierarchy {#connections}
+
+
+Instead of
+
+```py
+self.connect('A.B.C.x', 'A.B.y')
+```
+
+use
+
+```py
+self.connect('B.C.x', 'B.y')
+```
+
+within the `Model` named `'A'`.
+
+## Always assign types to parameters
+
+Instead of
+
+```py
+self.parameters.declare('cubesats')
+self.parameters.declare('groundstations')
+self.parameters.declare('timesteps')
+self.parameters.declare('stepsize')
+```
+
+use
+
+```py
+self.parameters.declare('cubesats', types=dict)
+self.parameters.declare('groundstations', types=dict)
+self.parameters.declare('timesteps', types=int)
+self.parameters.declare('stepsize', types=float)
+```

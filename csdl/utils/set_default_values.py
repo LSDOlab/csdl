@@ -15,13 +15,13 @@ def set_default_values(model, promotes=[], promotes_inputs=[]):
             variables_promoted_from_children.extend(variables)
 
     # set default values for children based on parent values
-    for var in model.inputs + model.variables:
+    for var in model.inputs + model.declared_variables:
         for child_var in variables_promoted_from_children:
             if var.name == child_var.name:
                 child_var.val = var.val
 
     # set default values for inputs created in children
-    for var in model.variables:
+    for var in model.declared_variables:
         for child_var in inputs_promoted_from_children:
             if var.name == child_var.name:
                 var.val = child_var.val
@@ -32,7 +32,7 @@ def set_default_values(model, promotes=[], promotes_inputs=[]):
     if promotes is None and promotes_inputs is None:
         return inputs_promoted_to_parent, variables_promoted_to_parent
     if promotes == ['*'] or promotes_inputs == ['*']:
-        variables_promoted_to_parent = model.variables + variables_promoted_from_children
+        variables_promoted_to_parent = model.declared_variables + variables_promoted_from_children
         inputs_promoted_to_parent = model.inputs + inputs_promoted_from_children
     else:
         for name in promotes_inputs:

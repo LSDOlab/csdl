@@ -1,25 +1,31 @@
 def example(Simulator):
-    from csdl import Model, ImplicitModel, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     import numpy as np
     
     
-    class ExampleBracketedScalar(ImplicitModel):
+    class ExampleBracketedScalar(Model):
         def define(self):
-            with self.create_model('sys') as model:
-                model.create_input('a', val=1)
-                model.create_input('b', val=-4)
-                model.create_input('c', val=3)
-            a = self.declare_variable('a')
-            b = self.declare_variable('b')
-            c = self.declare_variable('c')
+            with self.create_submodel('sys') as model:
+                a = model.declare_variable('a', val=1)
+                b = model.declare_variable('b', val=-4)
+                c = model.declare_variable('c', val=3)
     
-            x = self.create_implicit_output('x')
-            y = a * x**2 + b * x + c
+                x = model.declare_variable('x')
     
-            x.define_residual_bracketed(
-                y,
-                x1=0,
-                x2=2,
+                y = a * x**2 + b * x + c
+                model.register_output('y', y)
+    
+            a = self.declare_variable('a', val=1)
+            b = self.declare_variable('b', val=-4)
+            c = self.declare_variable('c', val=3)
+            x = self.bracketed_search(
+                a,
+                b,
+                c,
+                states=['x'],
+                residuals=['y'],
+                model=model,
+                brackets=dict(y=(0, 2)),
             )
     
     

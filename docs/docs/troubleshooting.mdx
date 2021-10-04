@@ -58,8 +58,29 @@ To print variables at run time, the ``Model.print_var`` method is
 provided, which prints the CSDL variable name, shape, and value during
 each simulation run.
 
-I get an "Output not defined" error, but I defined my output.
--------------------------------------------------------------
+## I get a shape mismatch error, but my shapes match {#broadcasting}
+
+CSDL variables do not support broadcasting.
+
+Suppose you have a variable `a` with shape `(2, 1)`, and
+
+```py
+b = self.create_output('b', shape=(3,))
+b[:1] = a
+```
+
+then this won't work because `b[:1]` has shape `(2,)` and `a` has shape
+`(2,1)`.
+Instead, use
+
+```py
+b = self.create_output('b', shape=(3,))
+b[:1] = csdl.reshape(a, (2,))
+```
+
+For more complicated cases, you will need to use einsum.
+
+## I get an "Output not defined" error, but I defined my output.
 
 Either you forgot to define a value to your output using indexed
 assignment, or you made your variable reference a new object, neglecting

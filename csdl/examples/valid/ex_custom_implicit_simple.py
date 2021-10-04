@@ -1,10 +1,10 @@
 def example(Simulator):
-    from csdl import ExplicitOperation, ImplicitOperation, NewtonSolver, ScipyKrylov
+    from csdl import CustomExplicitOperation, CustomImplicitOperation, NewtonSolver, ScipyKrylov
     import csdl
     import numpy as np
     
     
-    class ExampleImplicitSimple(ImplicitOperation):
+    class ExampleImplicitSimple(CustomImplicitOperation):
         def define(self):
             self.add_input('a', val=1.)
             self.add_input('b', val=-4.)

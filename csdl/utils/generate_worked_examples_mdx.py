@@ -38,9 +38,10 @@ def trimlines(l):
 
 
 do_not_run = [
-    '__pycache__', '__init__.py', 'ex_dedup_simple.py',
+    '__pycache__',
+    '__init__.py',
+    'ex_dedup_simple.py',
     'ex_matmat_mat_vec_product.py',
-    'ex_implicit_with_subsystems_visualize_internal_model.py'
 ]
 
 CSDLPATH = inspect.getfile(lang_pkg)[:-len('__init__.py')]

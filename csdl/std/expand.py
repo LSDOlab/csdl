@@ -33,13 +33,14 @@ def expand(var: Variable, shape: tuple, indices=None):
         op=op,
         shape=shape,
     ), )
-    for out in op.outs:
-        out.add_dependency_node(op)
+    # for out in op.outs:
+    #         out.add_dependency_node(op)
 
     if not var.shape == (1, ):
         if indices is None:
-            raise ValueError('If expanding something other than a scalar ' +
-                             'indices must be given')
+            raise ValueError(
+                'If expanding something other than a scalar ' +
+                'indices must be given')
         (
             _,
             _,

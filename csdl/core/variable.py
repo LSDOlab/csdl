@@ -61,13 +61,20 @@ class Variable(Node):
 
     def __neg__(self):
         from csdl.operations.linear_combination import linear_combination
+        from csdl.core.output import Output
         op = linear_combination(self, coeffs=-1, constant=0)
-        for out in op.outs:
-            out.add_dependency_node(op)
+        op.outs = [
+            Output(
+                None,
+                op=op,
+                shape=op.dependencies[0].shape,
+            )
+        ]
         return op.outs[0]
 
     def __add__(self, other):
         from csdl.operations.linear_combination import linear_combination
+        from csdl.core.output import Output
         if isinstance(other, Variable):
             op = linear_combination(self, other, coeffs=1, constant=0)
         elif isinstance(other, (Number, np.ndarray)):
@@ -76,12 +83,18 @@ class Variable(Node):
             raise TypeError(
                 "Cannot add {} to an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
+        op.outs = [
+            Output(
+                None,
+                op=op,
+                shape=op.dependencies[0].shape,
+            )
+        ]
         return op.outs[0]
 
     def __sub__(self, other):
         from csdl.operations.linear_combination import linear_combination
+        from csdl.core.output import Output
         if isinstance(other, Variable):
             op = linear_combination(self,
                                     other,
@@ -93,12 +106,18 @@ class Variable(Node):
             raise TypeError(
                 "Cannot subtract an object from {} other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
+        op.outs = [
+            Output(
+                None,
+                op=op,
+                shape=op.dependencies[0].shape,
+            )
+        ]
         return op.outs[0]
 
     def __mul__(self, other):
         from csdl.operations.power_combination import power_combination
+        from csdl.core.output import Output
         if isinstance(other, Variable):
             op = power_combination(self, other, coeff=1, powers=1)
         elif isinstance(other, (Number, np.ndarray)):
@@ -109,18 +128,25 @@ class Variable(Node):
                     coeff=other,
                     powers=1,
                 )
+
             if isinstance(other, np.ndarray):
                 op = power_combination(self, coeff=other, powers=1)
         else:
             raise TypeError(
                 "Cannot multiply {} by an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
+        op.outs = [
+            Output(
+                None,
+                op=op,
+                shape=op.dependencies[0].shape,
+            )
+        ]
         return op.outs[0]
 
     def __truediv__(self, other):
         from csdl.operations.power_combination import power_combination
+        from csdl.core.output import Output
         if isinstance(other, Variable):
             # TODO: check for near-zero values too
             if np.any(other.val == 0):
@@ -140,12 +166,18 @@ class Variable(Node):
             raise TypeError(
                 "Cannot multiply {} by an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
+        op.outs = [
+            Output(
+                None,
+                op=op,
+                shape=op.dependencies[0].shape,
+            )
+        ]
         return op.outs[0]
 
     def __pow__(self, other):
         from csdl.operations.power_combination import power_combination
+        from csdl.core.output import Output
         if isinstance(other, Variable):
             raise NotImplementedError(
                 "Raising a variable to a variable power is not yet supported"
@@ -156,24 +188,36 @@ class Variable(Node):
             raise TypeError(
                 "Cannot multiply {} by an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
+        op.outs = [
+            Output(
+                None,
+                op=op,
+                shape=op.dependencies[0].shape,
+            )
+        ]
         return op.outs[0]
 
     def __radd__(self, other):
         from csdl.operations.linear_combination import linear_combination
+        from csdl.core.output import Output
         if isinstance(other, (Number, np.ndarray)):
             op = linear_combination(self, constant=other, coeffs=1)
         else:
             raise TypeError(
                 "Cannot add {} to an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
+        op.outs = [
+            Output(
+                None,
+                op=op,
+                shape=op.dependencies[0].shape,
+            )
+        ]
         return op.outs[0]
 
     def __rsub__(self, other):
         from csdl.operations.linear_combination import linear_combination
+        from csdl.core.output import Output
         if isinstance(other, Number):
             op = linear_combination(self, constant=other, coeffs=1)
         elif isinstance(other, np.ndarray):
@@ -184,12 +228,18 @@ class Variable(Node):
             raise TypeError(
                 "Cannot add {} to an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
+        op.outs = [
+            Output(
+                None,
+                op=op,
+                shape=op.dependencies[0].shape,
+            )
+        ]
         return op.outs[0]
 
     def __rmul__(self, other):
         from csdl.operations.power_combination import power_combination
+        from csdl.core.output import Output
         if isinstance(other, (Number, np.ndarray)):
             if isinstance(other, Number):
                 op = power_combination(
@@ -211,12 +261,18 @@ class Variable(Node):
             raise TypeError(
                 "Cannot multiply {} by an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
+        op.outs = [
+            Output(
+                None,
+                op=op,
+                shape=op.dependencies[0].shape,
+            )
+        ]
         return op.outs[0]
 
     def __rtruediv__(self, other):
         from csdl.operations.power_combination import power_combination
+        from csdl.core.output import Output
         if isinstance(other, np.ndarray):
             raise NotImplementedError(
                 "Dividing NumPy ndarray by Variable object not yet supported."
@@ -238,8 +294,13 @@ class Variable(Node):
             raise TypeError(
                 "Cannot divide {} by an object other than number, NumPy ndarray, or Variable"
                 .format(repr(self)))
-        for out in op.outs:
-            out.add_dependency_node(op)
+        op.outs = [
+            Output(
+                None,
+                op=op,
+                shape=op.dependencies[0].shape,
+            )
+        ]
         return op.outs[0]
 
     def __getitem__(
@@ -314,7 +375,6 @@ class Variable(Node):
         self._decomp.outs.append(out)
         self._decomp.nouts = len(self._decomp.outs)
         self._decomp._key_out_pairs[key] = out
-        out.add_dependency_node(self._decomp)
         self._decomp.src_indices[out] = src_indices
 
         return out

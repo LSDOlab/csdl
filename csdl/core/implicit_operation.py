@@ -1,60 +1,47 @@
-from csdl.core.custom_operation import CustomOperation
+from typing import Dict, List, Set, Optional
+from csdl.core.variable import Variable
+from csdl.core.output import Output
+from csdl.core.operation import Operation
+from csdl.solvers.linear_solver import LinearSolver
+from csdl.solvers.nonlinear_solver import NonlinearSolver
+from csdl.solvers.nonlinear.newton import NewtonSolver
+from csdl.solvers.nonlinear.broyden import BroydenSolver
+import numpy as np
 
 
-class ImplicitOperation(CustomOperation):
-    def __init__(self, *args, **kwargs):
+class ImplicitOperation(Operation):
+    """
+    Class for solving implicit functions using the specified solvers
+    """
+    def __init__(
+            self,
+            model,
+            nonlinear_solver: NonlinearSolver,
+            linear_solver: Optional[LinearSolver],
+            out_res_map: Dict[str, Output],
+            res_out_map: Dict[str, Variable],
+            out_in_map: Dict[str, List[Variable]],
+            expose: List[str] = [],
+            defaults: Dict[str, np.ndarray] = dict(),
+            *args,
+            **kwargs,
+    ):
+        self.nouts = len(out_res_map.keys())
+        in_vars: Set[Variable] = set()
+        for _, v in out_in_map.items():
+            in_vars = in_vars.union(set(v))
+        self.nargs = len(in_vars)
         super().__init__(*args, **kwargs)
-        self.linear_solver = None
-        self.nonlinear_solver = None
-
-    def evaluate_residuals(
-        self,
-        inputs,
-        outputs,
-        residuals,
-    ):
-        """
-        User defined method to evaluate residuals
-        """
-        pass
-
-    def compute_derivatives(self, inputs, outputs, derivatives):
-        """
-        User defined method to evaluate derivatives of residuals wrt
-        inputs and outputs
-        """
-        pass
-
-    def solve_residual_equations(self, inputs, outputs):
-        """
-        User defined method to solve residual equations, converging
-        residuals to compute outputs.
-        """
-        pass
-
-    def apply_inverse_jacobian(
-        self,
-        d_outputs,
-        d_residuals,
-        mode,
-    ):
-        """
-        Optional. Solve linear system. Invoked when solving coupled
-        linear system; i.e. when solving Newton system to update
-        implicit state variables, and when computing total derivatives
-        """
-        pass
-
-    def compute_jacvec_product(
-        self,
-        inputs,
-        outputs,
-        d_inputs,
-        d_outputs,
-        d_residuals,
-        mode,
-    ):
-        """
-        Optional.
-        """
-        pass
+        self._model = model
+        if linear_solver is None and isinstance(
+                nonlinear_solver, (NewtonSolver, BroydenSolver)):
+            raise ValueError(
+                "A linear solver is required when specifying a Newton or Broyden solver"
+            )
+        self.nonlinear_solver = nonlinear_solver
+        self.linear_solver = linear_solver
+        self.res_out_map: Dict[str, Variable] = res_out_map
+        self.out_res_map: Dict[str, Output] = out_res_map
+        self.out_in_map: Dict[str, List[Variable]] = out_in_map
+        self.expose: List[str] = expose
+        self.defaults = defaults

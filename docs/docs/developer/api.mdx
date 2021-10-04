@@ -9,6 +9,39 @@ title: Developer API
 
 # csdl.core.model
 
+<a id="csdl.core.model.ImplicitOperationFactory"></a>
+
+## ImplicitOperationFactory Objects
+
+```python
+class ImplicitOperationFactory(object)
+```
+
+<a id="csdl.core.model.ImplicitOperationFactory.__init__"></a>
+
+### \_\_init\_\_
+
+```python
+def __init__(parent, model)
+```
+
+<a id="csdl.core.model.ImplicitOperationFactory.declare_state"></a>
+
+### declare\_state
+
+```python
+def declare_state(state: str, bracket: Tuple[Union[int, float, np.ndarray],
+                       Union[int, float, np.ndarray]] = None, *, residual: str)
+```
+
+<a id="csdl.core.model.ImplicitOperationFactory.__call__"></a>
+
+### \_\_call\_\_
+
+```python
+def __call__(*arguments: Variable, *, expose: List[str] = [], defaults: Dict[str, Union[int, float, np.ndarray]] = dict())
+```
+
 <a id="csdl.core.model.build_symbol_table"></a>
 
 ### build\_symbol\_table
@@ -154,6 +187,18 @@ sim.run()
 print(sim['y']) # expect 0
 ```
 
+<a id="csdl.core.model.Model._redefine"></a>
+
+### \_redefine
+
+```python
+def _redefine(expose: List[str])
+```
+
+Remove edges so that we can update the graph.
+This is *only* used when exposing intermediate variables for a
+composite residual.
+
 <a id="csdl.core.model.Model.print_var"></a>
 
 ### print\_var
@@ -278,7 +323,7 @@ Input
 ### create\_output
 
 ```python
-def create_output(name, val=1.0, shape=(1, ), units=None, res_units=None, desc='', lower=None, upper=None, ref=1.0, ref0=0.0, res_ref=1.0, tags=None, shape_by_conn=False, copy_shape=None, distributed=None) -> ExplicitOutput
+def create_output(name, val=1.0, shape=(1, ), units=None, res_units=None, desc='', lower=None, upper=None, ref=1.0, ref0=0.0, res_ref=1.0, tags=None, shape_by_conn=False, copy_shape=None, distributed=None) -> Concatenation
 ```
 
 Create a value that is computed explicitly, either through
@@ -301,7 +346,7 @@ shape: Tuple[int]
 
 **Returns**
 
-ExplicitOutput
+Concatenation
     An object to use in expressions
 
 <a id="csdl.core.model.Model.register_output"></a>
@@ -309,7 +354,7 @@ ExplicitOutput
 ### register\_output
 
 ```python
-def register_output(name: str, var: Variable) -> Variable
+def register_output(name: str, var: Variable) -> Output
 ```
 
 Register ``var`` as an output of the ``Model``.
@@ -335,7 +380,7 @@ Variable
 ### add
 
 ```python
-def add(submodel, name: str = '', promotes: Iterable = None, promotes_inputs: Iterable = None, promotes_outputs: Iterable = None)
+def add(submodel, name: str = '', promotes: Iterable[str] = None, promotes_inputs: Iterable[str] = None, promotes_outputs: Iterable[str] = None)
 ```
 
 Add a submodel to the ``Model``.
@@ -363,13 +408,296 @@ promotes_outputs: Iterable
 System
     Subsystem to add to `Model`
 
-<a id="csdl.core.model.Model.create_model"></a>
+<a id="csdl.core.model.Model._bracketed_search"></a>
 
-### create\_model
+### \_bracketed\_search
+
+```python
+def _bracketed_search(*arguments: Variable, *, states: List[str], residuals: List[str], model, brackets: Dict[str, Tuple[Union[int, float, np.ndarray],
+                                  Union[int, float, np.ndarray]]], expose: List[str] = [], maxiter: int = 100)
+```
+
+Create an implicit operation whose residuals are defined by a
+`Model`.
+An implicit operation is an operation that solves an equation
+$f(x,y)=0$ for $y$, given some value of $x$.
+CSDL solves $f(x,y)=0$ by defining a residual $r=f(x,y)$ and
+updating $y$ until $r$ converges to zero.
+
+**Parameters**
+
+`arguments: List[Variable]`
+
+    List of variables to use as arguments for the implicit
+    operation.
+    Variables must have the same name as a declared variable
+    within the `model`'s class definition.
+
+    :::note
+    The declared variable _must_ be declared within `model`
+    _and not_ promoted from a child submodel.
+    :::
+
+`states: List[str]`
+
+    Names of states to compute using the implicit operation.
+    The order of the names of these states corresponds to the
+    order of the output variables returned by
+    `implicit_operation`.
+    The order of the names in `states` must also match the order
+    of the names of the residuals associated with each state in
+    `residuals`.
+
+    :::note
+    The declared variable _must_ be declared within `model`
+    _and not_ promoted from a child submodel.
+    :::
+
+`residuals: List[str]`
+
+    The residuals associated with the states.
+    The name of each residual must match the name of a
+    registered output in `model`.
+
+    :::note
+    The registered output _must_ be registered within `model`
+    _and not_ promoted from a child submodel.
+    :::
+
+`model: Model`
+
+    The `Model` object to use to define the residuals.
+    Residuals may be defined via functional composition and/or
+    hierarchical composition.
+
+    :::note
+    _Any_ `Model` object may be used to define residuals for an
+    implicit operation
+    :::
+
+`nonlinear_solver: NonlinearSolver`
+
+    The nonlinear solver to use to converge the residuals
+
+`linear_solver: LinearSolver`
+
+    The linear solver to use to solve the linear system
+
+`expose: List[str]`
+
+    List of intermediate variables inside `model` that are
+    required for computing residuals to which it is desirable
+    to have access outside of the implicit operation.
+
+    For example, if a trajectory is computed using time marching
+    and a residual is computed from the final state of the
+    trajectory, it may be desirable to plot that trajectory
+    after the conclusion of a simulation, e.g. after an
+    iteration during an optimization process.
+
+    :::note
+    The variable names in `expose` may be any name within the
+    model hierarchy defined in `model`, but the variable names
+    in `expose` are neither declared variables, nor registered
+    outputs in `model`, although they may be declared
+    variables/registered outputs in a submodel (i.e. they are
+    neither states nor residuals in the, implicit operation).
+    :::
+
+**Returns**
+
+`Tuple[Ouput]`
+
+    Variables to use in this `Model`.
+    The variables are named according to `states` and `expose`,
+    and are returned in the same order in which they are
+    declared.
+    For example, if `states=['a', 'b', 'c']` and
+    `expose=['d', 'e', 'f']`, then the outputs
+    `a, b, c, d, e, f` in
+    `a, b, c, d, e, f = self.implcit_output(...)`
+    will be named
+    `'a', 'b', 'c', 'd', 'e', 'f'`, respectively.
+    This enables use of exposed intermediate variables (in
+    addition to the states computed by converging the
+    residuals) from `model` in this `Model`.
+    Unused outputs will be ignored, so
+    `a, b, c = self.implcit_output(...)`
+    will make the variables declared in `expose` available for
+    recording/analysis and promotion/connection, but they will
+    be unused by this `Model`.
+    Note that these variables are already registered as outputs
+    in this `Model`, so there is no need to call
+    `Model.register_output` for any of these variables.
+
+<a id="csdl.core.model.Model._implicit_operation"></a>
+
+### \_implicit\_operation
+
+```python
+def _implicit_operation(*arguments: Variable, *, states: List[str], residuals: List[str], model, nonlinear_solver: NonlinearSolver, linear_solver: LinearSolver = None, expose: List[str] = [], defaults: Dict[str, Union[int, float, np.ndarray]] = dict())
+```
+
+Create an implicit operation whose residuals are defined by a
+`Model`.
+An implicit operation is an operation that solves an equation
+$f(x,y)=0$ for $y$, given some value of $x$.
+CSDL solves $f(x,y)=0$ by defining a residual $r=f(x,y)$ and
+updating $y$ until $r$ converges to zero.
+
+**Parameters**
+
+`arguments: List[Variable]`
+
+    List of variables to use as arguments for the implicit
+    operation.
+    Variables must have the same name as a declared variable
+    within the `model`'s class definition.
+
+    :::note
+    The declared variable _must_ be declared within `model`
+    _and not_ promoted from a child submodel.
+    :::
+
+`states: List[str]`
+
+    Names of states to compute using the implicit operation.
+    The order of the names of these states corresponds to the
+    order of the output variables returned by
+    `implicit_operation`.
+    The order of the names in `states` must also match the order
+    of the names of the residuals associated with each state in
+    `residuals`.
+
+    :::note
+    The declared variable _must_ be declared within `model`
+    _and not_ promoted from a child submodel.
+    :::
+
+`residuals: List[str]`
+
+    The residuals associated with the states.
+    The name of each residual must match the name of a
+    registered output in `model`.
+
+    :::note
+    The registered output _must_ be registered within `model`
+    _and not_ promoted from a child submodel.
+    :::
+
+`model: Model`
+
+    The `Model` object to use to define the residuals.
+    Residuals may be defined via functional composition and/or
+    hierarchical composition.
+
+    :::note
+    _Any_ `Model` object may be used to define residuals for an
+    implicit operation
+    :::
+
+`nonlinear_solver: NonlinearSolver`
+
+    The nonlinear solver to use to converge the residuals
+
+`linear_solver: LinearSolver`
+
+    The linear solver to use to solve the linear system
+
+`expose: List[str]`
+
+    List of intermediate variables inside `model` that are
+    required for computing residuals to which it is desirable
+    to have access outside of the implicit operation.
+
+    For example, if a trajectory is computed using time marching
+    and a residual is computed from the final state of the
+    trajectory, it may be desirable to plot that trajectory
+    after the conclusion of a simulation, e.g. after an
+    iteration during an optimization process.
+
+    :::note
+    The variable names in `expose` may be any name within the
+    model hierarchy defined in `model`, but the variable names
+    in `expose` are neither declared variables, nor registered
+    outputs in `model`, although they may be declared
+    variables/registered outputs in a submodel (i.e. they are
+    neither states nor residuals in the, implicit operation).
+    :::
+
+**Returns**
+
+`Tuple[Ouput]`
+
+    Variables to use in this `Model`.
+    The variables are named according to `states` and `expose`,
+    and are returned in the same order in which they are
+    declared.
+    For example, if `states=['a', 'b', 'c']` and
+    `expose=['d', 'e', 'f']`, then the outputs
+    `a, b, c, d, e, f` in
+    `a, b, c, d, e, f = self.implcit_output(...)`
+    will be named
+    `'a', 'b', 'c', 'd', 'e', 'f'`, respectively.
+    This enables use of exposed intermediate variables (in
+    addition to the states computed by converging the
+    residuals) from `model` in this `Model`.
+    Unused outputs will be ignored, so
+    `a, b, c = self.implcit_output(...)`
+    will make the variables declared in `expose` available for
+    recording/analysis and promotion/connection, but they will
+    be unused by this `Model`.
+    Note that these variables are already registered as outputs
+    in this `Model`, so there is no need to call
+    `Model.register_output` for any of these variables.
+
+<a id="csdl.core.model.Model._something"></a>
+
+### \_something
+
+```python
+def _something(model, arguments, states, residuals, expose: List[str] = [])
+```
+
+<a id="csdl.core.model.Model._return_implicit_outputs"></a>
+
+### \_return\_implicit\_outputs
+
+```python
+def _return_implicit_outputs(model, op, arguments, states, residuals, expose)
+```
+
+<a id="csdl.core.model.Model.create_implicit_operation"></a>
+
+### create\_implicit\_operation
+
+```python
+def create_implicit_operation(model)
+```
+
+<a id="csdl.core.model.Model.__enter__"></a>
+
+### \_\_enter\_\_
+
+```python
+def __enter__()
+```
+
+<a id="csdl.core.model.Model.__exit__"></a>
+
+### \_\_exit\_\_
+
+```python
+def __exit__(type, value, traceback)
+```
+
+<a id="csdl.core.model.Model.create_submodel"></a>
+
+### create\_submodel
 
 ```python
 @contextmanager
-def create_model(name: str)
+def create_submodel(name: str)
 ```
 
 Create a ``Model`` object and add as a submodel, promoting all
@@ -386,7 +714,7 @@ name: str
 **Returns**
 
 Model
-    Child ``Model`` object whosevariables are all promoted
+    Child ``Model`` object whose variables are all promoted
 
 <a id="csdl.core.model.Model.visualize_sparsity"></a>
 
@@ -552,7 +880,7 @@ optimization problem.
 ### compute\_total\_derivatives
 
 ```python
-def compute_total_derivatives()
+def compute_total_derivatives() -> OrderedDict[str, Any]
 ```
 
 Method to compute total derivatives for use by an optimizer
@@ -597,12 +925,12 @@ are within a specified tolerance.
 
 result: Return type of ``check_partials``
 
-<a id="csdl.core.simulator_base.SimulatorBase.visualize_model"></a>
+<a id="csdl.core.simulator_base.SimulatorBase.visualize_implementation"></a>
 
-### visualize\_model
+### visualize\_implementation
 
 ```python
-def visualize_model()
+def visualize_implementation()
 ```
 
 A method for the back end to provide its own visualization of
@@ -613,7 +941,7 @@ the model.
 ### objective
 
 ```python
-def objective()
+def objective() -> Dict[str, Any]
 ```
 
 Method to provide optimizer with objective
@@ -623,7 +951,7 @@ Method to provide optimizer with objective
 ### design\_variables
 
 ```python
-def design_variables()
+def design_variables() -> OrderedDict[str, Dict[str, Any]]
 ```
 
 Method to provide optimizer with design variables
@@ -633,7 +961,7 @@ Method to provide optimizer with design variables
 ### constraints
 
 ```python
-def constraints()
+def constraints() -> OrderedDict[str, Dict[str, Any]]
 ```
 
 Method to provide optimizer with constraints
@@ -663,7 +991,7 @@ Method to provide optimizer with residuals
 ### objective\_gradient
 
 ```python
-def objective_gradient()
+def objective_gradient() -> OrderedDict[Tuple[str, str], Any]
 ```
 
 Method to provide optimizer with total derivative of objective
@@ -674,7 +1002,7 @@ with respect to design variables
 ### constraint\_jacobian
 
 ```python
-def constraint_jacobian()
+def constraint_jacobian() -> OrderedDict[Tuple[str, str], Any]
 ```
 
 Method to provide optimizer with total derivatives of
@@ -694,19 +1022,19 @@ residuals with respect to design variables
 
 
 
-<a id="csdl.core.explicit_operation"></a>
+<a id="csdl.core.custom_explicit_operation"></a>
 
-# csdl.core.explicit\_operation
+# csdl.core.custom\_explicit\_operation
 
-<a id="csdl.core.explicit_operation.ExplicitOperation"></a>
+<a id="csdl.core.custom_explicit_operation.CustomExplicitOperation"></a>
 
-## ExplicitOperation Objects
+## CustomExplicitOperation Objects
 
 ```python
-class ExplicitOperation(CustomOperation)
+class CustomExplicitOperation(CustomOperation)
 ```
 
-<a id="csdl.core.explicit_operation.ExplicitOperation.compute"></a>
+<a id="csdl.core.custom_explicit_operation.CustomExplicitOperation.compute"></a>
 
 ### compute
 
@@ -724,7 +1052,7 @@ Define outputs as an explicit function of the inputs
         outputs['L'] = 1/2 * inputs['Cl'] * inputs['rho'] * inputs['V']**2 * inputs['S']
         outputs['D'] = 1/2 * inputs['Cd'] * inputs['rho'] * inputs['V']**2 * inputs['S']
 
-<a id="csdl.core.explicit_operation.ExplicitOperation.compute_derivatives"></a>
+<a id="csdl.core.custom_explicit_operation.CustomExplicitOperation.compute_derivatives"></a>
 
 ### compute\_derivatives
 
@@ -754,7 +1082,7 @@ operation
         derivatives['D', 'V'] = inputs['Cd'] * inputs['rho'] * inputs['V'] * inputs['S']
         derivatives['D', 'S'] = 1/2 * inputs['Cd'] * inputs['rho'] * inputs['V']**2
 
-<a id="csdl.core.explicit_operation.ExplicitOperation.compute_jacvec_product"></a>
+<a id="csdl.core.custom_explicit_operation.CustomExplicitOperation.compute_jacvec_product"></a>
 
 ### compute\_jacvec\_product
 
@@ -789,19 +1117,19 @@ matrix-vector product
 
 
 
-<a id="csdl.core.implicit_operation"></a>
+<a id="csdl.core.custom_implicit_operation"></a>
 
-# csdl.core.implicit\_operation
+# csdl.core.custom\_implicit\_operation
 
-<a id="csdl.core.implicit_operation.ImplicitOperation"></a>
+<a id="csdl.core.custom_implicit_operation.CustomImplicitOperation"></a>
 
-## ImplicitOperation Objects
+## CustomImplicitOperation Objects
 
 ```python
-class ImplicitOperation(CustomOperation)
+class CustomImplicitOperation(CustomOperation)
 ```
 
-<a id="csdl.core.implicit_operation.ImplicitOperation.__init__"></a>
+<a id="csdl.core.custom_implicit_operation.CustomImplicitOperation.__init__"></a>
 
 ### \_\_init\_\_
 
@@ -809,7 +1137,7 @@ class ImplicitOperation(CustomOperation)
 def __init__(*args, **kwargs)
 ```
 
-<a id="csdl.core.implicit_operation.ImplicitOperation.evaluate_residuals"></a>
+<a id="csdl.core.custom_implicit_operation.CustomImplicitOperation.evaluate_residuals"></a>
 
 ### evaluate\_residuals
 
@@ -830,7 +1158,7 @@ User defined method to evaluate residuals
         c = inputs['c']
         residuals['x'] = a * x**2 + b * x + c
 
-<a id="csdl.core.implicit_operation.ImplicitOperation.compute_derivatives"></a>
+<a id="csdl.core.custom_implicit_operation.CustomImplicitOperation.compute_derivatives"></a>
 
 ### compute\_derivatives
 
@@ -858,7 +1186,7 @@ residuals wrt inputs and outputs
         # only necessary if implementing `apply_inverse_jacobian`
         self.inv_jac = 1.0 / (2 * a * x + b)
 
-<a id="csdl.core.implicit_operation.ImplicitOperation.solve_residual_equations"></a>
+<a id="csdl.core.custom_implicit_operation.CustomImplicitOperation.solve_residual_equations"></a>
 
 ### solve\_residual\_equations
 
@@ -881,7 +1209,7 @@ cause `evaluate_residual_equations` to run instead.
         c = inputs['c']
         outputs['x'] = (-b + (b ** 2 - 4 * a * c) ** 0.5) / (2 * a)
 
-<a id="csdl.core.implicit_operation.ImplicitOperation.apply_inverse_jacobian"></a>
+<a id="csdl.core.custom_implicit_operation.CustomImplicitOperation.apply_inverse_jacobian"></a>
 
 ### apply\_inverse\_jacobian
 
@@ -904,7 +1232,7 @@ implicit state variables, and when computing total derivatives
         elif mode == 'rev':
             d_residuals['x'] = self.inv_jac * d_outputs['x']
 
-<a id="csdl.core.implicit_operation.ImplicitOperation.compute_jacvec_product"></a>
+<a id="csdl.core.custom_implicit_operation.CustomImplicitOperation.compute_jacvec_product"></a>
 
 ### compute\_jacvec\_product
 
@@ -1091,6 +1419,30 @@ def __ixor__(other)
 ```python
 def add_fwd_edges()
 ```
+
+<a id="csdl.core.node.Node.remove_fwd_edges"></a>
+
+### remove\_fwd\_edges
+
+```python
+def remove_fwd_edges()
+```
+
+Remove fwd edges so that we can update the graph.
+This is *only* used when exposing intermediate variables for a
+composite residual.
+
+<a id="csdl.core.node.Node.remove_dependencies"></a>
+
+### remove\_dependencies
+
+```python
+def remove_dependencies()
+```
+
+Remove bwd edges so that we can update the graph.
+This is *only* used when exposing intermediate variables for a
+composite residual.
 
 <a id="csdl.core.node.Node.add_dependent_node"></a>
 
@@ -1438,21 +1790,21 @@ def __init__(name, val=1.0, shape=(1, ), src_indices=None, flat_src_indices=None
 
 
 
-<a id="csdl.core.explicit_output"></a>
+<a id="csdl.core.concatenation"></a>
 
-# csdl.core.explicit\_output
+# csdl.core.concatenation
 
-<a id="csdl.core.explicit_output.ExplicitOutput"></a>
+<a id="csdl.core.concatenation.Concatenation"></a>
 
-## ExplicitOutput Objects
+## Concatenation Objects
 
 ```python
-class ExplicitOutput(Output)
+class Concatenation(Output)
 ```
 
 Class for creating an explicit output
 
-<a id="csdl.core.explicit_output.ExplicitOutput.__init__"></a>
+<a id="csdl.core.concatenation.Concatenation.__init__"></a>
 
 ### \_\_init\_\_
 
@@ -1471,24 +1823,7 @@ shape: Tuple[int]
 val: Number or ndarray
     Initial value of variable to compute explicitly
 
-<a id="csdl.core.explicit_output.ExplicitOutput.define"></a>
-
-### define
-
-```python
-def define(var: Variable)
-```
-
-Define expression (in terms of ``self``) that computes value for
-this output. This method defines a cyclic relationship, which
-requires an iterative solver to converge.
-
-**Parameters**
-
-var: Variable
-    The expression to compute iteratively until convergence
-
-<a id="csdl.core.explicit_output.ExplicitOutput.__setitem__"></a>
+<a id="csdl.core.concatenation.Concatenation.__setitem__"></a>
 
 ### \_\_setitem\_\_
 
