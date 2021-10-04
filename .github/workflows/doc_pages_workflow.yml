@@ -41,7 +41,7 @@ jobs:
           pushd ${here}/csdl/utils/
           ./generate_api_docs.sh
           ls ../../docs/docs/developer/
-          ls ../../docs/docs/lang_ref/
+          cat ../../docs/docs/lang_ref/model.mdx
           popd
           # generate markdown files containing worked examples
           python3 ${here}/csdl/utils/generate_worked_examples_mdx.py ${here}
