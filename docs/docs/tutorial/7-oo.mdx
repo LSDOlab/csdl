@@ -126,9 +126,14 @@ Promotions are possible in the following cases:
   - the parent `Model` does not contain an `Input`, declared `Variable`,
     or `Output` with the same name and different shape.
 
-These promotion rules are illustrated below.
+The promotions performed automatically according to these rules are
+illustrated below.
 
-![](/img/automatic-promotions.svg)
+![](/img/tutorial/automatic-promotions.svg)
+
+The cases where no promotions are allowed are illustrated below:
+
+![](/img/tutorial/no-promotions.svg)
 
 CSDL users can always suppress promotion by selectively promoting
 variables.
@@ -256,4 +261,88 @@ the residual will not converge.
 
 ## Mixing Functional and Object Oriented Styles
 
-- [ ] declare/register
+Defining models via hierarchical composition is different from
+defining models via functional composition for a few reasons:
+
+- Functional composition adds `Operation` nodes to the IR
+- Hierarchical composition adds `Subgraph` nodes to the IR. (`Subgraph`
+  nodes are hidden from the user, and are simply containers for `Model`
+  instances.)
+- Functional composition makes use of a function interface, which makes
+  data flow apparent
+- Hierarchical composition hides the functional interfaces of models.
+
+This may look like functional composition should be the only choice for
+the user, but there are very good reasons for incorporating Functional
+and Object Oriented paradigms in CSDL.
+
+- A hierarchical representation of a system mirrors the hierarchy of a
+  system design.
+- The Functional paradigm would require changing function interfaces
+  each time a data transfer between variables in different branches and
+  levels of the model hierarchy needs to be declared.
+
+Sometimes it is necessary to connect a variable to a
+parent/child model and use a functional style to define variables.
+In the simplified example below, the class `Child` defines a variable
+`'c'` in terms of `'b'` using a functional style.
+When `Child` is added as a submodel to `Parent`, `'b'` and `'c'` are
+automatically promoted.
+Here we show how `'b'` depends on another variable, `'a'`, and a fourth
+variable, `'d'`, depends on `'c'`, using both object oriented and
+functional styles.
+
+```py
+class Child(Model):
+  def define(self):
+    b = self.declare_variable('b')
+    self.register_output('c', f(b))
+
+class Parent(Model):
+  def define(self):
+    a = self.declare_variable('a')
+
+    self.register_output('b', g(a))
+    self.add(Child())
+    c = self.declare_variable('c')
+
+    self.register_output('d', h(c))
+```
+
+In order to connect the variable `'b'` in `Parent` to `Child`, `'b'`
+must be registered as an output (note: in `Parent`, `'b'` could have
+also been a `Concatenation`, registered during `Model.create_output`),
+but because `'b'` is promoted from `Child`, no connection is necessary.
+In order to connect the variable `'c'` in `Child` to `Parent`, `'c'`
+needs to be declared in `Parent`.
+Once `'c'` is declared, it can be used in functions to define other
+variables.
+
+:::note
+Not all variables from a submodel need to be used in the parent model,
+and not all variables from a parent model need to be used in the child
+model.
+Leaving variables unused leaves connections to variables in other
+branches and levels of the hierarchy open until the user issues a
+connection.
+:::
+
+:::warning
+The following quoted text has not yet been implemented.
+You will need to use `Simulator.visualize_implementation` to verify that
+there are no unnecessary feedbacks or cycles in your `Model`.
+The quoted text will be moved to the main text and this warning will be
+removed once the feature is implemented.
+
+> The order in which submodels are added does not matter, as long as they
+> do not form a cycle.
+> The CSDL compiler will automatically detect dependencies, verify that
+> there are no cycles, and compute the correct execution order for each
+> submodel.
+:::
+
+:::tip
+Adding submodels in the order of their execution and using whitespace as
+shown in the example makes your code easier to read, understand, and
+maintain.
+:::
