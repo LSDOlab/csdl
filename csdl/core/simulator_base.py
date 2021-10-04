@@ -76,9 +76,13 @@ class SimulatorBase:
         """
         raise NotImplementedError(msg)
 
-    def compute_total_derivatives(self) -> OrderedDict[str, Any]:
+    def compute_total_derivatives(self) -> OrderedDict:
         """
         Method to compute total derivatives for use by an optimizer
+
+        **Returns**
+
+            `OrderedDict[str, Any]`
         """
         raise NotImplementedError(msg)
 
@@ -95,7 +99,7 @@ class SimulatorBase:
 
         **Returns**
 
-        An object that is compatible with ``assert_check_partials``
+        An object that is compatible with `assert_check_partials`
 
         """
         raise NotImplementedError(msg)
@@ -107,7 +111,7 @@ class SimulatorBase:
 
         **Parameters**
 
-        result: Return type of ``check_partials``
+        `result`: Return type of `check_partials`
 
         """
         raise NotImplementedError(msg)
@@ -125,15 +129,22 @@ class SimulatorBase:
         """
         raise NotImplementedError(msg)
 
-    def design_variables(self) -> OrderedDict[str, Dict[str, Any]]:
+    def design_variables(self) -> OrderedDict:
         """
         Method to provide optimizer with design variables
+        **Returns**
+
+            `OrderedDict[str, Dict[str, Any]]`
         """
         raise NotImplementedError(msg)
 
-    def constraints(self) -> OrderedDict[str, Dict[str, Any]]:
+    def constraints(self) -> OrderedDict:
         """
         Method to provide optimizer with constraints
+
+        **Returns**
+
+            `OrderedDict[str, Dict[str, Any]]`
         """
         raise NotImplementedError(msg)
 
@@ -149,17 +160,25 @@ class SimulatorBase:
         """
         raise NotImplementedError(msg)
 
-    def objective_gradient(self) -> OrderedDict[Tuple[str, str], Any]:
+    def objective_gradient(self) -> OrderedDict:
         """
         Method to provide optimizer with total derivative of objective
         with respect to design variables
+
+        **Returns**
+
+            `OrderedDict[Tuple[str, str], Any]`
         """
         raise NotImplementedError(msg)
 
-    def constraint_jacobian(self) -> OrderedDict[Tuple[str, str], Any]:
+    def constraint_jacobian(self) -> OrderedDict:
         """
         Method to provide optimizer with total derivatives of
         constraints with respect to design variables
+
+        **Returns**
+
+            `OrderedDict[Tuple[str, str], Any]`
         """
         raise NotImplementedError(msg)
 
