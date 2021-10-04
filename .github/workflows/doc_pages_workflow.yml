@@ -45,8 +45,6 @@ jobs:
           python3 ${here}/csdl/utils/generate_worked_examples_mdx.py ${here}
           echo "Worked Examples:"
           ls ${here}/docs/docs/worked_examples
-          echo "Worked Examples:"
-          ls ${here}/docs/docs/worked_examples
           pushd docs
           pwd
           ls
