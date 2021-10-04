@@ -37,7 +37,8 @@ jobs:
           pip3 install -e csdl_om/
           here=`pwd`
           # generate markdown files containing API docs from docstrings
-          pushd ${here}/utils/
+          echo ${here}
+          pushd ${here}/csdl/utils/
           ./generate_api_docs.sh
           popd
           # generate markdown files containing worked examples
