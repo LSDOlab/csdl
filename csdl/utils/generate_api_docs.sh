@@ -1,3 +1,5 @@
+echo "Generating API Docs"
+
 # user api
 echo "---\ntitle: Model\nsidebar_position: 1\n---\n\n------------------------------------------------------------------------\n\n" > ../../docs/docs/lang_ref/model.mdx
 pydoc-markdown -m csdl.core.model user.yml >> ../../docs/docs/lang_ref/model.mdx

@@ -380,7 +380,7 @@ Variable
 ### add
 
 ```python
-def add(submodel, name: str = '', promotes: Iterable[str] = None, promotes_inputs: Iterable[str] = None, promotes_outputs: Iterable[str] = None)
+def add(submodel, name: str = '', promotes: List[str] = None, promotes_inputs: List[str] = None, promotes_outputs: List[str] = None)
 ```
 
 Add a submodel to the ``Model``.
@@ -396,11 +396,11 @@ name: str
     Name of submodel
 submodel: System
     Subsystem to add to `Model`
-promotes: Iterable
+promotes: List
     Variables to promote
-promotes_inputs: Iterable
+promotes_inputs: List
     Inputs to promote
-promotes_outputs: Iterable
+promotes_outputs: List
     Outputs to promote
 
 **Returns**
@@ -880,10 +880,14 @@ optimization problem.
 ### compute\_total\_derivatives
 
 ```python
-def compute_total_derivatives() -> OrderedDict[str, Any]
+def compute_total_derivatives() -> OrderedDict
 ```
 
 Method to compute total derivatives for use by an optimizer
+
+**Returns**
+
+    `OrderedDict[str, Any]`
 
 <a id="csdl.core.simulator_base.SimulatorBase.compute_exact_hessian"></a>
 
@@ -908,7 +912,7 @@ operations within the model.
 
 **Returns**
 
-An object that is compatible with ``assert_check_partials``
+An object that is compatible with `assert_check_partials`
 
 <a id="csdl.core.simulator_base.SimulatorBase.assert_check_partials"></a>
 
@@ -923,7 +927,7 @@ are within a specified tolerance.
 
 **Parameters**
 
-result: Return type of ``check_partials``
+`result`: Return type of `check_partials`
 
 <a id="csdl.core.simulator_base.SimulatorBase.visualize_implementation"></a>
 
@@ -951,20 +955,27 @@ Method to provide optimizer with objective
 ### design\_variables
 
 ```python
-def design_variables() -> OrderedDict[str, Dict[str, Any]]
+def design_variables() -> OrderedDict
 ```
 
 Method to provide optimizer with design variables
+**Returns**
+
+    `OrderedDict[str, Dict[str, Any]]`
 
 <a id="csdl.core.simulator_base.SimulatorBase.constraints"></a>
 
 ### constraints
 
 ```python
-def constraints() -> OrderedDict[str, Dict[str, Any]]
+def constraints() -> OrderedDict
 ```
 
 Method to provide optimizer with constraints
+
+**Returns**
+
+    `OrderedDict[str, Dict[str, Any]]`
 
 <a id="csdl.core.simulator_base.SimulatorBase.implicit_outputs"></a>
 
@@ -991,22 +1002,30 @@ Method to provide optimizer with residuals
 ### objective\_gradient
 
 ```python
-def objective_gradient() -> OrderedDict[Tuple[str, str], Any]
+def objective_gradient() -> OrderedDict
 ```
 
 Method to provide optimizer with total derivative of objective
 with respect to design variables
+
+**Returns**
+
+    `OrderedDict[Tuple[str, str], Any]`
 
 <a id="csdl.core.simulator_base.SimulatorBase.constraint_jacobian"></a>
 
 ### constraint\_jacobian
 
 ```python
-def constraint_jacobian() -> OrderedDict[Tuple[str, str], Any]
+def constraint_jacobian() -> OrderedDict
 ```
 
 Method to provide optimizer with total derivatives of
 constraints with respect to design variables
+
+**Returns**
+
+    `OrderedDict[Tuple[str, str], Any]`
 
 <a id="csdl.core.simulator_base.SimulatorBase.residuals_jacobian"></a>
 
