@@ -1531,6 +1531,10 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             self.register_output(e.name, out)
             outs.append(out)
 
+        # ensure operation has knowledge of outputs so that back end can
+        # generate code from operation
+        op.outs = outs
+
         # return outputs
         if len(outs) > 1:
             return tuple(outs)
