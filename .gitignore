@@ -146,4 +146,4 @@ cython_debug/
 
 # Output
 **/*.out
-*.html
+**/*.html
