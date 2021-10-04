@@ -13,6 +13,7 @@ from csdl.core.node import Node
 from csdl.core.variable import Variable
 from csdl.core.input import Input
 from csdl.core.output import Output
+from csdl.core.implicit_output import ImplicitOutput
 from csdl.core.concatenation import Concatenation
 from csdl.core.operation import Operation
 from csdl.core.custom_operation import CustomOperation
@@ -42,12 +43,19 @@ class ImplicitOperationFactory(object):
         self.brackets: Dict[str, Tuple[Union[int, float, np.ndarray],
                                        Union[int, float,
                                              np.ndarray]]] = dict()
+        self.implicit_metadata: Dict[str, dict] = dict()
 
     def declare_state(
         self,
         state: str,
         bracket: Tuple[Union[int, float, np.ndarray],
                        Union[int, float, np.ndarray]] = None,
+        res_units=None,
+        lower=None,
+        upper=None,
+        ref=1.0,
+        ref0=0.0,
+        res_ref=1.0,
         *,
         residual: str,
     ):
@@ -55,6 +63,14 @@ class ImplicitOperationFactory(object):
         self.residuals.append(residual)
         if bracket is not None:
             self.brackets[state] = bracket
+        self.implicit_metadata[state] = dict(
+            res_units=res_units,
+            lower=lower,
+            upper=upper,
+            ref=ref,
+            ref0=ref0,
+            res_ref=res_ref,
+        )
 
     def __call__(
             self,
@@ -64,6 +80,7 @@ class ImplicitOperationFactory(object):
     ):
         if len(self.brackets) > 0:
             return self.parent._bracketed_search(
+                self.implicit_metadata,
                 *arguments,
                 states=self.states,
                 residuals=self.residuals,
@@ -73,6 +90,7 @@ class ImplicitOperationFactory(object):
             )
         else:
             return self.parent._implicit_operation(
+                self.implicit_metadata,
                 *arguments,
                 states=self.states,
                 residuals=self.residuals,
@@ -862,6 +880,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
     def _bracketed_search(
         self,
+        implicit_metadata: Dict[str, dict],
         *arguments: Variable,
         states: List[str],
         residuals: List[str],
@@ -1036,10 +1055,12 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             states,
             residuals,
             expose,
+            implicit_metadata,
         )
 
     def _implicit_operation(
             self,
+            implicit_metadata: Dict[str, dict],
             *arguments: Variable,
             states: List[str],
             residuals: List[str],
@@ -1209,6 +1230,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             states,
             residuals,
             expose,
+            implicit_metadata,
         )
 
     def _something(
@@ -1435,22 +1457,60 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         states,
         residuals,
         expose,
+        implicit_metadata: Dict[str, dict],
     ):
         for arg in arguments:
             op.add_dependency_node(arg)
 
         # create outputs of operation, establish dependencies on
         # operation, and register outputs
-        # TODO: include exposed intermediate outputs
-        outs = []
+        outs: List[Union[Output, ImplicitOutput]] = []
         for s, r in zip(states, residuals):
-            out = Output(
-                s,
-                op=op,
-            )
+
+            meta = None
+            try:
+                meta = implicit_metadata[s]
+            except:
+                pass
+            internal_var = list(
+                filter(lambda x: x.name == s,
+                       model.declared_variables))[0]
+
+            if meta is None:
+                out = ImplicitOutput(
+                    s,
+                    shape=internal_var.shape,
+                    val=internal_var.val,
+                    src_indices=internal_var.src_indices,
+                    flat_src_indices=internal_var.flat_src_indices,
+                    units=internal_var.units,
+                    desc=internal_var.desc,
+                    tags=internal_var.tags,
+                    shape_by_conn=internal_var.shape_by_conn,
+                    copy_shape=internal_var.copy_shape,
+                    distributed=internal_var.distributed,
+                    op=op,
+                )
+            else:
+                out = ImplicitOutput(
+                    s,
+                    shape=internal_var.shape,
+                    val=internal_var.val,
+                    src_indices=internal_var.src_indices,
+                    flat_src_indices=internal_var.flat_src_indices,
+                    units=internal_var.units,
+                    desc=internal_var.desc,
+                    tags=internal_var.tags,
+                    shape_by_conn=internal_var.shape_by_conn,
+                    copy_shape=internal_var.copy_shape,
+                    distributed=internal_var.distributed,
+                    op=op,
+                    **meta,
+                )
             self.register_output(s, out)
             outs.append(out)
 
+        # include exposed intermediate outputs in IR
         se = set(expose)
         ex = filter(lambda x: x.name in se, model.registered_outputs)
         for e in ex:

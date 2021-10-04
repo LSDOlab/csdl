@@ -1,57 +1,52 @@
-from typing import Tuple
 from csdl.core.output import Output
 
 
 class ImplicitOutput(Output):
     """
-    Class for creating an implicit output
+    Base class for outputs; used to prevent circular imports
     """
     def __init__(
         self,
         name,
         val=1.0,
-        shape: Tuple[int] = (1, ),
+        shape=(1, ),
+        src_indices=None,
+        flat_src_indices=None,
         units=None,
-        res_units=None,
         desc='',
+        tags=None,
+        shape_by_conn=False,
+        copy_shape=None,
+        distributed=None,
+        op=None,
+        res_units=None,
         lower=None,
         upper=None,
         ref=1.0,
         ref0=0.0,
         res_ref=1.0,
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
         *args,
         **kwargs,
     ):
-        """
-        Initialize implicit output
-
-        **Parameters**
-
-        name: str
-            Name of variable to compute implicitly
-        shape: Tuple[int]
-            Shape of variable to compute implicitly
-        val: Number or ndarray
-            Initial value of variable to compute implicitly
-        """
         super().__init__(
             name,
             val=val,
             shape=shape,
+            src_indices=src_indices,
+            flat_src_indices=flat_src_indices,
             units=units,
-            res_units=res_units,
             desc=desc,
-            lower=lower,
-            upper=upper,
-            ref=ref,
-            ref0=ref0,
-            res_ref=res_ref,
             tags=tags,
             shape_by_conn=shape_by_conn,
             copy_shape=copy_shape,
-            # *args,
-            # **kwargs,
+            distributed=distributed,
+            op=op,
+            *args,
+            **kwargs,
         )
+        self.res_units = res_units
+        self.lower = lower
+        self.upper = upper
+        self.ref = ref
+        self.ref0 = ref0
+        self.res_ref = res_ref
