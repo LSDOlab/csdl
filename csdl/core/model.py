@@ -1,4 +1,3 @@
-from collections.abc import Iterable
 from contextlib import contextmanager
 from typing import Callable, Tuple, List, Union, Dict
 from copy import deepcopy
@@ -780,9 +779,9 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self,
         submodel,
         name: str = '',
-        promotes: Iterable[str] = None,
-        promotes_inputs: Iterable[str] = None,
-        promotes_outputs: Iterable[str] = None,
+        promotes: List[str] = None,
+        promotes_inputs: List[str] = None,
+        promotes_outputs: List[str] = None,
     ):
         """
         Add a submodel to the ``Model``.
@@ -798,11 +797,11 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             Name of submodel
         submodel: System
             Subsystem to add to `Model`
-        promotes: Iterable
+        promotes: List
             Variables to promote
-        promotes_inputs: Iterable
+        promotes_inputs: List
             Inputs to promote
-        promotes_outputs: Iterable
+        promotes_outputs: List
             Outputs to promote
 
         **Returns**
