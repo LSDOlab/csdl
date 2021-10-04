@@ -9,17 +9,21 @@ title: Frequently Asked Questions
 
 ## What is CSDL?
 
-CSDL is a domain specific language for specifying mathematical models
-for use in multidisciplinary design analysis and optimization (MDAO).
-CSDL is also a compiled language, which means that user code is
-translated into executable code before running the desired program.
-The CSDL compiler is a three stage compiler with a front end, a middle
-end, and a back end.
-The front end and middle end are implemented in the `csdl` package,
-while the user is free to choose a back end from the list of available
-back ends to generate executable code.
-The compilation process takes place within a Python script, and the user
-can run the executable, or simulation, within the same script.
+CSDL is an embedded domain specific language designed for solving
+Multidisciplinary Design Analysis and Optimization (MDAO) problems.
+CSDL enables complete separation between specifying a mathematical model
+and implementing a numerical simulation of a physical system.
+Separation between specification and implementation enables engineers to
+operate at a high level of abstraction, without the need to implement
+low level algorithms, including derivative computation.
+CSDL is an obvious choice for optimization problems that benefit from
+gradient-based methods because of how CSDL automates derivative
+computation, both at the level of individual operations, and across
+tightly coupled disciplines.
+The CSDL compiler's intrusive design makes it a powerful tool for
+analyzing, verifying, and optimizing model code prior to execution, so
+it is sure to grow in capability in the long term, reducing development
+time.
 
 ## Why use CSDL?
 
