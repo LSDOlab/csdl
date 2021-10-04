@@ -1,6 +1,7 @@
 echo "Generating API Docs"
 
 # user api
+mkdir -p ../../docs/docs/lang_ref
 echo "---\ntitle: Model\nsidebar_position: 1\n---\n\n------------------------------------------------------------------------\n\n" > ../../docs/docs/lang_ref/model.mdx
 pydoc-markdown -m csdl.core.model user.yml >> ../../docs/docs/lang_ref/model.mdx
 sed -i -e 's/#### /### /g' ../../docs/docs/lang_ref/model.mdx
@@ -8,8 +9,6 @@ sed -i -e 's/#### /### /g' ../../docs/docs/lang_ref/model.mdx
 echo "---\ntitle: Output\nsidebar_position: 2\n---\n\n------------------------------------------------------------------------\n\n" > ../../docs/docs/lang_ref/output.mdx
 pydoc-markdown -m csdl.core.concatenation user.yml >> ../../docs/docs/lang_ref/output.mdx
 echo "\n\n" >> ../../docs/docs/lang_ref/custom.mdx
-# pydoc-markdown -m csdl.core.implicit_output user.yml >> ../../docs/docs/lang_ref/output.mdx
-# sed -i -e 's/#### /### /g' ../../docs/docs/lang_ref/implicit_output.mdx
 
 echo "---\ntitle: SimulatorBase\nsidebar_position: 2\n---\n\n------------------------------------------------------------------------\n\n" > ../../docs/docs/lang_ref/simulator_base.mdx
 pydoc-markdown -m csdl.core.simulator_base user.yml >> ../../docs/docs/lang_ref/simulator_base.mdx
@@ -41,8 +40,8 @@ pydoc-markdown -m csdl.core.output dev.yml >> ../../docs/docs/developer/api.mdx
 echo "\n\n" >> ../../docs/docs/developer/api.mdx
 pydoc-markdown -m csdl.core.concatenation dev.yml >> ../../docs/docs/developer/api.mdx
 echo "\n\n" >> ../../docs/docs/developer/api.mdx
-# pydoc-markdown -m csdl.core.implicit_output dev.yml >> ../../docs/docs/developer/api.mdx
-# echo "\n\n" >> ../../docs/docs/developer/api.mdx
+pydoc-markdown -m csdl.core.implicit_output dev.yml >> ../../docs/docs/developer/api.mdx
+echo "\n\n" >> ../../docs/docs/developer/api.mdx
 pydoc-markdown -m csdl.core.operation dev.yml >> ../../docs/docs/developer/api.mdx
 echo "\n\n" >> ../../docs/docs/developer/api.mdx
 pydoc-markdown -m csdl.core.standard_operation dev.yml >> ../../docs/docs/developer/api.mdx
