@@ -25,6 +25,10 @@ analyzing, verifying, and optimizing model code prior to execution, so
 it is sure to grow in capability in the long term, reducing development
 time.
 
+## How do I install `csdl`?
+
+Please follow the instructions in the [Tutorial](docs/tutorial/install).
+
 ## Why use CSDL?
 
 CSDL is a powerful language that enables users to specify a mathematical
@@ -71,34 +75,22 @@ with little or no additional overhead for the user.
 
 ## Who is CSDL for?
 
-CSDL is targeted at MDO researchers and practitioners, and as a result,
-is general enough for anyone who wishes to create a mathematical model
-of a physical system and simulate the behavior of that system, even if
+CSDL is targeted at Multidisciplinary Design Optimization (MDO)
+researchers and practitioners, and as a result, is general enough for
+anyone who wishes to create a mathematical model of a physical system
+and simulate the behavior of that system, even if gradient-based
 optimization is not a requirement.
-CSDL is especially powerful in multidisciplinary design optimization,
-where the model is composed of multiple disciplines that are
-tightly coupled, which presents a challenge to efficient derivative
-computation.
+CSDL is especially powerful in MDO, where the model is composed of
+multiple disciplines that are tightly coupled, which presents a
+challenge to efficient derivative computation.
 The tight coupling between disciplines requires computing derivatives of
 the objective and constraints with respect to design variables in order
 for an optimizer to update the values of the design variables.
 CSDL comes with an extensive standard library that automates derivative
 computation.
-Users can define their own operations and the corresponding partial
-derivative for each operation as well using
-[custom operations](docs/tutorial/advanced#custom-operations).
-
-## Who maintains CSDL?
-
-The [LSDO Lab at UCSD](https://lsdo.eng.ucsd.edu/) owns the repository
-for the `csdl` compiler front end source code and the `csdl_om` compiler
-back end source code.
-[Victor Gandarillas](/community#core-development-team) is the sole
-maintainer for both `csdl` and `csdl_om` (which is based on
-[OpenMDAO](https://openmdao.org/)) at the moment, but more contributors
-are welcome.
-As CSDL grows and evolves, we may set up various working groups to
-ensure that CSDL meets the needs of our users
+If the Standard Library is insufficient for the needs of a project,
+users can also define their own operations and the corresponding partial
+derivative for each operation as well using custom operations.
 
 ## Who uses CSDL?
 
@@ -107,9 +99,17 @@ If you are a CSDL user and would like your organization or project to be
 featured on this website, please
 [let us know](mailto:vgandari@eng.ucsd.edu).
 
-## How do I install `csdl`?
+## Who maintains CSDL?
 
-Please follow the instructions in the [Tutorial](docs/tutorial/install).
+The [LSDO Lab at UCSD](https://lsdo.eng.ucsd.edu/) owns the repository
+for the `csdl` compiler front end source code and the `csdl_om` compiler
+back end source code.
+At the moment, [Victor Gandarillas](/community#core-development-team) is
+the sole maintainer for both `csdl` and the `csdl_om` compiler back end
+(which is based on [OpenMDAO](https://openmdao.org/)), but more
+contributors are welcome.
+As CSDL grows and evolves, we may set up various working groups to
+ensure that CSDL meets the needs of our users.
 
 ## Do I need to use the command line to compile my program?
 
@@ -133,8 +133,8 @@ optimizations on the intermediate representation, and a back end, which
 generates code in a target language, or generates an executable
 directly.
 CSDL is an embedded domain specific language (EDSL), which means
-that CSDL is a *language within a language*; Python is the *host*
-language for CSDL.
+that CSDL is basically a *language within a language*; Python is the
+*host* language for CSDL.
 The `csdl` package provides the front end and middle end of the CSDL
 compiler, but the user is free to choose any CSDL compiler back end
 to implement a low level executable object to run a simulation.
@@ -155,14 +155,11 @@ behavior a user wants to simulate for the purpose of analysis or
 optimization.
 Like any language, CSDL requires an implementation (compiler or
 interpreter) in order to generate and run software on a computer.
-.
 The `csdl` package contains the front end and middle end of the CSDL
 compiler.
 The `csdl` package does not provide the complete implementation of the
-CSDL compiler; a separate package is required to supply the compiler
-back end.
-Projects using CSDL can use any of the back ends listed on the home page
-of the documentation for `csdl`.
+CSDL compiler; a separate package is required to supply the
+[compiler back end](/docs/backends).
 All back ends must provide a `Simulator` class, which provides the
 same API as the `SimulatorBase` class provided in the `csdl`
 package.
@@ -180,10 +177,6 @@ information.
 A list of available compiler back ends is available
 [here](/docs/backends).
 
-<!-- ## What are some projects that use CSDL? -->
-
-<!-- - [ ] To Do -->
-
 ## Where is CSDL headed?
 
 CSDL is a very young project, so the short answer is, that's up to you!
@@ -198,4 +191,4 @@ with the community.
 Please see the [Community](community) page for more information on how
 to get in touch with other users and developers.
 Please see the section on contributing to CSDL in the
-[Documentation](docs/intro).
+[Developer Docs](/docs/developer/contributing/issues).
