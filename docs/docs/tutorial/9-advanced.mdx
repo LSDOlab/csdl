@@ -10,13 +10,32 @@ title: Advanced
 
 You can use Python's `if`, `elif`, and `else` to perform
 conditional compilation.
-Let's say you have a model simulates steady state behavior,
+
+Let's say you have a model of a wing in steady state flow, and different
+models for the aerodynamics below and above a Reynolds number of
+1,000,000.
+Depending on what condition you want to simulate, you could make the
+decision at compile time as to which submodel to add to your model:
+
+```py
+if Re < 1000000:
+    self.add(SlowModel())
+else:
+    self.add(FastModel())
+```
+
+Only one model results in code generation because the condition is
+evaluated at compile time.
+
+:::note
+CSDL does not offer a way of performing conditional execution at run
+time.
+:::
 
 ## Using Loops to Add Several Models
 
 A model specification can be constructed programmatically at compile
 time, based on compile time constants (parameters).
-
 
 ```py
 class Example(Model):
