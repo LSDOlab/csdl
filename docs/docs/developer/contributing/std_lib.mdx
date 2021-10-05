@@ -1,7 +1,9 @@
 ---
 title: Adding Standard Library Operations
-sidebar_position: 3
+sidebar_position: 4
 ---
+
+------------------------------------------------------------------------
 
 To add operations to the Standard Library, define a subclass of
 `StandardOperation` and a function wrapper.
@@ -33,8 +35,6 @@ class power_combination(StandardOperation):
 
         # store properties that the compiler can use for IR optimizations
         self.properties['elementwise'] = True
-
-
 
         # store compile time constants that the back end will use
         self.literals['powers'] = powers

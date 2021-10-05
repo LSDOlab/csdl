@@ -1,6 +1,6 @@
 ---
-title: Adding Examples for Testing and Documentation
-sidebar_position: 2
+title: Adding Test Cases and Worked Examples
+sidebar_position: 3
 ---
 
 ------------------------------------------------------------------------
@@ -92,6 +92,10 @@ that the example emits the appropriate error for a given invalid input.
 The `csdl/tests` directory contains all the tests.
 Each test suite is a Python file with a name that starts with the
 `test_` prefix.
+Tests (functions with the `test_` prefix) are designed so that importing
+a generated example script runs the example.
+There should be one test per example, so each test should import an
+example.
 `pytest` automatically detects test cases contained within files whose
 names begin with `test_` if no file is passed to `pytest` from the
 terminal/command line.
@@ -107,7 +111,6 @@ import pytest
 If adding a test case to an existing test suite, you can simply open an
 existing file that already has these imports.
 Then, define a test case:
-
 
 ```py
 # Name the function, adding the `test_` prefix to the function name.
@@ -144,6 +147,11 @@ def test_name_of_test(backend):
                               atol=1.e-6,
                               rtol=1.e-6)
 ```
+
+To test values, use
+[numpy.assert_approx_equal](https://numpy.org/doc/stable/reference/generated/numpy.testing.assert_approx_equal.html)
+or
+[numpy.assert_almost_equal](https://numpy.org/doc/stable/reference/generated/numpy.testing.assert_almost_equal.html).
 
 The next section covers  how to generate worked example scripts from
 example functions to include in the documentation.

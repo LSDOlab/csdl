@@ -1,6 +1,6 @@
 ---
 title: Building a Compiler Back End
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 ------------------------------------------------------------------------
@@ -25,3 +25,9 @@ The `Simulator` class can be implemented in any language, as long as
 there is a Python interface available.
 For example, if `Simulator` is implemented in C++, the `pybind11`
 library can expose the C++ class to Python.
+
+The `Model.sorted_nodes` attribute contains all the nodes for a given
+`Model` object, sorted in the _reverse_ order of execution.
+Each `Operation` and `Subgraph` node in `Model.sorted_nodes` contains
+enough information to generate executable code for the entire model
+specification.

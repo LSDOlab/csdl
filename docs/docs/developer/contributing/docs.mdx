@@ -1,4 +1,9 @@
-# Building and Updating Documentation
+---
+title: Building and Updating Documentation
+sidebar_position: 2
+---
+
+------------------------------------------------------------------------
 
 ## Building Documentation
 
@@ -30,6 +35,17 @@ generate Markdown files containing the API documentation.
 The `csdl/utils/generate_api_docs.sh` script uses the config files
 `csdl/utils/user.yml` and `csdl/utils/def.yml` to generate the user API
 and developer API, respectively.
+
+:::warning
+The `csdl/utils/generate_api_docs.sh` script must be run from within
+`csdl/utils/` in order for the API docs to be written to the right
+location.
+
+```sh
+cd csdl/utils/
+./generate_api_docs.sh
+```
+:::
 
 ## Generating Worked Examples
 
