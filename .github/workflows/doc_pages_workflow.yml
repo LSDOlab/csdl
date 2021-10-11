@@ -33,7 +33,7 @@ jobs:
           # install csdl
           pip3 install -e .
           # install a back end (in this case, csdl_om)
-          git clone --depth=1 https://lsdolab@@github.com/lsdolab/csdl_om.git
+          git clone --depth=1 https://lsdolab@github.com/lsdolab/csdl_om.git
           pip3 install -e csdl_om/
           here=`pwd`
           # generate markdown files containing API docs from docstrings
