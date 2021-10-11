@@ -1,4 +1,6 @@
 from csdl.core.variable import Variable
+from csdl.core.output import Output
+from csdl.core.subgraph import Subgraph
 from typing import List
 from copy import copy
 from warnings import warn
@@ -84,56 +86,6 @@ def topological_sort(
     return sorted_nodes
 
 
-def paper_topological_sort(
-        registered_nodes: List[Variable]) -> List[Variable]:
-    """
-    Perform a topological sort on the Directed Acyclic Graph (DAG).
-    If any cycles are detected when traversing the graph,
-    ``topological_sort`` will not terminate, and it will cause a memory
-    overflow.
-
-    This version of a topological sort is modified so that a node will
-    not be added to the sorted list until the node has been visited as
-    many times as its in-degree; i.e. the number of dependents.
-
-    **Parameters**
-
-    node: Variable
-        The node to treat as "root". In ``csdl.model``,
-        ``Group._root`` is treated as the "root" node.
-
-    **Returns**
-
-    list[Variable]
-        List of ``Variable`` objects sorted from root to leaf. When
-        overriding ``csdl.Model.setup``, the first node will be
-        ``Group._root``, and the last will be an ``DocInput``,
-        ``Concatenation``, ``ImplicitOutput``, or ``IndepVar``.
-    """
-    sorted_nodes = []
-    stack = copy(registered_nodes)
-    while stack != []:
-        v = stack.pop()
-        if v.get_num_dependents() == 0:
-            sorted_nodes.append(v)
-        elif v.times_visited < v.get_num_dependents():
-            v.incr_times_visited()
-
-            # modify to respect order that user registered outputs
-            if v in registered_nodes:
-                if not (all(x in sorted_nodes for x in v.dependents)):
-                    raise Warning('{} is registered late'.format(
-                        v.name))
-
-            if v.times_visited == v.get_num_dependents():
-                for w in v.dependencies:
-                    stack.append(w)
-
-            if v.times_visited == v.get_num_dependents():
-                sorted_nodes.append(v)
-    return sorted_nodes
-
-
 from csdl.operations.print_var import print_var
 
 
@@ -168,33 +120,20 @@ def modified_topological_sort(
     stack = copy(registered_nodes)
     while stack != []:
         v = stack.pop()
-        if v.get_num_dependents() == 0:
-            if isinstance(v, Variable) and isinstance(
-                    v.dependencies[0], print_var):
-                # ensure print_var operations are moved to end of model
-                print_operations.append(v.dependencies[0])
-            else:
-                # registered outputs that have no dependent nodes
+        if v.get_num_dependents() == 0 and isinstance(
+                v, Output) and isinstance(v.dependencies[0], print_var):
+            # ensure print_var operations are moved to end of model
+            print_operations.append(v.dependencies[0])
+        elif v.get_num_dependents() == 0:
+            # registered outputs that have no dependent nodes
+            # KLUDGE: temporary
+            if isinstance(v, Subgraph):
                 sorted_nodes.append(v)
-                for w in v.dependencies:
-                    stack.append(w)
+            for w in v.dependencies:
+                stack.append(w)
         elif v.times_visited < v.get_num_dependents():
             # all other nodes
             v.incr_times_visited()
-
-            # modify to respect order that user registered outputs
-            if v in registered_nodes:
-                if not (all((x in sorted_nodes for x in v.dependents))):
-                    # TODO: tell user which model this is
-                    # NOTE: raising a warning would terminate the
-                    # program here
-                    warn(
-                        "{} is registered late."
-                        "This will result in unnecessary feedback in "
-                        "your model, and will require an iterative "
-                        "solver to finish evaluating the model.".format(
-                            v.name), )
-
             if v.times_visited == v.get_num_dependents():
                 for w in v.dependencies:
                     stack.append(w)

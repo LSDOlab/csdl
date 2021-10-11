@@ -1,7 +1,7 @@
-from csdl.core.output import Output
+from csdl.core.variable import Variable
 
 
-class ImplicitOutput(Output):
+class DeclaredVariable(Variable):
     """
     Base class for outputs; used to prevent circular imports
     """
@@ -19,12 +19,6 @@ class ImplicitOutput(Output):
         copy_shape=None,
         distributed=None,
         op=None,
-        res_units=None,
-        lower=None,
-        upper=None,
-        ref=1.0,
-        ref0=0.0,
-        res_ref=1.0,
         *args,
         **kwargs,
     ):
@@ -32,8 +26,6 @@ class ImplicitOutput(Output):
             name,
             val=val,
             shape=shape,
-            src_indices=src_indices,
-            flat_src_indices=flat_src_indices,
             units=units,
             desc=desc,
             tags=tags,
@@ -44,9 +36,5 @@ class ImplicitOutput(Output):
             *args,
             **kwargs,
         )
-        self.res_units = res_units
-        self.lower = lower
-        self.upper = upper
-        self.ref = ref
-        self.ref0 = ref0
-        self.res_ref = res_ref
+        self.src_indices = src_indices
+        self.flat_src_indices = flat_src_indices

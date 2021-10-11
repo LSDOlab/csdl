@@ -11,9 +11,9 @@ from csdl.core.implicit_operation import ImplicitOperation
 from csdl.core.bracketed_search_operation import BracketedSearchOperation
 from csdl.core.node import Node
 from csdl.core.variable import Variable
+from csdl.core.declared_variable import DeclaredVariable
 from csdl.core.input import Input
 from csdl.core.output import Output
-from csdl.core.implicit_output import ImplicitOutput
 from csdl.core.concatenation import Concatenation
 from csdl.core.operation import Operation
 from csdl.core.custom_operation import CustomOperation
@@ -50,6 +50,13 @@ class ImplicitOperationFactory(object):
         state: str,
         bracket: Tuple[Union[int, float, np.ndarray],
                        Union[int, float, np.ndarray]] = None,
+        val=1.0,
+        units=None,
+        desc='',
+        tags=None,
+        shape_by_conn=False,
+        copy_shape=None,
+        distributed=None,
         res_units=None,
         lower=None,
         upper=None,
@@ -64,6 +71,13 @@ class ImplicitOperationFactory(object):
         if bracket is not None:
             self.brackets[state] = bracket
         self.implicit_metadata[state] = dict(
+            val=val,
+            units=units,
+            desc=desc,
+            tags=tags,
+            shape_by_conn=shape_by_conn,
+            copy_shape=copy_shape,
+            distributed=distributed,
             res_units=res_units,
             lower=lower,
             upper=upper,
@@ -130,18 +144,16 @@ def build_clean_dag(registered_outputs):
 # model does have inputs; issue warning if not
 def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
     """
-    This function replaces ``Model.setup`` with a new method that calls
-    ``Model.setup`` and performs the necessary steps to determine
-    execution order and construct and add the appropriate subsystems.
-
-    The new method is the core of the ``csdl`` package. This function
-    analyzes the Directed Acyclic Graph (DAG) and sorts expressions.
+    Run CSDL compiler front end (`Model.define`) and middle end.
+    The middle end is run immediately after the front end automatically.
+    `Model` inherits from the metaclass `_CompilerFrontEndMiddleEnd`.
+    The metaclass `_CompilerFrontEndMiddleEnd` replaces the
+    `Model.define` method with this function, which calls `Model.define`
+    and then performs the functions of the CSDL compiler middle end.
+    The user does not need to opt into running the middle end and cannot
+    opt out of running the middle end.
     """
     def _run_middle_end(self):
-        """
-        User defined method to define expressions and add subsystems for
-        model execution
-        """
         if self._defined is False:
             self._defined = True
             run_front_end(self)
@@ -291,7 +303,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self.subgraphs: List[Subgraph] = []
         self.variables_promoted_from_children: List[Variable] = []
         self.inputs: List[Input] = []
-        self.declared_variables: List[Variable] = []
+        self.declared_variables: List[DeclaredVariable] = []
         self.registered_outputs: List[Union[Output]] = []
         self.objective = None
         self.constraints = dict()
@@ -304,13 +316,14 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
     def initialize(self):
         """
-        User defined method to declare parameter values. Parameters are
-        compile time constants (neither inputs nor outputs to the model)
-        and cannot be updated at runtime. Parameters are intended to
-        make a ``Model`` subclass definition generic, and therefore
-        reusable. The example below shows how a ``Model`` subclass
-        definition uses parameters and how the user can set parameters
-        when constructing the example ``Model`` subclass.
+        User defined method to declare parameter values.
+        Parameters are compile time constants (neither inputs nor
+        outputs to the model) and cannot be updated at runtime.
+        Parameters are intended to make a `Model` subclass definition
+        generic, and therefore reusable.
+        The example below shows how a `Model` subclass definition uses
+        parameters and how the user can set parameters when constructing
+        the example `Model` subclass.
 
         **Example**
 
@@ -403,8 +416,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
                 var._id + '_residual',
                 val=var.val,
                 shape=var.shape,
-                src_indices=var.src_indices,
-                flat_src_indices=var.flat_src_indices,
                 units=var.units,
                 desc=var.desc,
                 tags=var.tags,
@@ -421,15 +432,15 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
     def print_var(self, var: Variable):
         """
-        Print *runtime* value during execution. Note that ``print_var``
+        Print *runtime* value during execution. Note that `print_var`
         should only be used for debugging, as it does have a performance
-        impact. Note that Python's ``print`` function will print the
-        CSDL compile time ``Variable`` object information, and will have
+        impact. Note that Python's `print` function will print the
+        CSDL compile time `Variable` object information, and will have
         no effect on run time execution.
 
         **Example**
 
-        ```python
+        ```py
         y = csdl.sin(x)
         print(y) # will print compile time information about y
         self.print_var(y) # will print run time value of y
@@ -444,8 +455,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             var.name + '_print',
             val=var.val,
             shape=var.shape,
-            src_indices=var.src_indices,
-            flat_src_indices=var.flat_src_indices,
             units=var.units,
             desc=var.desc,
             tags=var.tags,
@@ -472,17 +481,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         Declare the objective for the optimization problem. Objective
         must be a scalar variable.
         """
-        # alternate implementation using a Variable object instead of a
-        # name
-        # name = var.name
-        # if not isinstance(var, Output):
-        #     raise TypeError('Variable must be an Output')
-        # if not var.shape == (1, ):
-        #     raise ValueError('Variable must be a scalar')
-        # if var._id == var.name:
-        #     raise NameError(
-        #         'Variable is not named by user. Name Variable by registering it as an output first.'
-        #     )
         self.objective = dict(
             name=name,
             ref=ref,
@@ -511,16 +509,9 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
     ):
         """
         Add a design variable to the optimization problem. The design
-        variable must be an ``Input``. This will signal to the optimizer
+        variable must be an `Input`. This will signal to the optimizer
         that it is responsible for updating the input variable.
         """
-        # alternate implementation using a Variable object instead of a
-        # nam
-        # name = var.name
-        # if not isinstance(var, Input):
-        #     raise TypeError('Variable must be an Input')
-        # if isinstance(var, Output):
-        #     raise TypeError('Variable is not an input to the model')
         if name in self.design_variables.keys():
             raise ValueError(
                 "{} already added as a design variable".format(name))
@@ -602,14 +593,14 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         shape_by_conn=False,
         copy_shape=None,
         distributed=None,
-    ) -> Variable:
+    ) -> DeclaredVariable:
         """
         Declare an input to use in an expression.
 
-        An input can be an output of a child ``System``. If the user
-        declares an input that is computed by a child ``System``, then
-        the call to ``self.declare_variable`` must appear after the call to
-        ``self.add``.
+        An input can be an output of a child `System`. If the user
+        declares an input that is computed by a child `System`, then
+        the call to `self.declare_variable` must appear after the call to
+        `self.add`.
 
         **Parameters**
 
@@ -627,7 +618,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         DocInput
             An object to use in expressions
         """
-        v = Variable(
+        v = DeclaredVariable(
             name,
             val=val,
             shape=shape,
@@ -716,7 +707,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
         **Example**
 
-        ```python
+        ```py
         x = self.create_output('x', shape=(5,3,2))
         x[:, :, 0] = a
         x[:, :, 1] = b
@@ -755,25 +746,28 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             ),
         )
 
-    def register_output(self, name: str, var: Variable) -> Output:
+    def register_output(self, name: str, var: Output) -> Output:
         """
-        Register ``var`` as an output of the ``Model``.
+        Register `var` as an output of the `Model`.
         When adding subsystems, each of the submodel's inputs requires
-        a call to ``register_output`` prior to the call to
-        ``add``.
+        a call to `register_output` prior to the call to
+        `add`.
 
         **Parameters**
 
-        name: str
+        `name: str`
+
             Name of variable in CSDL
 
-        var: Variable
-            Variable that computes output
+        `var: Output`
+
+            Variable that defines output
 
         **Returns**
 
-        Variable
-            Variable that computes output
+        `Output`
+
+            Variable that defines output (same object as argument)
         """
         if not isinstance(var, Output):
             raise TypeError(
@@ -802,11 +796,11 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         promotes_outputs: List[str] = None,
     ):
         """
-        Add a submodel to the ``Model``.
+        Add a submodel to the `Model`.
 
-        ``self.add`` call must be preceded by a call to
-        ``self.register_output`` for each of the submodel's inputs,
-        and followed by ``self.declare_variable`` for each of the
+        `self.add` call must be preceded by a call to
+        `self.register_output` for each of the submodel's inputs,
+        and followed by `self.declare_variable` for each of the
         submodel's outputs.
 
         **Parameters**
@@ -902,107 +896,106 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
         `arguments: List[Variable]`
 
-            List of variables to use as arguments for the implicit
-            operation.
-            Variables must have the same name as a declared variable
-            within the `model`'s class definition.
+        > List of variables to use as arguments for the implicit
+        > operation.
+        > Variables must have the same name as a declared variable
+        > within the `model`'s class definition.
 
-            :::note
-            The declared variable _must_ be declared within `model`
-            _and not_ promoted from a child submodel.
-            :::
+        :::note
+        The declared variable _must_ be declared within `model`
+        _and not_ promoted from a child submodel.
+        :::
 
         `states: List[str]`
 
-            Names of states to compute using the implicit operation.
-            The order of the names of these states corresponds to the
-            order of the output variables returned by
-            `implicit_operation`.
-            The order of the names in `states` must also match the order
-            of the names of the residuals associated with each state in
-            `residuals`.
+        > Names of states to compute using the implicit operation.
+        > The order of the names of these states corresponds to the
+        > order of the output variables returned by
+        > `implicit_operation`.
+        > The order of the names in `states` must also match the order
+        > of the names of the residuals associated with each state in
+        > `residuals`.
 
-            :::note
-            The declared variable _must_ be declared within `model`
-            _and not_ promoted from a child submodel.
-            :::
+        :::note
+        The declared variable _must_ be declared within `model`
+        _and not_ promoted from a child submodel.
+        :::
 
         `residuals: List[str]`
 
-            The residuals associated with the states.
-            The name of each residual must match the name of a
-            registered output in `model`.
+        > The residuals associated with the states.
+        > The name of each residual must match the name of a
+        > registered output in `model`.
 
-            :::note
-            The registered output _must_ be registered within `model`
-            _and not_ promoted from a child submodel.
-            :::
+        :::note
+        The registered output _must_ be registered within `model`
+        _and not_ promoted from a child submodel.
+        :::
 
         `model: Model`
 
-            The `Model` object to use to define the residuals.
-            Residuals may be defined via functional composition and/or
-            hierarchical composition.
+        > The `Model` object to use to define the residuals.
+        > Residuals may be defined via functional composition and/or
+        > hierarchical composition.
 
-            :::note
-            _Any_ `Model` object may be used to define residuals for an
-            implicit operation
-            :::
+        :::note
+        _Any_ `Model` object may be used to define residuals for an
+        implicit operation
+        :::
 
         `nonlinear_solver: NonlinearSolver`
 
-            The nonlinear solver to use to converge the residuals
+        > The nonlinear solver to use to converge the residuals
 
         `linear_solver: LinearSolver`
 
-            The linear solver to use to solve the linear system
+        > The linear solver to use to solve the linear system
 
         `expose: List[str]`
 
-            List of intermediate variables inside `model` that are
-            required for computing residuals to which it is desirable
-            to have access outside of the implicit operation.
+        > List of intermediate variables inside `model` that are
+        > required for computing residuals to which it is desirable
+        > to have access outside of the implicit operation.
+        > For example, if a trajectory is computed using time marching
+        > and a residual is computed from the final state of the
+        > trajectory, it may be desirable to plot that trajectory
+        > after the conclusion of a simulation, e.g. after an
+        > iteration during an optimization process.
 
-            For example, if a trajectory is computed using time marching
-            and a residual is computed from the final state of the
-            trajectory, it may be desirable to plot that trajectory
-            after the conclusion of a simulation, e.g. after an
-            iteration during an optimization process.
-
-            :::note
-            The variable names in `expose` may be any name within the
-            model hierarchy defined in `model`, but the variable names
-            in `expose` are neither declared variables, nor registered
-            outputs in `model`, although they may be declared
-            variables/registered outputs in a submodel (i.e. they are
-            neither states nor residuals in the, implicit operation).
-            :::
+        :::note
+        The variable names in `expose` may be any name within the
+        model hierarchy defined in `model`, but the variable names
+        in `expose` are neither declared variables, nor registered
+        outputs in `model`, although they may be declared
+        variables/registered outputs in a submodel (i.e. they are
+        neither states nor residuals in the, implicit operation).
+        :::
 
         **Returns**
 
         `Tuple[Ouput]`
 
-            Variables to use in this `Model`.
-            The variables are named according to `states` and `expose`,
-            and are returned in the same order in which they are
-            declared.
-            For example, if `states=['a', 'b', 'c']` and
-            `expose=['d', 'e', 'f']`, then the outputs
-            `a, b, c, d, e, f` in
-            `a, b, c, d, e, f = self.implcit_output(...)`
-            will be named
-            `'a', 'b', 'c', 'd', 'e', 'f'`, respectively.
-            This enables use of exposed intermediate variables (in
-            addition to the states computed by converging the
-            residuals) from `model` in this `Model`.
-            Unused outputs will be ignored, so
-            `a, b, c = self.implcit_output(...)`
-            will make the variables declared in `expose` available for
-            recording/analysis and promotion/connection, but they will
-            be unused by this `Model`.
-            Note that these variables are already registered as outputs
-            in this `Model`, so there is no need to call
-            `Model.register_output` for any of these variables.
+        > Variables to use in this `Model`.
+        > The variables are named according to `states` and `expose`,
+        > and are returned in the same order in which they are
+        > declared.
+        > For example, if `states=['a', 'b', 'c']` and
+        > `expose=['d', 'e', 'f']`, then the outputs
+        > `a, b, c, d, e, f` in
+        > `a, b, c, d, e, f = self.implcit_output(...)`
+        > will be named
+        > `'a', 'b', 'c', 'd', 'e', 'f'`, respectively.
+        > This enables use of exposed intermediate variables (in
+        > addition to the states computed by converging the
+        > residuals) from `model` in this `Model`.
+        > Unused outputs will be ignored, so
+        > `a, b, c = self.implcit_output(...)`
+        > will make the variables declared in `expose` available for
+        > recording/analysis and promotion/connection, but they will
+        > be unused by this `Model`.
+        > Note that these variables are already registered as outputs
+        > in this `Model`, so there is no need to call
+        > `Model.register_output` for any of these variables.
         """
         out_res_map, res_out_map, out_in_map = self._something(
             model,
@@ -1358,7 +1351,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
         # make some maps to do some things more efficiently later
         registered_output_map: Dict[str, Output] = dict()
-        declared_variables_map: Dict[str, Variable] = dict()
+        declared_variables_map: Dict[str, DeclaredVariable] = dict()
         exposed_residuals_map: Dict[str, Output] = dict()
         res_exp_map: Dict[str, Output] = dict()
         exp_res_map: Dict[str, Output] = dict()
@@ -1381,7 +1374,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         # objects
         # TODO: explain why
         out_res_map: Dict[str, Output] = dict()
-        res_out_map: Dict[str, Variable] = dict()
+        res_out_map: Dict[str, Union[DeclaredVariable, Output]] = dict()
         for s, r in zip(states, residuals):
             if registered_output_map[r].shape != declared_variables_map[
                     s].shape:
@@ -1400,7 +1393,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         # Associate outputs with the inputs they depend on
         # Collect residual expressions and their corresponding inputs
         # and outputs
-        out_in_map: Dict[str, List[Variable]] = dict()
+        out_in_map: Dict[str, List[DeclaredVariable]] = dict()
         for state_name, residual in out_res_map.items():
             # Collect inputs (terminal nodes) for this residual only; no
             # duplicates
@@ -1457,56 +1450,26 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         states,
         residuals,
         expose,
-        implicit_metadata: Dict[str, dict],
+        implicit_metadata,
     ):
         for arg in arguments:
             op.add_dependency_node(arg)
 
         # create outputs of operation, establish dependencies on
         # operation, and register outputs
-        outs: List[Union[Output, ImplicitOutput]] = []
+        outs: List[Output] = []
         for s, r in zip(states, residuals):
 
-            meta = None
-            try:
-                meta = implicit_metadata[s]
-            except:
-                pass
             internal_var = list(
                 filter(lambda x: x.name == s,
                        model.declared_variables))[0]
 
-            if meta is None:
-                out = ImplicitOutput(
-                    s,
-                    shape=internal_var.shape,
-                    val=internal_var.val,
-                    src_indices=internal_var.src_indices,
-                    flat_src_indices=internal_var.flat_src_indices,
-                    units=internal_var.units,
-                    desc=internal_var.desc,
-                    tags=internal_var.tags,
-                    shape_by_conn=internal_var.shape_by_conn,
-                    copy_shape=internal_var.copy_shape,
-                    distributed=internal_var.distributed,
-                    op=op,
-                )
-            else:
-                out = ImplicitOutput(
-                    s,
-                    shape=internal_var.shape,
-                    val=internal_var.val,
-                    src_indices=internal_var.src_indices,
-                    flat_src_indices=internal_var.flat_src_indices,
-                    units=internal_var.units,
-                    desc=internal_var.desc,
-                    tags=internal_var.tags,
-                    shape_by_conn=internal_var.shape_by_conn,
-                    copy_shape=internal_var.copy_shape,
-                    distributed=internal_var.distributed,
-                    op=op,
-                    **meta,
-                )
+            out = Output(
+                s,
+                shape=internal_var.shape,
+                **implicit_metadata[s],
+                op=op,
+            )
             self.register_output(s, out)
             outs.append(out)
 
@@ -1553,21 +1516,21 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
     @contextmanager
     def create_submodel(self, name: str):
         """
-        Create a ``Model`` object and add as a submodel, promoting all
+        Create a `Model` object and add as a submodel, promoting all
         inputs and outputs.
-        For use in ``with`` contexts.
+        For use in `with` contexts.
         NOTE: Only use if planning to promote all varaibales within
-        child ``Model`` object.
+        child `Model` object.
 
         **Parameters**
 
         name: str
-            Name of new child ``Model`` object
+            Name of new child `Model` object
 
         **Returns**
 
         Model
-            Child ``Model`` object whose variables are all promoted
+            Child `Model` object whose variables are all promoted
         """
         try:
             with Model() as m:

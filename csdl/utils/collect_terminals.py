@@ -2,6 +2,8 @@ from typing import List
 
 from csdl.core.node import Node
 from csdl.core.variable import Variable
+from csdl.core.declared_variable import DeclaredVariable
+from csdl.core.output import Output
 from csdl.core.operation import Operation
 
 
@@ -11,10 +13,10 @@ def isterminal(node: Node):
 
 
 def collect_terminals2(
-    terminals: List[Variable],
-    residual: Variable,
+    terminals: List[DeclaredVariable],
+    residual: Output,
     op: Operation,
-) -> List[Variable]:
+) -> List[DeclaredVariable]:
     """
     Collect input nodes so that the resulting ``ImplicitModel`` has
     access to inputs outside of itself.
@@ -30,10 +32,10 @@ def collect_terminals2(
 
 
 def collect_terminals(
-    terminals: List[Variable],
-    residual: Variable,
+    terminals: List[DeclaredVariable],
+    residual: Output,
     var: Variable,
-) -> List[Variable]:
+) -> List[DeclaredVariable]:
     """
     Collect input nodes so that the resulting ``ImplicitModel`` has
     access to inputs outside of itself.

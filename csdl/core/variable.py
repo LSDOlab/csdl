@@ -30,8 +30,6 @@ class Variable(Node):
         name,
         val=1.0,
         shape=(1, ),
-        src_indices=None,
-        flat_src_indices=None,
         units=None,
         desc='',
         tags=None,
@@ -47,8 +45,6 @@ class Variable(Node):
         else:
             self.name = name
         self.shape, self.val = get_shape_val(shape, val)
-        self.src_indices = src_indices
-        self.flat_src_indices = flat_src_indices
         self.units = units
         self.desc = desc
         self.tags = tags

@@ -39,7 +39,6 @@ class Node():
         self._getitem_called = False
         self._decomp = None
         self.indexed_exprs = dict()
-        self.src_indices = dict()
 
         for k, v in kwargs.items():
             if k == 'name':

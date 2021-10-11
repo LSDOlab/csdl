@@ -29,33 +29,33 @@ class CustomOperation(Operation):
 
         **Example**
 
-        .. code-block:: python
+        ```py
+        # in this example, we inherit from ExplicitOperation, but
+        # the user can also inherit from ImplicitOperation
+        class Example(ExplicitOperation):
+            def initialize(self):
+                self.parameters.declare('in_name', types=str)
+                self.parameters.declare('out_name', types=str)
 
-            # in this example, we inherit from ExplicitOperation, but
-            # the user can also inherit from ImplicitOperation
-            class Example(ExplicitOperation):
-                def initialize(self):
-                    self.parameters.declare('in_name', types=str)
-                    self.parameters.declare('out_name', types=str)
+            def define(self):
+                # use parameters declared in ``initialize``
+                in_name = self.parameters['in_name']
+                out_name = self.parameters['out_name']
 
-                def define(self):
-                    # use parameters declared in ``initialize``
-                    in_name = self.parameters['in_name']
-                    out_name = self.parameters['out_name']
+                self.add_input(in_name)
+                self.add_output(out_name)
+                self.declare_derivatives(out_name, in_name)
 
-                    self.add_input(in_name)
-                    self.add_output(out_name)
-                    self.declare_derivatives(out_name, in_name)
+            # define run time behavior by defining other methods...
 
-                # define run time behavior by defining other methods...
-
-            # compile using Simulator imported from back end...
-            sim = Simulator(
-                Example(
-                    in_name='x',
-                    out_name='y',
-                ),
-            )
+        # compile using Simulator imported from back end...
+        sim = Simulator(
+            Example(
+                in_name='x',
+                out_name='y',
+            ),
+        )
+        ```
         """
         pass
 
@@ -99,32 +99,33 @@ class CustomOperation(Operation):
 
         **Example**
 
-        .. code-block:: python
+        ```py
+        class Example(ExplicitOperation):
+            def define(self):
+                self.add_input('Cl')
+                self.add_input('Cd')
+                self.add_input('rho')
+                self.add_input('V')
+                self.add_input('S')
+                self.add_output('L')
+                self.add_output('D')
 
-            class Example(ExplicitOperation):
-                def define(self):
-                    self.add_input('Cl')
-                    self.add_input('Cd')
-                    self.add_input('rho')
-                    self.add_input('V')
-                    self.add_input('S')
-                    self.add_output('L')
-                    self.add_output('D')
+            # ...
 
-                # ...
+        class Example(ImplicitOperation):
+            def define(self):
+                self.add_input('a', val=1.)
+                self.add_input('b', val=-4.)
+                self.add_input('c', val=3.)
+                self.add_output('x', val=0.)
 
-            class Example(ImplicitOperation):
-                def define(self):
-                    self.add_input('a', val=1.)
-                    self.add_input('b', val=-4.)
-                    self.add_input('c', val=3.)
-                    self.add_output('x', val=0.)
-
-                # ...
+            # ...
+        ```
         """
         if name in self.input_meta.keys():
-            raise KeyError(name +
-                           ' was already declared an input of this Operation')
+            raise KeyError(
+                name +
+                ' was already declared an input of this Operation')
         self.input_meta[name] = dict()
         self.input_meta[name]['val'] = val
         if isinstance(shape, int):
@@ -156,38 +157,41 @@ class CustomOperation(Operation):
         tags=None,
         shape_by_conn=False,
         copy_shape=None,
+        distributed=None,
     ):
         """
         Add an output to this operation.
 
         **Example**
 
-        .. code-block:: python
 
-            class Example(ExplicitOperation):
-                def define(self):
-                    self.add_input('Cl')
-                    self.add_input('Cd')
-                    self.add_input('rho')
-                    self.add_input('V')
-                    self.add_input('S')
-                    self.add_output('L')
-                    self.add_output('D')
+        ```py
+        class Example(ExplicitOperation):
+            def define(self):
+                self.add_input('Cl')
+                self.add_input('Cd')
+                self.add_input('rho')
+                self.add_input('V')
+                self.add_input('S')
+                self.add_output('L')
+                self.add_output('D')
 
-                # ...
+            # ...
 
-            class Example(ImplicitOperation):
-                def define(self):
-                    self.add_input('a', val=1.)
-                    self.add_input('b', val=-4.)
-                    self.add_input('c', val=3.)
-                    self.add_output('x', val=0.)
+        class Example(ImplicitOperation):
+            def define(self):
+                self.add_input('a', val=1.)
+                self.add_input('b', val=-4.)
+                self.add_input('c', val=3.)
+                self.add_output('x', val=0.)
 
-                # ...
+            # ...
+        ```
         """
         if name in self.input_meta.keys():
-            raise KeyError(name +
-                           ' was already declared an input of this Operation')
+            raise KeyError(
+                name +
+                ' was already declared an input of this Operation')
         self.output_meta[name] = dict()
         self.output_meta[name]['val'] = val
         if isinstance(shape, int):
@@ -206,6 +210,7 @@ class CustomOperation(Operation):
         self.output_meta[name]['tags'] = tags
         self.output_meta[name]['shape_by_conn'] = shape_by_conn
         self.output_meta[name]['copy_shape'] = copy_shape
+        self.output_meta[name]['distributed'] = distributed
         self.nouts += 1
 
     def declare_derivatives(
@@ -226,48 +231,51 @@ class CustomOperation(Operation):
         input (ExplicitOperation) or each residual associated with an output with
         respect to the input/output (ImplicitOperation).
 
-        .. code-block:: python
 
-            class Example(ExplicitOperation):
-                def define(self):
-                    self.add_input('Cl')
-                    self.add_input('Cd')
-                    self.add_input('rho')
-                    self.add_input('V')
-                    self.add_input('S')
-                    self.add_output('L')
-                    self.add_output('D')
+        ```py
+        class Example(ExplicitOperation):
+            def define(self):
+                self.add_input('Cl')
+                self.add_input('Cd')
+                self.add_input('rho')
+                self.add_input('V')
+                self.add_input('S')
+                self.add_output('L')
+                self.add_output('D')
 
-                    # declare derivatives of all outputs wrt all inputs
-                    self.declare_derivatives('*', '*')
+                # declare derivatives of all outputs wrt all inputs
+                self.declare_derivatives('*', '*')
 
-                # ...
+            # ...
 
-            class Example(ImplicitOperation):
-                def define(self):
-                    self.add_input('a', val=1.)
-                    self.add_input('b', val=-4.)
-                    self.add_input('c', val=3.)
-                    self.add_output('x', val=0.)
-                    # declare derivative of residual associated with x
-                    # wrt x
-                    self.declare_derivatives('x', 'x')
-                    # declare derivative of residual associated with x
-                    # wrt a, b, c
-                    self.declare_derivatives('x', ['a','b','c'])
+        class Example(ImplicitOperation):
+            def define(self):
+                self.add_input('a', val=1.)
+                self.add_input('b', val=-4.)
+                self.add_input('c', val=3.)
+                self.add_output('x', val=0.)
+                # declare derivative of residual associated with x
+                # wrt x
+                self.declare_derivatives('x', 'x')
+                # declare derivative of residual associated with x
+                # wrt a, b, c
+                self.declare_derivatives('x', ['a','b','c'])
 
-                    self.linear_solver = ScipyKrylov()
-                    self.nonlinear_solver = NewtonSolver(solve_subsystems=False)
+                self.linear_solver = ScipyKrylov()
+                self.nonlinear_solver = NewtonSolver(solve_subsystems=False)
 
-                # ...
-            """
+            # ...
+        ```
+        """
         # check argument types
         if not isinstance(of, (str, list)):
-            raise TypeError('of must be a string or list; {} given'.format(
-                type(of)))
+            raise TypeError(
+                'of must be a string or list; {} given'.format(
+                    type(of)))
         if not isinstance(wrt, (str, list)):
-            raise TypeError('wrt must be a string or list; {} given'.format(
-                type(wrt)))
+            raise TypeError(
+                'wrt must be a string or list; {} given'.format(
+                    type(wrt)))
 
         # user-provided lists of variables of wildcards
         of_list = []
@@ -335,8 +343,9 @@ class CustomOperation(Operation):
                 )
         else:
             if (of, wrt) in self.derivatives_meta.keys():
-                raise KeyError('Derivative {} wrt {} already declared'.format(
-                    of, wrt))
+                raise KeyError(
+                    'Derivative {} wrt {} already declared'.format(
+                        of, wrt))
             self.derivatives_meta[of, wrt] = dict()
             self.derivatives_meta[of, wrt]['dependent'] = dependent
             self.derivatives_meta[of, wrt]['rows'] = rows

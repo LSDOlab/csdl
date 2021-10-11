@@ -89,7 +89,6 @@ mathematical expressions or the standard library.
 ```py
 x = self.declare_variable('x')
 y = csdl.sin(x)
-self.register_output('x', x)
 self.register_output('y', y)
 ```
 
@@ -135,4 +134,6 @@ See
 :::important
 When you call `Model.create_output`, you don't need to call
 `Model.register_output` later.
+See
+[Troubleshooting](/docs/troubleshooting#i-get-an-output-not-defined-error-but-i-defined-my-output).
 :::

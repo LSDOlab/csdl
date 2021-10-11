@@ -179,3 +179,37 @@ self.parameters.declare('groundstations', types=dict)
 self.parameters.declare('timesteps', types=int)
 self.parameters.declare('stepsize', types=float)
 ```
+
+
+## Register outputs immediately after they are defined
+
+Prefer
+
+```py
+a = f(x)
+self.register('a', a)
+```
+
+over
+
+```py
+a = f(x)
+
+# ...
+
+self.register('a', a)
+```
+
+This will make your code easier to read (and easier to debug).
+Remember, you can always use a variable after it is registered.
+
+```py
+a = f(x)
+self.register('a', a)
+
+# ...
+
+b = g(a)
+
+# ...
+```
