@@ -84,7 +84,8 @@ def test_one_dimensional_index_assignement(backend):
     sim.assert_check_partials(result, atol=1.e-8, rtol=1.e-8)
 
 
-def test_multidimensional_dimensional_index_assignement_overlap(backend):
+def test_multidimensional_dimensional_index_assignement_overlap(
+        backend):
     exec('from {} import Simulator'.format(backend))
     from csdl.examples.invalid.ex_indices_multidimensional_overlap import example
     with pytest.raises(KeyError):
@@ -113,7 +114,8 @@ def test_multidimensional_dimensional_index_assignement(backend):
     p = np.arange(30).reshape((5, 2, 3))
     np.testing.assert_array_equal(sim['p'], p)
     # TODO: numpy convention causes shape error without reshape
-    np.testing.assert_array_equal(sim['r'], p[0, :, :].reshape((1, 2, 3)))
+    np.testing.assert_array_equal(sim['r'], p[0, :, :].reshape(
+        (1, 2, 3)))
     np.testing.assert_array_equal(
         sim['q'],
         np.arange(30).reshape((5, 2, 3)),
@@ -128,7 +130,7 @@ def test_multidimensional_dimensional_index_assignement(backend):
         w,
     )
 
-    t = np.ones(np.prod((5, 3, 3))).reshape((5, 3, 3))
+    t = np.zeros(np.prod((5, 3, 3))).reshape((5, 3, 3))
     t[0:5, 0:-1, 0:3] = np.arange(30).reshape((5, 2, 3))
     np.testing.assert_array_equal(
         sim['t'],

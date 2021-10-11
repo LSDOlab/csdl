@@ -61,7 +61,8 @@ class ExampleOneDimensional(Model):
                                   val=np.arange(n).reshape((n, )))
         v = self.declare_variable('v',
                                   shape=(n - 4, ),
-                                  val=np.arange(n - 4).reshape((n - 4, )))
+                                  val=np.arange(n - 4).reshape(
+                                      (n - 4, )))
         w = self.declare_variable('w',
                                   shape=(4, ),
                                   val=16 + np.arange(4).reshape((4, )))
@@ -127,7 +128,8 @@ class ExampleMultidimensional(Model):
         s[0, :] = vec
         s[1, :] = 2 * vec
 
-        # Negative indices
+        # Negative indices and unassigned indices that take on default
+        # values
         t = self.create_output('t', shape=(5, 3, 3), val=0)
         t[0:5, 0:-1, 0:3] = p
 
@@ -155,7 +157,8 @@ class ErrorOneDimensionalOutOfRange(Model):
         n = 20
         x = self.declare_variable('x',
                                   shape=(n - 4, ),
-                                  val=np.arange(n - 4).reshape((n - 4, )))
+                                  val=np.arange(n - 4).reshape(
+                                      (n - 4, )))
         y = self.declare_variable('y',
                                   shape=(4, ),
                                   val=16 + np.arange(4).reshape((4, )))
@@ -170,7 +173,8 @@ class ErrorOneDimensionalOverlap(Model):
         n = 20
         x = self.declare_variable('x',
                                   shape=(n - 4, ),
-                                  val=np.arange(n - 4).reshape((n - 4, )))
+                                  val=np.arange(n - 4).reshape(
+                                      (n - 4, )))
         y = self.declare_variable('y',
                                   shape=(4, ),
                                   val=16 + np.arange(4).reshape((4, )))
