@@ -33,6 +33,8 @@ jobs:
           # install csdl
           pip3 install -e .
           # install a back end (in this case, csdl_om)
+          git config --global user.email "vgandari@eng.ucsd.edu"
+          git config --global user.name "vgucsd"
           git clone --depth=1 https://vgucsd@github.com/lsdolab/csdl_om.git
           pip3 install -e csdl_om/
           here=`pwd`
@@ -51,8 +53,6 @@ jobs:
           pwd
           ls
           # deploy docs
-          git config --global user.email "vgandari@eng.ucsd.edu"
-          git config --global user.name "vgucsd"
           if [ -e yarn.lock ]; then
             echo "yarn i RUNNING"
             yarn install --frozen-lockfile
