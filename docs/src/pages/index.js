@@ -24,7 +24,7 @@ function HomepageHeader() {
 export default function Home() {
     const { siteConfig } = useDocusaurusContext();
     return (
-        <Layout title={`CSDL | ${siteConfig.title}`} description="Description will go into a meta tag in <head />">
+        <Layout title={`CSDL `} description="Description will go into a meta tag in <head />">
             <HomepageHeader />
             <main>
                 <HomepageFeatures />
