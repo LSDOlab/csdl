@@ -117,7 +117,7 @@ def modified_topological_sort(
     """
     print_operations = []
     sorted_nodes = []
-    stack = copy(registered_nodes)
+    stack = list(filter(lambda x: x.dependents == [], registered_nodes))
     while stack != []:
         v = stack.pop()
         if v.get_num_dependents() == 0 and isinstance(
