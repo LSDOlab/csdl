@@ -1,4 +1,5 @@
 from csdl.core.operation import Operation
+from csdl.utils.get_shape_val import get_shape_val
 from csdl.utils.parameters import Parameters
 
 
@@ -85,7 +86,7 @@ class CustomOperation(Operation):
         self,
         name,
         val=1.0,
-        shape=None,
+        shape=(1, ),
         src_indices=None,
         flat_src_indices=None,
         units=None,
@@ -127,11 +128,8 @@ class CustomOperation(Operation):
                 name +
                 ' was already declared an input of this Operation')
         self.input_meta[name] = dict()
-        self.input_meta[name]['val'] = val
-        if isinstance(shape, int):
-            self.input_meta[name]['shape'] = (shape, )
-        else:
-            self.input_meta[name]['shape'] = shape
+        self.input_meta[name]['shape'], self.input_meta[name][
+            'val'] = get_shape_val(shape, val)
         self.input_meta[name]['src_indices'] = src_indices
         self.input_meta[name]['flat_src_indices'] = flat_src_indices
         self.input_meta[name]['units'] = units
@@ -145,7 +143,7 @@ class CustomOperation(Operation):
         self,
         name,
         val=1.0,
-        shape=None,
+        shape=(1, ),
         units=None,
         res_units=None,
         desc='',
@@ -193,11 +191,8 @@ class CustomOperation(Operation):
                 name +
                 ' was already declared an input of this Operation')
         self.output_meta[name] = dict()
-        self.output_meta[name]['val'] = val
-        if isinstance(shape, int):
-            self.output_meta[name]['shape'] = (shape, )
-        else:
-            self.output_meta[name]['shape'] = shape
+        self.output_meta[name]['shape'], self.output_meta[name][
+            'val'] = get_shape_val(shape, val)
         self.output_meta[name]['units'] = units
         self.output_meta[name]['res_units'] = res_units
         self.output_meta[name]['desc'] = desc

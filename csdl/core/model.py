@@ -254,17 +254,12 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
             for r in self.registered_outputs:
                 build_symbol_table(self.symbol_table, r)
 
-            if True:
-                # Use modified Kahn's algorithm to sort nodes, reordering
-                # expressions except where user registers outputs out of order
-                self.sorted_nodes = modified_topological_sort(
-                    self.registered_outputs)
-            # else:
             # Use Kahn's algorithm to sort nodes, reordering
             # expressions without regard for the order in which user
-            # registers outputs
-            # self.sorted_nodes =
-            # topological_sort(self.registered_outputs)
+            # registers outputs; ensure print operations and variables
+            # are moved to end of execution order
+            self.sorted_nodes = modified_topological_sort(
+                self.registered_outputs)
 
             # Define child models recursively
             for subgraph in self.subgraphs:
@@ -398,7 +393,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         """
 
         if self._defined == True:
-            print('redefining')
             self._defined = False
             for out in self.registered_outputs:
                 out.remove_fwd_edges()
@@ -406,10 +400,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
                 out.remove_dependencies()
         from csdl.operations.passthrough import passthrough
         se = set(expose)
-        print(se)
         vars = list(
             filter(lambda x: x.name in se, self.registered_outputs))
-        print([var.name for var in vars])
         for var in vars:
             op = passthrough(var)
             out = Output(
@@ -425,10 +417,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
                 op=op,
             )
             op.outs = (out, )
-            print(out.name)
             self.register_output(out.name, out)
         self.define()
-        print([var.name for var in self.registered_outputs])
 
     def print_var(self, var: Variable):
         """
@@ -1016,8 +1006,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
             if len(v) != 2:
                 raise ValueError(
-                    "Bracket for state {} is not a tuple of two values".
-                    format(k))
+                    "Bracket {} for state {} is not a tuple of two values"
+                    .format(v, k))
 
             (a, b) = (np.array(v[0]), np.array(v[1]))
             if a.shape != b.shape:
@@ -1481,8 +1471,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
                 e.name,
                 val=e.val,
                 shape=e.shape,
-                src_indices=e.src_indices,
-                flat_src_indices=e.flat_src_indices,
                 units=e.units,
                 desc=e.desc,
                 tags=e.tags,
