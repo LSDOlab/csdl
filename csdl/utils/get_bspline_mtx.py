@@ -71,16 +71,3 @@ def get_bspline_mtx(num_cp, num_pt, order=4):
         (data, (rows, cols)),
         shape=(num_pt, num_cp),
     )
-
-
-from csdl import Model
-import csdl
-
-
-class Test(Model):
-    def define(self):
-        num_cp = 3
-        num_pt = 30
-        x = self.declare_variable('x', shape=(num_cp))
-        y = csdl.matvec(get_bspline_mtx(num_cp, num_pt), x)
-        self.register_output('y', y)
