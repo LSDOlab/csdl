@@ -22,6 +22,7 @@ def example(Simulator):
 
             # Get value from indices
             self.register_output('r', p[0, :, :])
+            self.register_output('r2', p[0, -1, 2])
 
             # Assign a vector to a slice
             vec = self.create_input(
@@ -47,6 +48,8 @@ def example(Simulator):
     print(sim['q'])
     print('r', sim['r'].shape)
     print(sim['r'])
+    print('r2', sim['r2'].shape)
+    print(sim['r2'])
     print('s', sim['s'].shape)
     print(sim['s'])
     print('t', sim['t'].shape)

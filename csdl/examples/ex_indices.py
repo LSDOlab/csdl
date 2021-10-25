@@ -117,6 +117,7 @@ class ExampleMultidimensional(Model):
 
         # Get value from indices
         self.register_output('r', p[0, :, :])
+        self.register_output('r2', p[0, -1, 2])
 
         # Assign a vector to a slice
         vec = self.create_input(

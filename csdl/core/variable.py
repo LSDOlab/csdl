@@ -214,7 +214,7 @@ class Variable(Node):
     def __rsub__(self, other):
         from csdl.operations.linear_combination import linear_combination
         from csdl.core.output import Output
-        if isinstance(other, Number):
+        if isinstance(other, (int, float)):
             op = linear_combination(self, constant=other, coeffs=1)
         elif isinstance(other, np.ndarray):
             raise NotImplementedError(
@@ -333,11 +333,20 @@ class Variable(Node):
                         self.shape[i],
                     ))
                 elif isinstance(key[i], int):
-                    l.append(
-                        slice_to_tuple(
-                            slice(key[i], key[i] + 1, None),
-                            self.shape,
-                        ))
+                    if key[i] < 0:
+                        size = self.shape[i]
+                        l.append(
+                            slice_to_tuple(
+                                slice(size + key[i], size + key[i] + 1,
+                                      None),
+                                self.shape,
+                            ))
+                    else:
+                        l.append(
+                            slice_to_tuple(
+                                slice(key[i], key[i] + 1, None),
+                                self.shape,
+                            ))
             key = tuple(l)
         else:
             raise TypeError(
