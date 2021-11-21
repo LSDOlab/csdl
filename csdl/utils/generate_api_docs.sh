@@ -68,8 +68,6 @@ pydoc-markdown -m csdl.core.output dev.yml >> ../../docs/docs/developer/api.mdx
 echo "" >> ../../docs/docs/developer/api.mdx
 pydoc-markdown -m csdl.core.concatenation dev.yml >> ../../docs/docs/developer/api.mdx
 echo "" >> ../../docs/docs/developer/api.mdx
-pydoc-markdown -m csdl.core.implicit_output dev.yml >> ../../docs/docs/developer/api.mdx
-echo "" >> ../../docs/docs/developer/api.mdx
 pydoc-markdown -m csdl.core.operation dev.yml >> ../../docs/docs/developer/api.mdx
 echo "" >> ../../docs/docs/developer/api.mdx
 pydoc-markdown -m csdl.core.standard_operation dev.yml >> ../../docs/docs/developer/api.mdx
