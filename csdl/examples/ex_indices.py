@@ -97,6 +97,7 @@ class ExampleMultidimensional(Model):
     :param var: x
     :param var: q
     :param var: r
+    :param var: r2
     :param var: s
     :param var: t
     """

@@ -1,6 +1,7 @@
 from csdl.core.operation import Operation
 from csdl.utils.get_shape_val import get_shape_val
 from csdl.utils.parameters import Parameters
+from collections import OrderedDict
 
 
 class CustomOperation(Operation):
@@ -9,8 +10,8 @@ class CustomOperation(Operation):
         self.nouts = 1
         super().__init__(*args, **kwargs)
         self.nouts = 0
-        self.input_meta = dict()
-        self.output_meta = dict()
+        self.input_meta = OrderedDict()
+        self.output_meta = OrderedDict()
         self.derivatives_meta = dict()
         self.parameters = Parameters()
         self.initialize()

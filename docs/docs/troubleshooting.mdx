@@ -106,3 +106,35 @@ x = self.create_output('x', shape=(2,))
 x[0] = f(y)
 x[1] = g(z)
 ```
+
+## How to deal with errors in the back end
+
+The back end may emit error messages that look extremely unhelpful when
+using CSDL.
+In some cases, the back end will say there's an issue with a variable
+called `'_000H'`, which is a name that CSDL automatically generates for
+outputs that the user does not register explicitly.
+There may be a class that the back end uses with a similar name to a
+standatd library function, or an operation with an automatically
+generated name.
+
+To debug issues like this, register outputs in your model that are most
+likely to be inputs and outputs of the operations that the back end uses
+to generate code.
+This will not remove the error messages, but that `'_000H'` will change
+to the name you set for your output.
+Eventually, you should be able to find the source of the bug.
+This does involve some trial end error.
+
+There are a few reasons you've encountered this error
+
+- You used CSDL incorrectly (unlikely if the error is coming from the
+  back end).
+- There is a bug in the CSDL compiler back end (more likely than the
+  first option).
+- The CSDL compiler back end interacts with `csdl` incorrectly (more
+  likely as the number of back ends increases).
+
+If you're sure the issue is the last one, or if you've spent a long time
+trying to understand the bug and you've gotten nowhere, please file an
+issue on the GitHub issue tracker.

@@ -15,9 +15,11 @@ class Operation(Node):
                 "Operation subclass has not defined number of outputs")
         if not hasattr(self, 'nargs'):
             AttributeError(
-                "Operation subclass has not defined number of arguments")
+                "Operation subclass has not defined number of arguments"
+            )
         if self.nouts < 1:
-            ValueError("Operation classes must declare at least one output")
+            ValueError(
+                "Operation classes must declare at least one output")
         if self.nargs is not None and self.nargs < 1:
             ValueError(
                 "Operation classes must declare at least one argument"
@@ -25,15 +27,20 @@ class Operation(Node):
         for arg in args:
             self.add_dependency_node(arg)
 
+        if self.nargs is not None:
+            if len(self.dependencies) > self.nargs:
+                raise TypeError(
+                    "{} can have at most {} nonliteral (Variable) object dependencies, found {}"
+                    .format(repr(self), self.nargs,
+                            len(self.dependencies)))
+
     def add_dependency_node(self, dependency):
         from csdl.core.variable import Variable
         if not isinstance(dependency, Variable):
             raise TypeError(
-                "Dependency of an Operation object must be a Variable object")
-        if len(self.dependencies) == self.nargs:
-            raise TypeError(
-                "{} can have at most {} nonliteral (Variable) object dependencies"
-                .format(repr(self), self.nargs), )
+                "Dependency of an Operation object must be a Variable object"
+            )
+
         self.dependencies.append(dependency)
 
         # # Add dependency

@@ -116,6 +116,7 @@ def test_multidimensional_dimensional_index_assignement(backend):
     # TODO: numpy convention causes shape error without reshape
     np.testing.assert_array_equal(sim['r'], p[0, :, :].reshape(
         (1, 2, 3)))
+    np.testing.assert_array_equal(sim['r2'], 5.)
     np.testing.assert_array_equal(
         sim['q'],
         np.arange(30).reshape((5, 2, 3)),

@@ -31,6 +31,8 @@ import numpy as np
 import matplotlib.pylab as plt
 import scipy.sparse as sparse
 
+_residual = '_residual'
+
 
 class ImplicitOperationFactory(object):
     def __init__(self, parent, model):
@@ -391,7 +393,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         This is *only* used when exposing intermediate variables for a
         composite residual.
         """
-
         if self._defined == True:
             self._defined = False
             for out in self.registered_outputs:
@@ -405,7 +406,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         for var in vars:
             op = passthrough(var)
             out = Output(
-                var._id + '_residual',
+                _residual + var._id,
                 val=var.val,
                 shape=var.shape,
                 units=var.units,
@@ -1327,15 +1328,15 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         # expose any variable in the hierarchy
         # check that name of each exposed intermediate output matches
         # name of a registered output in internal model
-        # for expose_name in expose:
-        #     expose_name_match = False
-        #     for var in model.registered_outputs:
-        #         if expose_name == var.name:
-        #             expose_name_match = True
-        #     if not expose_name_match:
-        #         raise ValueError(
-        #             "The intermediate output {} is not a registered output of the model used to define an implicit operation"
-        #             .format(expose_name))
+        for expose_name in expose:
+            expose_name_match = False
+            for var in model.registered_outputs:
+                if expose_name == var.name:
+                    expose_name_match = True
+            if not expose_name_match:
+                raise ValueError(
+                    "The intermediate output {} is not a registered output of the model used to define an implicit operation"
+                    .format(expose_name))
 
         # TODO: always expose residuals (SURF)
 
@@ -1345,8 +1346,10 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         exposed_residuals_map: Dict[str, Output] = dict()
         res_exp_map: Dict[str, Output] = dict()
         exp_res_map: Dict[str, Output] = dict()
+
         for res in model.registered_outputs:
-            if res.name[0] == '_':
+            if res.name.startswith(_residual):
+                # residual is associated with exposed variable;
                 # map exposed variables to exposed residuals and vice
                 # versa
                 exposed_residuals_map[res.name] = res
@@ -1378,6 +1381,13 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         # intermediate values
         res_out_map = {**res_out_map, **res_exp_map}
         out_res_map = {**out_res_map, **exp_res_map}
+
+        # TODO: (?) keep track of which exposed variables depend on
+        # residuals; necessary for computing derivatives of residuals
+        # associated with exposed variables wrt exposed variables, but
+        # only those exposed variables that do not depend on a stata
+
+        # TODO: collect_terminals for exposed variables, like an "exp_in_map"
 
         # TODO: check if residuals depend on each other
         # Associate outputs with the inputs they depend on

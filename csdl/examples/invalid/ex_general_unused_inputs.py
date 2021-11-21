@@ -2,7 +2,7 @@ def example(Simulator):
     from csdl import Model
     
     
-    class ExampleUnusedInputs(Model):
+    class ErrorUnusedInputs(Model):
         def define(self):
             # These inputs are unused; will not be supplied to compiler
             # back end
@@ -11,7 +11,6 @@ def example(Simulator):
             c = self.declare_variable('c', val=2)
     
     
-    sim = Simulator(ExampleUnusedInputs())
+    sim = Simulator(ErrorUnusedInputs())
     sim.run()
     
-    return sim

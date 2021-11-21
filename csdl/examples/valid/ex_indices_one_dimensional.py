@@ -12,7 +12,8 @@ def example(Simulator):
                                       val=np.arange(n).reshape((n, )))
             v = self.declare_variable('v',
                                       shape=(n - 4, ),
-                                      val=np.arange(n - 4).reshape((n - 4, )))
+                                      val=np.arange(n - 4).reshape(
+                                          (n - 4, )))
             w = self.declare_variable('w',
                                       shape=(4, ),
                                       val=16 + np.arange(4).reshape((4, )))

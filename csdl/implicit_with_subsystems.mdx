@@ -1,0 +1,54 @@
+Implicit Relationships with Subsystems
+======================================
+
+Residual variables may depend on the result of a subsystem.
+For example, the solution to a quadratic equation depends on the
+coefficients, but one of those coefficients may not be constant, and may
+depend on a subsystem.
+
+In this example, we solve :math:`ax^2+bx+c=0`, but :math:`a` is a fixed
+point of :math:`(3 + a - 2a^2)^\frac{1}{4}`.
+
+In order to compute :math:`a`, ``csdl`` creates a new
+``openmdao.Problem`` instance within an ``ImplicitOperation``.
+The ``Problem`` instance contains a model, which is an instance of
+``csdl.Model``.
+The ``ImplicitOperation`` class provides acces to this ``csdl.Model``
+object with ``self.model``.
+Residuals that depend on subsystems may be defined with
+calls to ``self.model.add``.
+
+**Subsystems added by calling ``self.model.add`` are
+part of the residual(s), not the ``ImplicitOperation``.**
+
+**All inputs to the ``ImplicitOperation`` must be declared using calls
+to ``self.model.declare_variable`` at the beginning of ``self.setup``,
+before any calls to ``self.model.add``.**
+
+In this example, the only input is ``c``.
+Both ``a`` and ``b`` are outputs of subsystems used to define the
+residual.
+
+import WorkedExample1 from './worked_examples/ex_implicit_with_subsystems.mdx';
+
+<WorkedExample1 />
+
+
+
+Note that calls to ``ImplicitOperation.add`` result in adding
+a subsystem to the internal ``Problem`` instance (not shown), and not
+the ``ImplicitOperation`` itself.
+
+Just as with residuals that do not require subsystems to converge,
+bracketing solutions is an option as well.
+
+import WorkedExample2 from './worked_examples/ex_implicit_with_subsystems_bracketed_scalar.mdx';
+
+<WorkedExample2 />
+
+
+Brackets may also be specified for multidimensional array values.
+
+import WorkedExample3 from './worked_examples/ex_implicit_with_subsystems_bracketed_array.mdx';
+
+<WorkedExample3 />

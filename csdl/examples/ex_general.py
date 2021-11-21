@@ -1,7 +1,7 @@
 from csdl import Model
 
 
-class ExampleUnusedInputs(Model):
+class ErrorUnusedInputs(Model):
     def define(self):
         # These inputs are unused; will not be supplied to compiler
         # back end

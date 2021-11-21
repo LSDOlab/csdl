@@ -50,6 +50,8 @@ def expand(var: Variable, shape: tuple, indices=None):
         ) = decompose_shape_tuple(shape, expand_indices)
 
         if in_shape != var.shape:
-            raise ValueError('Shape or indices is invalid')
+            raise ValueError(
+                'Shape or indices is invalid. Make sure the indices are appropriate and that the string contains no spaces.'
+            )
 
     return op.outs[0]

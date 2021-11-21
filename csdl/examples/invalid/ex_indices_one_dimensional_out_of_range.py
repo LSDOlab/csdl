@@ -9,7 +9,8 @@ def example(Simulator):
             n = 20
             x = self.declare_variable('x',
                                       shape=(n - 4, ),
-                                      val=np.arange(n - 4).reshape((n - 4, )))
+                                      val=np.arange(n - 4).reshape(
+                                          (n - 4, )))
             y = self.declare_variable('y',
                                       shape=(4, ),
                                       val=16 + np.arange(4).reshape((4, )))

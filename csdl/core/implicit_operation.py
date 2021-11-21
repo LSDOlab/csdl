@@ -31,7 +31,7 @@ class ImplicitOperation(Operation):
         for _, v in out_in_map.items():
             in_vars = in_vars.union(set(v))
         self.nargs = len(in_vars)
-        super().__init__(*args, **kwargs)
+        super().__init__(*list(in_vars), **kwargs)
         self._model = model
         if linear_solver is None and isinstance(
                 nonlinear_solver, (NewtonSolver, BroydenSolver)):
