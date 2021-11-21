@@ -13,6 +13,25 @@ class ExampleLiterals(Model):
         self.register_output('y', y)
 
 
+class ExampleRegisterDependencies(Model):
+    """
+    :param var: x
+    :param var: y
+    :param var: z
+    """
+    def define(self):
+        a = self.declare_variable('a')
+        b = self.declare_variable('b')
+        c = self.declare_variable('c')
+        d = self.declare_variable('d')
+        x = a + b  # 2
+        y = c + d  # 2
+        z = x * y  # 4
+        self.register_output('z', z)
+        self.register_output('x', x)
+        self.register_output('y', y)
+
+
 class ExampleBinaryOperations(Model):
     """
     :param var: y1

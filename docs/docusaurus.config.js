@@ -50,6 +50,11 @@ const katex = require('rehype-katex');
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
             hideableSidebar: true,
+            // announcementBar: {
+            //     id: 'announcementBar-2', // Increment on change
+            // TODO: make an announcement eventually
+            //     content: `If you like CSDL, give it a star on <a target="_blank" rel="noopener noreferrer" href="https://github.com/lsdolab/csdl">GitHub</a> and engage with us on <a target="_blank" rel="noopener noreferrer" href="https://csdl.zulipchat.com/" >Zulip</a>`,
+            // },
             navbar: {
                 logo: {
                     alt: 'CSDL',
@@ -144,6 +149,15 @@ const katex = require('rehype-katex');
                             {
                                 label: 'LSDO Lab',
                                 href: 'https://lsdo.eng.ucsd.edu/',
+                            },
+                        ],
+                    },
+                    {
+                        title: 'Legal',
+                        items: [
+                            {
+                                label: 'LGPLv3 License',
+                                href: 'https://github.com/LSDOlab/csdl/blob/master/LICENSE.md',
                             },
                         ],
                     },

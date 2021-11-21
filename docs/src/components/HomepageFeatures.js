@@ -48,8 +48,9 @@ const FeatureList = [
                 algorithms.
                 Use a functional and/or object oriented style to define
                 system models, and take advantage of CSDL's early,
-                helpful error messages to build correct model
-                specifications.
+                helpful error messages to provide physically meaningful
+                model specifications and build correct
+                implementations.
             </>
         ),
     },
