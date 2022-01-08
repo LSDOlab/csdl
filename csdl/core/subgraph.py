@@ -13,8 +13,6 @@ class Subgraph(Node):
         submodel,
         *args,
         promotes=None,
-        promotes_inputs=None,
-        promotes_outputs=None,
         min_procs=1,
         max_procs=None,
         proc_weight=1.0,
@@ -23,13 +21,11 @@ class Subgraph(Node):
         super().__init__(*args, **kwargs)
         from csdl.core.model import Model
         from csdl.core.implicit_operation import ImplicitOperation
-        if not isinstance(submodel, (Model, CustomOperation)):
-            TypeError("subsys must be a Model or Operation")
+        if not isinstance(submodel, (Model)):
+            TypeError("subsys must be a Model")
         self.name: str = name
         self.promotes = promotes
-        self.promotes_inputs = promotes_inputs
-        self.promotes_outputs = promotes_outputs
-        self.submodel: Union[Model, CustomOperation] = submodel
+        self.submodel: Model = submodel
 
     def add_dependency_node(self, dependency):
         from csdl.core.variable import Variable

@@ -1,5 +1,5 @@
 # TODO: ensure explicit output values are not reassigned
-def set_default_values(model, promotes=[], promotes_inputs=[]):
+def set_default_values(model, promotes=[]):
     from csdl.core.model import Model
     variables_promoted_from_children = []
     inputs_promoted_from_children = []
@@ -9,7 +9,6 @@ def set_default_values(model, promotes=[], promotes_inputs=[]):
             inputs, variables = set_default_values(
                 subgraph.submodel,
                 promotes=subgraph.promotes,
-                promotes_inputs=subgraph.promotes_inputs,
             )
             inputs_promoted_from_children.extend(inputs)
             variables_promoted_from_children.extend(variables)
@@ -29,17 +28,17 @@ def set_default_values(model, promotes=[], promotes_inputs=[]):
     # gather variables promoted to parent
     inputs_promoted_to_parent = []
     variables_promoted_to_parent = []
-    if promotes is None and promotes_inputs is None:
+    if promotes is None:
         return inputs_promoted_to_parent, variables_promoted_to_parent
-    if promotes == ['*'] or promotes_inputs == ['*']:
+    if promotes == ['*']:
         variables_promoted_to_parent = model.declared_variables + variables_promoted_from_children
         inputs_promoted_to_parent = model.inputs + inputs_promoted_from_children
     else:
-        for name in promotes_inputs:
-            variables_promoted_to_parent.extend(
-                list(
-                    filter(lambda var: var.name == name,
-                           model.variables_promoted_from_children)))
+        # for name in promotes_inputs:
+        #     variables_promoted_to_parent.extend(
+        #         list(
+        #             filter(lambda var: var.name == name,
+        #                    model.variables_promoted_from_children)))
         for name in promotes:
             variables_promoted_to_parent.extend(
                 list(

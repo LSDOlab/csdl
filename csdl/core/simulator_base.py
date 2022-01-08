@@ -1,5 +1,6 @@
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Union
 from collections import OrderedDict
+import numpy as np
 
 
 class _ReprClass(object):
@@ -10,6 +11,7 @@ class _ReprClass(object):
     automatically generated source documentation as a certain string instead of python's
     default representation.
     """
+
     def __init__(self, repr_string):
         """
         Inititialize the __repr__ string.
@@ -50,13 +52,14 @@ class SimulatorBase:
     ``csdl``, only the ``Simulator`` class provided by the CSDL compiler
     back end of choice.
     """
+
     def __init__(self, model, reorder=False):
         """
         Constructor.
         """
         raise NotImplementedError(msg)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> np.ndarray:
         """
         Method to get variable values before or after a simulation run
         """
@@ -76,13 +79,17 @@ class SimulatorBase:
         """
         raise NotImplementedError(msg)
 
-    def compute_total_derivatives(self) -> OrderedDict:
+    def compute_total_derivatives(
+        self,
+        return_format='array',
+    ) -> Union[OrderedDict, np.ndarray]:
         """
-        Method to compute total derivatives for use by an optimizer
+        Method to compute total derivatives (objective gradient and
+        constraint jacobian)
 
         **Returns**
 
-            `OrderedDict[str, Any]`
+            Union[OrderedDict, np.ndarray]`
         """
         raise NotImplementedError(msg)
 
@@ -123,28 +130,66 @@ class SimulatorBase:
         """
         raise NotImplementedError(msg)
 
-    def objective(self) -> Dict[str, Any]:
+    def get_design_variable_metadata(self) -> dict:
+        """
+        Method to get design variable metadata that an optimizer
+        needs to define an optimization problem
+
+        **Returns**
+
+            `dict`
+        """
+        raise NotImplementedError(msg)
+
+    def get_constraints_metadata(self) -> OrderedDict:
+        """
+        Method to get constraint metadata that an optimizer
+        needs to define an optimization problem
+
+        **Returns**
+
+            `OrderedDict`
+        """
+        raise NotImplementedError(msg)
+
+    def update_design_variables(
+        self,
+        x: np.ndarray,
+        input_format='array',
+    ):
+        """
+        Method for external optimizer to update design variable values
+        """
+        raise NotImplementedError(msg)
+
+    def design_variables(
+        self,
+        return_format='array',
+    ) -> Union[OrderedDict, np.ndarray]:
+        """
+        Method to provide optimizer with design variables
+        **Returns**
+
+            `Union[OrderedDict, np.ndarray]`
+        """
+        raise NotImplementedError(msg)
+
+    def objective(self) -> float:
         """
         Method to provide optimizer with objective
         """
         raise NotImplementedError(msg)
 
-    def design_variables(self) -> OrderedDict:
-        """
-        Method to provide optimizer with design variables
-        **Returns**
-
-            `OrderedDict[str, Dict[str, Any]]`
-        """
-        raise NotImplementedError(msg)
-
-    def constraints(self) -> OrderedDict:
+    def constraints(
+        self,
+        return_format='array',
+    ) -> Union[OrderedDict, np.ndarray]:
         """
         Method to provide optimizer with constraints
 
         **Returns**
 
-            `OrderedDict[str, Dict[str, Any]]`
+            `Union[OrderedDict, np.ndarray]`
         """
         raise NotImplementedError(msg)
 
@@ -154,35 +199,39 @@ class SimulatorBase:
         """
         raise NotImplementedError(msg)
 
-    def residuals(self):
+    def residuals(self) -> Union[OrderedDict, np.ndarray]:
         """
         Method to provide optimizer with residuals
         """
         raise NotImplementedError(msg)
 
-    def objective_gradient(self) -> OrderedDict:
+    def objective_gradient(self) -> Union[OrderedDict, np.ndarray]:
         """
         Method to provide optimizer with total derivative of objective
-        with respect to design variables
+        with respect to design variables; does not compute derivatives;
+        must call `Simulator.compute_total_derivatives` to compute
+        derivatives
 
         **Returns**
 
-            `OrderedDict[Tuple[str, str], Any]`
+            `Union[OrderedDict, np.ndarray]`
         """
         raise NotImplementedError(msg)
 
-    def constraint_jacobian(self) -> OrderedDict:
+    def constraint_jacobian(self) -> Union[OrderedDict, np.ndarray]:
         """
-        Method to provide optimizer with total derivatives of
-        constraints with respect to design variables
+        Method to provide optimizer with total derivative of constraints
+        with respect to design variables; does not compute derivatives;
+        must call `Simulator.compute_total_derivatives` to compute
+        derivatives
 
         **Returns**
 
-            `OrderedDict[Tuple[str, str], Any]`
+            `Union[OrderedDict, np.ndarray]`
         """
         raise NotImplementedError(msg)
 
-    def residuals_jacobian(self):
+    def residuals_jacobian(self) -> Union[OrderedDict, np.ndarray]:
         """
         Method to provide optimizer with total derivatives of
         residuals with respect to design variables

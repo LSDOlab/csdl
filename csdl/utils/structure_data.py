@@ -16,7 +16,7 @@ def structure_data(inputs, output, ny=1):
 
     xt = np.array(np.meshgrid(
         *inputs,
-        indexing='ij',
+        indexing='xy',
     ), ).reshape(
         int(np.prod(output.shape) / ny),
         len(inputs),
@@ -26,5 +26,8 @@ def structure_data(inputs, output, ny=1):
     xlimits = np.zeros((len(inputs), 2))
     xlimits[:, 0] = np.min(xt) * np.ones(len(inputs))
     xlimits[:, 1] = np.max(xt) * np.ones(len(inputs))
+
+    # xlimits = np.zer
+    # ] = np.min(x), np.max(x)
 
     return xt, xlimits

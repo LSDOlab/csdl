@@ -5,7 +5,7 @@ from typing import List
 import numpy as np
 
 
-def sum(*summands: List[Variable], axes=None):
+def sum(*summands: Variable, axes=None):
     '''
     This function can compute an elementwise or axiswise sum of
     a single or multiple inputs.
@@ -22,9 +22,14 @@ def sum(*summands: List[Variable], axes=None):
     for summand in summands:
         if not isinstance(summand, Variable):
             raise TypeError(summand, " is not an Variable object")
+        if summand.shape != summands[0].shape:
+            raise ValueError("Arguments must have the same shape")
 
     if axes == None:
-        shape = summands[0].shape
+        if len(summands) == 1:
+            shape = (1, )
+        else:
+            shape = summands[0].shape
     else:
         shape = tuple(np.delete(summands[0].shape, axes))
 
@@ -34,6 +39,8 @@ def sum(*summands: List[Variable], axes=None):
         op=op,
         shape=shape,
     ), )
+    print('SHAPE', op.outs[0].shape)
+    print('SHAPE (dep)', op.dependencies[0].shape)
     # for out in op.outs:
     #         out.add_dependency_node(op)
 

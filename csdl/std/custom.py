@@ -23,8 +23,8 @@ def custom(*args, op: CustomOperation):
         # KLUDGE: outer name must match inner name
         if arg.name != key:
             raise ValueError(
-                "Variable {} not found in {}. Perhaps the arguments are out of order?"
-                .format(arg.name, type(op)))
+                "Variable {} does not match {}. Perhaps the arguments are out of order?"
+                .format(arg.name, key))
         if arg.shape != op.input_meta[arg.name]['shape']:
             raise ValueError(
                 "Variable shapes do not match for {}. Argument shape is {}, but CustomOperation has shape {}"
@@ -37,22 +37,12 @@ def custom(*args, op: CustomOperation):
     outs = []
     # KLUDGE: keep names simple for now
     for name, meta in op.output_meta.items():
-        # out = Output(
-        #     gen_hex_name(Output._count + 1),
-        #     **meta,
-        #     op=op,
-        # )
         out = Output(
             name,
             **meta,
             op=op,
         )
         outs.append(out)
-    output_meta = OrderedDict()
-    # for out, meta in zip(outs, op.output_meta.values()):
-    #     # print(out.name, meta)
-    #     output_meta[out.name] = meta
-    # op.output_meta = output_meta
 
     if len(outs) == 1:
         return outs[0]

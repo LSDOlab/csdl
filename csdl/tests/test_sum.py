@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.testing._private.utils import assert_
 import pytest
 
 
@@ -15,6 +16,8 @@ def test_sum_single_vector(backend):
 
     np.testing.assert_almost_equal(sim['single_vector_sum'],
                                    desired_vector_sum)
+    assert sim['v1'].shape == (n, )
+    assert sim['single_vector_sum'].shape == (1, )
 
     partials_error_vector_sum = sim.check_partials(
         includes=['comp_single_vector_sum'],
@@ -40,6 +43,8 @@ def test_sum_single_matrix(backend):
 
     np.testing.assert_almost_equal(sim['single_matrix_sum'],
                                    desired_matrix_sum)
+    assert sim['M1'].shape == (n, m)
+    assert sim['single_matrix_sum'].shape == (1, )
 
     partials_error_vector_sum = sim.check_partials(
         includes=['comp_single_matrix_sum'],
@@ -67,6 +72,7 @@ def test_sum_single_tensor(backend):
 
     np.testing.assert_almost_equal(sim['single_tensor_sum'],
                                    desired_tensor_sum)
+    assert sim['single_tensor_sum'].shape == (1, )
 
     partials_error_tensor_sum = sim.check_partials(
         includes=['comp_single_tensor_sum'],
@@ -92,6 +98,7 @@ def test_sum_multiple_vector(backend):
 
     np.testing.assert_almost_equal(sim['multiple_vector_sum'],
                                    desired_vector_sum)
+    assert sim['multiple_vector_sum'].shape == (n, )
 
     partials_error_vector_sum = sim.check_partials(
         includes=['comp_multiple_vector_sum'],
@@ -118,6 +125,7 @@ def test_sum_multiple_matrix(backend):
 
     np.testing.assert_almost_equal(sim['multiple_matrix_sum'],
                                    desired_matrix_sum)
+    assert sim['multiple_matrix_sum'].shape == (n, m)
 
     partials_error_matrix_sum = sim.check_partials(
         includes=['comp_multiple_matrix_sum'],
@@ -140,12 +148,14 @@ def test_sum_multiple_tensor(backend):
     q = 10
 
     T1 = np.arange(n * m * p * q).reshape((n, m, p, q))
-    T2 = np.arange(n * m * p * q, 2 * n * m * p * q).reshape((n, m, p, q))
+    T2 = np.arange(n * m * p * q, 2 * n * m * p * q).reshape(
+        (n, m, p, q))
 
     desired_tensor_sum = T1 + T2
 
     np.testing.assert_almost_equal(sim['multiple_tensor_sum'],
                                    desired_tensor_sum)
+    assert sim['multiple_tensor_sum'].shape == (n, m, p, q)
 
     partials_error_tensor_sum = sim.check_partials(
         includes=['comp_multiple_tensor_sum'],
@@ -171,6 +181,7 @@ def test_sum_single_matrix_along0(backend):
 
     np.testing.assert_almost_equal(sim['single_matrix_sum_along_0'],
                                    desired_single_matrix_sum_axis_0)
+    assert sim['single_matrix_sum_along_0'].shape == (m, )
 
     partials_error_single_matrix_axis_0 = sim.check_partials(
         includes=['comp_single_matrix_sum_along_0'],
@@ -196,6 +207,7 @@ def test_sum_single_matrix_along1(backend):
 
     np.testing.assert_almost_equal(sim['single_matrix_sum_along_1'],
                                    desired_single_matrix_sum_axis_1)
+    assert sim['single_matrix_sum_along_1'].shape == (n, )
 
     partials_error_single_matrix_axis_1 = sim.check_partials(
         includes=['comp_single_matrix_sum_along_1'],

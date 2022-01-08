@@ -26,13 +26,14 @@ def get_shape_val(
     if isinstance(shape, int):
         shape = (shape, )
     if isinstance(val, (int, float)):
-        # if isinstance(val, Number):
-        return shape, val * np.ones(shape)
+        val = val * np.ones(shape)
     if isinstance(val, list):
         val = np.array(val)
     if isinstance(val, np.ndarray):
         if shape == (1, ):
             return val.shape, val
         if val.shape != shape:
-            raise ValueError("Value shape mismatch")
+            raise ValueError(
+                "Value shape mismatch. val has shape {}, and shape is {}"
+                .format(val.shape, shape))
     return shape, val

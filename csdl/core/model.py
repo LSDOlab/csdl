@@ -26,12 +26,22 @@ from csdl.utils.parameters import Parameters
 from csdl.utils.combine_operations import combine_operations
 from csdl.utils.set_default_values import set_default_values
 from csdl.utils.collect_terminals import collect_terminals
+from csdl.utils.check_default_val_type import check_default_val_type
+from csdl.utils.check_constraint_value_type import check_constraint_value_type
 from warnings import warn
 import numpy as np
 import matplotlib.pylab as plt
 import scipy.sparse as sparse
 
 _residual = '_residual'
+
+
+def check_constraint_value_type(val):
+    if val is not None and not isinstance(val,
+                                          (int, float, np.ndarray)):
+        raise TypeError(
+            'Constraint values must be of type int, float, or np.ndarray; {} given'
+            .format(type(val)))
 
 
 class ImplicitOperationFactory(object):
@@ -73,7 +83,7 @@ class ImplicitOperationFactory(object):
         if bracket is not None:
             self.brackets[state] = bracket
         self.implicit_metadata[state] = dict(
-            val=val,
+            val=check_default_val_type(val),
             units=units,
             desc=desc,
             tags=tags,
@@ -301,10 +311,10 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self.variables_promoted_from_children: List[Variable] = []
         self.inputs: List[Input] = []
         self.declared_variables: List[DeclaredVariable] = []
-        self.registered_outputs: List[Union[Output]] = []
+        self.registered_outputs: List[Union[Output, Subgraph]] = []
         self.objective = None
         self.constraints = dict()
-        self.design_variables: Dict[str, Dict[Any]] = dict()
+        self.design_variables: Dict[str, dict] = dict()
         self.connections: List[Tuple[str, str]] = []
         self.parameters = Parameters()
         self.initialize()
@@ -542,6 +552,10 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             raise ValueError(
                 "Constraint already defined for {}".format(name))
         else:
+            check_constraint_value_type(lower)
+            check_constraint_value_type(upper)
+            check_constraint_value_type(equals)
+
             if lower is not None and upper is not None:
                 if np.greater(lower, upper):
                     raise ValueError(
@@ -611,7 +625,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         """
         v = DeclaredVariable(
             name,
-            val=val,
+            val=check_default_val_type(val),
             shape=shape,
             src_indices=src_indices,
             flat_src_indices=flat_src_indices,
@@ -659,7 +673,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         """
         i = Input(
             name,
-            val=val,
+            val=check_default_val_type(val),
             shape=shape,
             units=units,
             desc=desc,
@@ -672,8 +686,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self.inputs.append(i)
         return i
 
-    # TODO: add solver argument to create a model from cyclic
-    # relationships
     def create_output(
         self,
         name,
@@ -720,7 +732,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             name,
             Concatenation(
                 name,
-                val=val,
+                val=check_default_val_type(val),
                 shape=shape,
                 units=units,
                 desc=desc,
@@ -762,7 +774,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         """
         if not isinstance(var, Output):
             raise TypeError(
-                "Can only register Output object as an output")
+                'Can only register Output object as an output. Received type {}.'
+                .format(type(var)))
         else:
             if var in self.registered_outputs:
                 raise ValueError(
@@ -773,7 +786,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             self.registered_outputs.append(var)
         return var
 
-    # TODO: call submodel.define() -- what to do about create_model?
+    # TODO: what to do about create_model?
     # TODO: never add subgraph to registered_outputs
     # TODO: check for duplicate subgraph names
     # TODO: establish dependencies based on promotions and connections
@@ -783,8 +796,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         submodel,
         name: str = '',
         promotes: List[str] = None,
-        promotes_inputs: List[str] = None,
-        promotes_outputs: List[str] = None,
     ):
         """
         Add a submodel to the `Model`.
@@ -802,10 +813,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             Subsystem to add to `Model`
         promotes: List
             Variables to promote
-        promotes_inputs: List
-            Inputs to promote
-        promotes_outputs: List
-            Outputs to promote
 
         **Returns**
 
@@ -819,28 +826,15 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         submodel.define()
 
         # promote by default
-        if promotes == [] and (promotes_inputs is not None) or (
-                promotes_outputs is not None):
-            raise ValueError(
-                "cannot selectively promote inputs and outputs if promotes=[]"
-            )
-        if promotes == ['*'] and (promotes_inputs is not None) or (
-                promotes_outputs is not None):
-            raise ValueError(
-                "cannot selectively promote inputs and outputs if promoting all variables"
-            )
-        if promotes is None and (promotes_inputs is
-                                 None) and (promotes_outputs is None):
+        if promotes is None:
             promotes = ['*']
-        if promotes == []:
-            promotes_inputs = []
+        else:
+            promotes = promotes
 
         subgraph = Subgraph(
             gen_hex_name(Node._count + 1) if name == '' else name,
             submodel,
             promotes=promotes,
-            promotes_inputs=promotes_inputs,
-            promotes_outputs=promotes_outputs,
         )
         self.subgraphs.append(subgraph)
         if self._most_recently_added_subgraph is not None:
@@ -1043,17 +1037,17 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         )
 
     def _implicit_operation(
-            self,
-            implicit_metadata: Dict[str, dict],
-            *arguments: Variable,
-            states: List[str],
-            residuals: List[str],
-            model,
-            nonlinear_solver: NonlinearSolver,
-            linear_solver: LinearSolver = None,
-            expose: List[str] = [],
-            defaults: Dict[str, Union[int, float, np.ndarray]] = dict(),
-    ):
+        self,
+        implicit_metadata: Dict[str, dict],
+        *arguments: Variable,
+        states: List[str],
+        residuals: List[str],
+        model,
+        nonlinear_solver: NonlinearSolver,
+        linear_solver: LinearSolver = None,
+        expose: List[str] = [],
+        defaults: Dict[str, Union[int, float, np.ndarray]] = dict(),
+    ) -> Tuple[Output, ...]:
         """
         Create an implicit operation whose residuals are defined by a
         `Model`.
@@ -1412,6 +1406,25 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
                         residual.name, state_name))
 
             # Store inputs for this implicit output
+            # Only the arguments specified in the parent model will be
+            # inputs to the internal model
+            argument_names = [x.name for x in arguments]
+            out_in_map[state_name] = list(
+                filter(lambda v: v.name in argument_names + states,
+                       in_vars))
+            # out_in_map[state_name] = in_vars
+
+        for state_name, residual in exp_res_map.items():
+            # Collect inputs (terminal nodes) for this residual only; no
+            # duplicates
+            in_vars = list(
+                set(collect_terminals(
+                    [],
+                    residual,
+                    residual,
+                )))
+
+            # Store inputs for this implicit output
             out_in_map[state_name] = in_vars
 
         # # check that exposed variable are valid choices
@@ -1445,13 +1458,13 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
     def _return_implicit_outputs(
         self,
         model,
-        op,
-        arguments,
-        states,
-        residuals,
-        expose,
-        implicit_metadata,
-    ):
+        op: ImplicitOperation,
+        arguments: Tuple[Variable, ...],
+        states: List[str],
+        residuals: List[str],
+        expose: List[str],
+        implicit_metadata: Dict[str, dict],
+    ) -> Tuple[Output, ...]:
         for arg in arguments:
             op.add_dependency_node(arg)
 
