@@ -269,3 +269,28 @@ def test_sum_multiple_matrix_along1(backend):
     sim.assert_check_partials(partials_error_multiple_matrix_axis_1,
                               atol=1.e-6,
                               rtol=1.e-6)
+
+
+def test_sum_concatenate_sums(backend):
+    from csdl.examples.valid.ex_sum_concatenate import example
+    exec('from {} import Simulator'.format(backend))
+    sim = example(eval('Simulator'))
+
+    x = np.array([np.sum(np.arange(5)), np.sum(np.arange(4)), 0])
+
+    np.testing.assert_almost_equal(sim['sum_vector'], x)
+    np.testing.assert_almost_equal(
+        sim['single_vector_sum_1a'],
+        sim['single_vector_sum_1a'],
+    )
+
+    partials_error_multiple_matrix_axis_1 = sim.check_partials(
+        out_stream=None, compact_print=True, method='fd')
+    sim.assert_check_partials(partials_error_multiple_matrix_axis_1,
+                              atol=1.e-8,
+                              rtol=1.e-8)
+    partials_error_multiple_matrix_axis_1 = sim.check_partials(
+        out_stream=None, compact_print=True, method='cs')
+    sim.assert_check_partials(partials_error_multiple_matrix_axis_1,
+                              atol=1.e-8,
+                              rtol=1.e-8)
