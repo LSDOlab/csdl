@@ -4,27 +4,28 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleMultipleMatrix(Model):
+    class ExampleMultipleMatrixRandom(Model):
     
         def define(self):
             n = 3
             m = 6
+            np.random.seed(0)
     
             # Declare a matrix of shape 3x6 as input
             M1 = self.declare_variable('M1',
-                                       val=np.arange(n * m).reshape((n, m)))
+                                       val=np.random.rand(n * m).reshape(
+                                           (n, m)))
     
             # Declare another matrix of shape 3x6 as input
             M2 = self.declare_variable('M2',
-                                       val=np.arange(n * m,
-                                                     2 * n * m).reshape(
-                                                         (n, m)))
+                                       val=np.random.rand(n * m).reshape(
+                                           (n, m)))
     
             # Output the elementwise sum of matrices M1 and M2
             self.register_output('multiple_matrix_sum', csdl.sum(M1, M2))
     
     
-    sim = Simulator(ExampleMultipleMatrix())
+    sim = Simulator(ExampleMultipleMatrixRandom())
     sim.run()
     
     print('M1', sim['M1'].shape)

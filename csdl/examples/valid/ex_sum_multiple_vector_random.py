@@ -4,22 +4,23 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleMultipleVector(Model):
+    class ExampleMultipleVectorRandom(Model):
     
         def define(self):
             n = 3
+            np.random.seed(0)
     
             # Declare a vector of length 3 as input
-            v1 = self.declare_variable('v1', val=np.arange(n))
+            v1 = self.declare_variable('v1', val=np.random.rand(n))
     
             # Declare another vector of length 3 as input
-            v2 = self.declare_variable('v2', val=np.arange(n, 2 * n))
+            v2 = self.declare_variable('v2', val=np.random.rand(n))
     
             # Output the elementwise sum of vectors v1 and v2
             self.register_output('multiple_vector_sum', csdl.sum(v1, v2))
     
     
-    sim = Simulator(ExampleMultipleVector())
+    sim = Simulator(ExampleMultipleVectorRandom())
     sim.run()
     
     print('v1', sim['v1'].shape)

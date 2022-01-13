@@ -4,14 +4,15 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleConcatenate(Model):
+    class ExampleConcatenateRandom(Model):
     
         def define(self):
             n = 5
+            np.random.seed(0)
     
             # Declare a vector of length 3 as input
-            v1 = self.declare_variable('v1', val=np.arange(n))
-            v2 = self.declare_variable('v2', val=np.arange(n - 1))
+            v1 = self.declare_variable('v1', val=np.random.rand(n))
+            v2 = self.declare_variable('v2', val=np.random.rand(n - 1))
             v3 = self.declare_variable('v3', val=np.zeros(n))
     
             # Output the sum of all the elements of the vector v1
@@ -33,7 +34,7 @@ def example(Simulator):
             sum_vector[2] = single_vector_sum_3
     
     
-    sim = Simulator(ExampleConcatenate())
+    sim = Simulator(ExampleConcatenateRandom())
     sim.run()
     
     print('single_vector_sum_1a', sim['single_vector_sum_1a'].shape)

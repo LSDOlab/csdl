@@ -4,19 +4,20 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleSingleVector(Model):
+    class ExampleSingleVectorRandom(Model):
     
         def define(self):
             n = 3
+            np.random.seed(0)
     
             # Declare a vector of length 3 as input
-            v1 = self.declare_variable('v1', val=np.arange(n))
+            v1 = self.declare_variable('v1', val=np.random.rand(n))
     
             # Output the sum of all the elements of the vector v1
             self.register_output('single_vector_sum', csdl.sum(v1))
     
     
-    sim = Simulator(ExampleSingleVector())
+    sim = Simulator(ExampleSingleVectorRandom())
     sim.run()
     
     print('v1', sim['v1'].shape)
