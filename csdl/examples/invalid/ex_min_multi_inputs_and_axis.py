@@ -5,6 +5,7 @@ def example(Simulator):
     
     
     class ErrorMultiInputsAndAxis(Model):
+    
         def define(self):
             # Creating the values for two tensors
             val1 = np.array([[1, 5, -8], [10, -3, -5]])

@@ -5,6 +5,7 @@ def example(Simulator):
     
     
     class ErrorInputsNotSameSize(Model):
+    
         def define(self):
             # Creating the values for two tensors
             val1 = np.array([[1, 5], [10, -3]])

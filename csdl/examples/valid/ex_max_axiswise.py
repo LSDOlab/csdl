@@ -5,6 +5,7 @@ def example(Simulator):
     
     
     class ExampleAxiswise(Model):
+    
         def define(self):
             m = 2
             n = 3
@@ -22,9 +23,11 @@ def example(Simulator):
             # Declaring the tensor as an input
             ten = self.declare_variable('tensor', val=val)
     
-            # Computing the axiswise minimum on the tensor
+            # Computing the axiswise maximum on the tensor
             axis = 1
-            self.register_output('AxiswiseMin', csdl.max(ten, axis=axis))
+            ma = self.register_output('AxiswiseMax', csdl.max(ten,
+                                                              axis=axis))
+            assert ma.shape == (m, o, p, q)
     
     
     sim = Simulator(ExampleAxiswise())
@@ -32,7 +35,7 @@ def example(Simulator):
     
     print('tensor', sim['tensor'].shape)
     print(sim['tensor'])
-    print('AxiswiseMin', sim['AxiswiseMin'].shape)
-    print(sim['AxiswiseMin'])
+    print('AxiswiseMax', sim['AxiswiseMax'].shape)
+    print(sim['AxiswiseMax'])
     
     return sim

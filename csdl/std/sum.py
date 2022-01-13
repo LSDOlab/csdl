@@ -44,7 +44,7 @@ def sum(*summands: Variable, axes=None):
                 shape = (1, )
             else:
                 # tuple guaranteed to be nonempty when summing over axes
-                # of matrices and tensors
+                # of a matrix or tensor
                 if len(summands[0].shape) > len(axes):
                     shape = tuple(np.delete(summands[0].shape, axes))
                 else:

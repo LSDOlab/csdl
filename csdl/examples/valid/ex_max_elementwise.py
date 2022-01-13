@@ -5,6 +5,7 @@ def example(Simulator):
     
     
     class ExampleElementwise(Model):
+    
         def define(self):
     
             m = 2
@@ -21,7 +22,9 @@ def example(Simulator):
             tensor2 = self.declare_variable('tensor2', val=val2)
     
             # Creating the output for matrix multiplication
-            self.register_output('ElementwiseMin', csdl.max(tensor1, tensor2))
+            ma = self.register_output('ElementwiseMax',
+                                      csdl.max(tensor1, tensor2))
+            assert ma.shape == (2, 3)
     
     
     sim = Simulator(ExampleElementwise())
@@ -31,7 +34,7 @@ def example(Simulator):
     print(sim['tensor1'])
     print('tensor2', sim['tensor2'].shape)
     print(sim['tensor2'])
-    print('ElementwiseMin', sim['ElementwiseMin'].shape)
-    print(sim['ElementwiseMin'])
+    print('ElementwiseMax', sim['ElementwiseMax'].shape)
+    print(sim['ElementwiseMax'])
     
     return sim

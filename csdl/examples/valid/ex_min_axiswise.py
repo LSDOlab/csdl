@@ -5,6 +5,7 @@ def example(Simulator):
     
     
     class ExampleAxiswise(Model):
+    
         def define(self):
             m = 2
             n = 3
@@ -24,7 +25,9 @@ def example(Simulator):
     
             # Computing the axiswise minimum on the tensor
             axis = 1
-            self.register_output('AxiswiseMin', csdl.min(ten, axis=axis))
+            ma = self.register_output('AxiswiseMin', csdl.min(ten,
+                                                              axis=axis))
+            assert ma.shape == (m, o, p, q)
     
     
     sim = Simulator(ExampleAxiswise())

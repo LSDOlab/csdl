@@ -5,6 +5,7 @@ def example(Simulator):
     
     
     class ExampleScalar(Model):
+    
         def define(self):
             m = 2
             n = 3
@@ -23,7 +24,8 @@ def example(Simulator):
             ten = self.declare_variable('tensor', val=val)
     
             # Computing the minimum across the entire tensor, returns single value
-            self.register_output('ScalarMin', csdl.min(ten))
+            ma = self.register_output('ScalarMin', csdl.min(ten))
+            assert ma.shape == (1, ), ma.shape
     
     
     sim = Simulator(ExampleScalar())

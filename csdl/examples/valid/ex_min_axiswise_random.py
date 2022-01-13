@@ -4,7 +4,7 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleScalar(Model):
+    class ExampleAxiswiseRandom(Model):
     
         def define(self):
             m = 2
@@ -12,28 +12,31 @@ def example(Simulator):
             o = 4
             p = 5
             q = 6
+            np.random.seed(0)
     
             # Shape of a tensor
             tensor_shape = (m, n, o, p, q)
     
             num_of_elements = np.prod(tensor_shape)
             # Creating the values of the tensor
-            val = np.arange(num_of_elements).reshape(tensor_shape)
+            val = np.random.rand(num_of_elements).reshape(tensor_shape)
     
             # Declaring the tensor as an input
             ten = self.declare_variable('tensor', val=val)
     
-            # Computing the maximum across the entire tensor, returns single value
-            ma = self.register_output('ScalarMax', csdl.max(ten))
-            assert ma.shape == (1, ), ma.shape
+            # Computing the axiswise minimum on the tensor
+            axis = 1
+            ma = self.register_output('AxiswiseMin',
+                                      csdl.min(ten, axis=axis, rho=75000.))
+            assert ma.shape == (m, o, p, q)
     
     
-    sim = Simulator(ExampleScalar())
+    sim = Simulator(ExampleAxiswiseRandom())
     sim.run()
     
     print('tensor', sim['tensor'].shape)
     print(sim['tensor'])
-    print('ScalarMax', sim['ScalarMax'].shape)
-    print(sim['ScalarMax'])
+    print('AxiswiseMin', sim['AxiswiseMin'].shape)
+    print(sim['AxiswiseMin'])
     
     return sim

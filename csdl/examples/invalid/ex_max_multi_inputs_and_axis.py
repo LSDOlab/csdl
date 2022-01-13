@@ -5,6 +5,7 @@ def example(Simulator):
     
     
     class ErrorMultiInputsAndAxis(Model):
+    
         def define(self):
             # Creating the values for two tensors
             val1 = np.array([[1, 5, -8], [10, -3, -5]])
@@ -15,7 +16,7 @@ def example(Simulator):
             tensor2 = self.declare_variable('tensor2', val=val2)
     
             # Creating the output for matrix multiplication
-            self.register_output('ElementwiseMinWithAxis',
+            self.register_output('ElementwiseMaxWithAxis',
                                  csdl.max(tensor1, tensor2, axis=0))
     
     

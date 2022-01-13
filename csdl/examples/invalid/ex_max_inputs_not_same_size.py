@@ -5,6 +5,7 @@ def example(Simulator):
     
     
     class ErrorInputsNotSameSize(Model):
+    
         def define(self):
             # Creating the values for two tensors
             val1 = np.array([[1, 5], [10, -3]])
@@ -15,7 +16,7 @@ def example(Simulator):
             tensor2 = self.declare_variable('tensor2', val=val2)
     
             # Creating the output for matrix multiplication
-            self.register_output('ElementwiseMinWrongSize',
+            self.register_output('ElementwiseMaxWrongSize',
                                  csdl.max(tensor1, tensor2))
     
     
