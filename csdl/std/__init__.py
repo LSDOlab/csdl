@@ -40,4 +40,5 @@ from csdl.std.sum import sum
 from csdl.std.average import average
 from csdl.std.min import min
 from csdl.std.max import max
+from csdl.std.quatrotvec import quatrotvec
 from csdl.std.custom import custom
