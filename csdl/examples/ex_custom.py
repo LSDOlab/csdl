@@ -1,36 +1,38 @@
-from csdl import CustomExplicitOperation, CustomImplicitOperation, NewtonSolver, ScipyKrylov
+from csdl import Model
 import csdl
-import numpy as np
 
 
-class ExampleImplicitSimple(CustomImplicitOperation):
+class ExampleQuadraticEquationImplicitScalar(Model):
     """
     :param var: x
     """
+
     def define(self):
-        self.add_input('a', val=1.)
-        self.add_input('b', val=-4.)
-        self.add_input('c', val=3.)
-        self.add_output('x', val=0.)
-        self.declare_derivatives('x', 'x')
-        self.declare_derivatives('x', ['a', 'b', 'c'])
+        from csdl.examples.operations.quadratic_implicit import QuadraticImplicit
 
-        self.linear_solver = ScipyKrylov()
-        self.nonlinear_solver = NewtonSolver(solve_subsystems=False)
+        # These values overwrite the values within the CustomOperation
+        a = self.declare_variable('a', val=1.)
+        b = self.declare_variable('b', val=-4.)
+        c = self.declare_variable('c', val=3.)
 
-    def evaluate_residuals(self, inputs, outputs, residuals):
-        x = outputs['x']
-        a = inputs['a']
-        b = inputs['b']
-        c = inputs['c']
-        residuals['x'] = a * x**2 + b * x + c
+        # Solve quadratic equation using a CustomImplicitOperation
+        x = csdl.custom(a, b, c, op=QuadraticImplicit())
+        self.register_output('x', x)
 
-    def compute_derivatives(self, inputs, outputs, derivatives):
-        a = inputs['a']
-        b = inputs['b']
-        x = outputs['x']
 
-        derivatives['x', 'a'] = x**2
-        derivatives['x', 'b'] = x
-        derivatives['x', 'c'] = 1.0
-        derivatives['x', 'x'] = 2 * a * x + b
+class ExampleQuadraticEquationImplicitArray(Model):
+    """
+    :param var: x
+    """
+
+    def define(self):
+        from csdl.examples.operations.quadratic_implicit import QuadraticImplicit
+
+        # These values overwrite the values within the CustomOperation
+        a = self.declare_variable('a', val=[1, -1])
+        b = self.declare_variable('b', val=[-4, 4])
+        c = self.declare_variable('c', val=[3, -3])
+
+        # Solve quadratic equation using a CustomImplicitOperation
+        x = csdl.custom(a, b, c, op=QuadraticImplicit())
+        self.register_output('x', x)
