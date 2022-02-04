@@ -43,6 +43,8 @@ do_not_run = [
     'ex_dedup_simple.py',
     'ex_matmat_mat_vec_product.py',
     'ex_custom_implicit_simple.py',
+    'ex_custom_quadratic_equation_array.py',
+    'ex_custom_quadratic_equation_scalar.py',
 ]
 
 CSDLPATH = inspect.getfile(lang_pkg)[:-len('__init__.py')]
