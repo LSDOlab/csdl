@@ -3,9 +3,14 @@ from csdl.core.variable import Variable
 from csdl.core.output import Output
 from csdl.core.subgraph import Subgraph
 from csdl.core.operation import Operation
-from typing import List, Union
+from csdl.core.input import Input
+from csdl.core.standard_operation import StandardOperation
+from csdl.operations.combined import combined
+from csdl.utils.check_property import check_property
+from typing import List, Union, Dict
 from copy import copy
 from warnings import warn
+import numpy as np
 
 
 def remove_op_from_dag(op: Operation):
@@ -239,3 +244,195 @@ def modified_topological_sort(
 #                             [n.name for n in n2.dependencies],
 #                             [n.name for n in n2.dependents],
 #                         )
+
+
+# some graph theory
+def min_in_degree(model) -> int:
+    for node in model.sorted_nodes:
+        if node not in model.registered_outputs and len(
+                node.dependents) < 1:
+            return 0
+    mid = 1
+    for node in filter(lambda x: isinstance(x, Subgraph),
+                       model.sorted_nodes):
+        mid = min_out_degree(node.submodel)
+    return mid
+
+
+def min_out_degree(model) -> int:
+    for node in model.sorted_nodes:
+        if not isinstance(node, Input) and len(node.dependencies) < 1:
+            return 0
+    mod = 1
+    for node in filter(lambda x: isinstance(x, Subgraph),
+                       model.sorted_nodes):
+        mod = min_out_degree(node.submodel)
+    return mod
+
+
+def max_in_degree(model) -> int:
+    mid = 0
+    for node in model.sorted_nodes:
+        mid = max(mid, len(node.dependents))
+    for node in filter(lambda x: isinstance(x, Subgraph),
+                       model.sorted_nodes):
+        mid = max(mid, max_in_degree(node.submodel))
+    return mid
+
+
+def max_out_degree(model) -> int:
+    mod = 0
+    for node in model.sorted_nodes:
+        mod = max(mod, len(node.dependencies))
+    for node in filter(lambda x: isinstance(x, Subgraph),
+                       model.sorted_nodes):
+        mod = max(mod, max_out_degree(node.submodel))
+    return mod
+
+
+def is_tree(model) -> bool:
+    """
+    check if IR is tree or DAG
+    """
+    for node in model.sorted_nodes:
+        if len(node.dependents) > 1:
+            return False
+    flag = True
+    for node in filter(lambda x: isinstance(x, Subgraph),
+                       model.sorted_nodes):
+        flag = flag and is_tree(node.submodel)
+        if flag is False:
+            return flag
+
+    return True
+
+
+# # TODO: walk graph to find inputs on which outputs depend
+# def find_inputs(outputs: List[Output],
+#                 output_names: List[str] = None) -> Dict[str, str]:
+#     """
+#     Find all inputs used to compute each output
+#     """
+#     inputs = []
+#     if output_names is None:
+#         l = [x.name for x in outputs]
+#         for output_name in l:
+#             output = l[0]
+#             inputs.append(find_inputs(output.dependencies))
+#     else:
+#         for output_name in output_names:
+#             l = list(filter(lambda x: x.name == output_name, outputs))
+#             if len(l) == 0:
+#                 raise ValueError()
+#         output = l[0]
+#         inputs.append(find_inputs(output.dependencies))
+#     return inputs
+
+# # TODO: walk graph to find outputs that depend on inputs
+# def find_outputs(inputs: List[Output],
+#                  input_names: List[str] = None) -> Dict[str, str]:
+#     """
+#     Find all outputs that depend on each input
+#     """
+#     pass
+
+
+def count_std_operations(m, elementwise_only=False) -> int:
+    if elementwise_only:
+        n = len(
+            list(
+                filter(
+                    lambda x: isinstance(x, StandardOperation) and
+                    check_property(x, 'elementwise', True),
+                    m.sorted_nodes)))
+    else:
+        n = len(
+            list(
+                filter(lambda x: isinstance(x, StandardOperation),
+                       m.sorted_nodes)))
+    subgraphs = list(
+        filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
+    for sg in subgraphs:
+        n += count_operations(sg.submodel)
+    return n
+
+
+def count_combined_operations(m) -> int:
+    n = len(
+        list(filter(lambda x: isinstance(x, combined), m.sorted_nodes)))
+    subgraphs = list(
+        filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
+    for sg in subgraphs:
+        n += count_operations(sg.submodel)
+    return n
+
+
+def count_operations(m) -> int:
+    n = len(
+        list(filter(lambda x: isinstance(x, Operation),
+                    m.sorted_nodes)))
+    subgraphs = list(
+        filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
+    for sg in subgraphs:
+        n += count_operations(sg.submodel)
+    return n
+
+
+def count_variables(m, vectorized: bool = True) -> int:
+    v = list(filter(lambda x: isinstance(x, Variable), m.sorted_nodes))
+    if vectorized:
+        n = len(v)
+    else:
+        n = sum([np.prod(x.shape) for x in v])
+    subgraphs = list(
+        filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
+    for sg in subgraphs:
+        n += count_operations(sg.submodel)
+    return n
+
+
+def count_design_variables(m, vectorized: bool = True) -> int:
+    v = list(
+        filter(
+            lambda x: isinstance(x, Input) and x.name in m.
+            design_variables.keys().keys(), m.sorted_nodes))
+    if vectorized:
+        n = len(v)
+    else:
+        n = sum([np.prod(x.shape) for x in v])
+    subgraphs = list(
+        filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
+    for sg in subgraphs:
+        n += count_design_variables(sg.submodel)
+    return n
+
+
+def count_constraints(m, vectorized: bool = True) -> int:
+    v = list(
+        filter(
+            lambda x: isinstance(x, Output) and x in m.
+            registered_outputs and x.name in m.constraints.keys(),
+            m.sorted_nodes))
+    if vectorized:
+        n = len(v)
+    else:
+        n = sum([np.prod(x.shape) for x in v])
+
+    subgraphs = list(
+        filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
+    for sg in subgraphs:
+        n += count_constraints(sg.submodel)
+    return n
+
+
+def count_outputs(m, vectorized: bool = True) -> int:
+    v = m.registered_outputs
+    if vectorized:
+        n = len(v)
+    else:
+        n = sum([np.prod(x.shape) for x in v])
+    subgraphs = list(
+        filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
+    for sg in subgraphs:
+        n += count_outputs(sg.submodel)
+    return n
