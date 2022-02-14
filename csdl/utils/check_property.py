@@ -1,6 +1,6 @@
-def check_property(b, op, prop, truthy):
+def check_property(op, prop, status):
     try:
-        b = b and op.properties[prop] == truthy
+        check = op.properties[prop] == status
     except:
-        pass
-    return b
+        check = False
+    return check

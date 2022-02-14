@@ -28,20 +28,13 @@ from csdl.utils.set_default_values import set_default_values
 from csdl.utils.collect_terminals import collect_terminals
 from csdl.utils.check_default_val_type import check_default_val_type
 from csdl.utils.check_constraint_value_type import check_constraint_value_type
+from csdl.utils.combine_operations import combine_operation_pass
 from warnings import warn
 import numpy as np
 import matplotlib.pylab as plt
 import scipy.sparse as sparse
 
 _residual = '_residual'
-
-
-def check_constraint_value_type(val):
-    if val is not None and not isinstance(val,
-                                          (int, float, np.ndarray)):
-        raise TypeError(
-            'Constraint values must be of type int, float, or np.ndarray; {} given'
-            .format(type(val)))
 
 
 class ImplicitOperationFactory(object):
@@ -132,24 +125,6 @@ def build_symbol_table(symbol_table, node):
     for n in node.dependencies:
         symbol_table[n._id] = n
         build_symbol_table(symbol_table, n)
-
-
-def build_clean_dag(registered_outputs):
-    symbol_table = dict()
-    for r in registered_outputs:
-        symbol_table[r._id] = r
-    for r in registered_outputs:
-        build_symbol_table(symbol_table, r)
-
-    # Clean up graph, removing dependencies that do not constrain
-    # execution order
-    for node in symbol_table.values():
-        remove_indirect_dependencies(node)
-        if isinstance(node, Operation):
-            if len(node.dependencies) < 1:
-                raise ValueError(
-                    "Operation objects must have at least one dependency"
-                )
 
 
 # TODO: collect all inputs from all models to ensure that the entire
@@ -248,19 +223,14 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
             for r in self.registered_outputs:
                 r.add_fwd_edges()
 
-            # remove_duplicate_nodes(self.nodes, self.registered_outputs)
+            if self._optimize_ir is True:
+                # combine elementwise operations and use complex step
+                combine_operation_pass(
+                    self.registered_outputs,
+                    dict([(x.name, x)
+                          for x in self.registered_outputs]))
 
-            # combine elementwise operations and use complex step
-            # terminate = False
-            # if len(self.registered_outputs) == 0:
-            #     terminate = True
-            # while terminate is False:
-            #     for r in self.registered_outputs:
-            #         terminate = combine_operations(
-            #             self.registered_outputs, r)
-            #     terminate = True
-
-            # Create record of all nodes in DAG
+            # Create record of all nodes in optimized IR
             for r in self.registered_outputs:
                 self.symbol_table[r._id] = r
             for r in self.registered_outputs:
@@ -277,10 +247,6 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
             for subgraph in self.subgraphs:
                 if not isinstance(subgraph.submodel, CustomOperation):
                     subgraph.submodel.define()
-                #     if subgraph.submodel.deterministic is False:
-                #         self.deterministic = False
-                # else:
-                #     self.deterministic = False
 
             _, _ = set_default_values(self)
 
@@ -319,7 +285,10 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self.parameters = Parameters()
         self.initialize()
         self.parameters.update(kwargs)
-        # self.deterministic = True
+        self._optimize_ir = True
+
+    def optimize_ir(self, flag: bool = True):
+        self._optimize_ir = flag
 
     def initialize(self):
         """

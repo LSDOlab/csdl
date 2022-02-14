@@ -133,6 +133,12 @@ class Node():
         self.dependents.append(dependent)
         self.dependents = list(set(self.dependents))
 
+    def remove_dependent_node(self, dependent):
+        self.dependents.remove(dependent)
+
+    def remove_dependency_node(self, dependent):
+        self.dependencies.remove(dependent)
+
     def register_nodes(self, nodes: dict):
         """
         Register all nodes in DAG.
