@@ -17,7 +17,7 @@ class linear_combination(StandardOperation):
                 raise ValueError(
                     "Shapes of inputs to linear_combination do not match"
                 )
-                self.properties['elementwise'] = True
+        self.properties['elementwise'] = True
 
         self.literals['constant'] = constant
         self.literals['coeffs'] = coeffs

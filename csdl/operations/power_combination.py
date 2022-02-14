@@ -18,7 +18,7 @@ class power_combination(StandardOperation):
                 raise ValueError(
                     "Shapes of inputs to linear_combination do not match"
                 )
-                self.properties['elementwise'] = True
+        self.properties['elementwise'] = True
 
         self.literals['powers'] = powers
         self.literals['coeff'] = coeff
