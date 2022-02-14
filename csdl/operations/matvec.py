@@ -9,8 +9,7 @@ class matvec(StandardOperation):
         self.nouts = 1
         self.nargs = 2
         super().__init__(*args, **kwargs)
-        self.properties['iterative'] = False
-        self.literals['sparsemtx'] = None
+                self.literals['sparsemtx'] = None
         if isinstance(mat, Variable):
             self.dependencies = [mat, self.dependencies[0]]
         else:

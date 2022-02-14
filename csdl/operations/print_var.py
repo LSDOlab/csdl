@@ -3,6 +3,7 @@ from csdl.core.node import Node
 
 
 class print_var(StandardOperation):
+
     def __init__(self, *args, **kwargs):
         name = 'print_val'
         self.nargs = 1
@@ -12,7 +13,6 @@ class print_var(StandardOperation):
             raise ValueError("{} takes exactly {} arguments".format(
                 name, self.nargs))
         self.properties['elementwise'] = True
-        self.properties['iterative'] = False
 
     def define_compute_strings(self):
         pass

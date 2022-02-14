@@ -7,6 +7,7 @@ from csdl.utils.gen_hex_name import gen_hex_name
 
 
 class power_combination(StandardOperation):
+
     def __init__(self, *args, powers, coeff, **kwargs):
         self.nouts = 1
         self.nargs = None
@@ -17,8 +18,7 @@ class power_combination(StandardOperation):
                 raise ValueError(
                     "Shapes of inputs to linear_combination do not match"
                 )
-        self.properties['iterative'] = False
-        self.properties['elementwise'] = True
+                self.properties['elementwise'] = True
 
         self.literals['powers'] = powers
         self.literals['coeff'] = coeff

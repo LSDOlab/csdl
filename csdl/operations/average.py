@@ -6,5 +6,4 @@ class average(StandardOperation):
         self.nouts = 1
         self.nargs = None
         super().__init__(*args, **kwargs)
-        self.properties['iterative'] = False
-        self.literals['axes'] = axes
+                self.literals['axes'] = axes

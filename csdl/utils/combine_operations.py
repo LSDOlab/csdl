@@ -4,18 +4,11 @@ from csdl.core.subgraph import Subgraph
 from csdl.core.input import Input
 from csdl.core.standard_operation import StandardOperation
 from csdl.operations.combined import combined
+from csdl.utils.check_property import check_property
 
 # TODO: derivatives wrt op2.dependencies
 # TODO: derivatives wrt variables that are in op1.dependencies AND
 # op2.dependencies
-
-
-def check_property(b, op, prop, truthy):
-    try:
-        b = b and op.properties[prop] == truthy
-    except:
-        pass
-    return b
 
 
 def can_combine(op: StandardOperation):
@@ -25,7 +18,6 @@ def can_combine(op: StandardOperation):
         return False
     cc = True
     cc = check_property(cc, op, 'elementwise', True)
-    cc = check_property(cc, op, 'iterative', False)
     return cc
 
 
@@ -77,7 +69,8 @@ def combine_operations(registered_outputs, out: Output):
                         # update graph
                         for depvar in penultimate_operation.dependencies:
                             try:
-                                depvar.dependents.remove(penultimate_operation)
+                                depvar.dependents.remove(
+                                    penultimate_operation)
                             except:
                                 pass
                             depvar.dependents.append(combine_op)

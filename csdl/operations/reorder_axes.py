@@ -6,6 +6,5 @@ class reorder_axes(StandardOperation):
         self.nouts = 1
         self.nargs = 1
         super().__init__(*args, **kwargs)
-        self.properties['iterative'] = False
-        self.literals['operation'] = operation
+                self.literals['operation'] = operation
         self.literals['new_axes_locations'] = new_axes_locations

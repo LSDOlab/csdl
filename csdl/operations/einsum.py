@@ -6,6 +6,5 @@ class einsum(StandardOperation):
         self.nouts = 1
         self.nargs = None
         super().__init__(*args, **kwargs)
-        self.properties['iterative'] = False
-        self.literals['subscripts'] = subscripts
+                self.literals['subscripts'] = subscripts
         self.literals['partial_format'] = partial_format

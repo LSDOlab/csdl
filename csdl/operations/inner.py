@@ -6,5 +6,4 @@ class inner(StandardOperation):
         self.nouts = 1
         self.nargs = 2
         super().__init__(*args, **kwargs)
-        self.properties['iterative'] = False
-        self.literals['axes'] = axes
+                self.literals['axes'] = axes
