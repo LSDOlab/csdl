@@ -44,10 +44,6 @@ def combine_operations(a, b, reg_dict) -> bool:
         combine_op = combined()
         combine_op.compute_string += a.compute_string + '\n'
         combine_op.compute_string += b.compute_string + '\n'
-        print('a compute string (middle end)', a.compute_string)
-        print('b compute string (middle end)', b.compute_string)
-        print('combined compute string (middle end)',
-              combine_op.compute_string)
 
         # dependencies of b that are not dependents of a, plus dependencies
         # of a
