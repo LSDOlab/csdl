@@ -195,6 +195,11 @@ def modified_topological_sort(
                 sorted_nodes.append(v)
     # ensure print_var operations are moved to end of model
     sorted_nodes = print_operations + sorted_nodes
+    # KLUDGE: there has to be a better way to make sure registered nodes
+    # without dependent nodes are sorted
+    sorted_nodes = list(
+        filter(lambda x: x not in sorted_nodes,
+               registered_nodes)) + sorted_nodes
     return sorted_nodes
 
 
