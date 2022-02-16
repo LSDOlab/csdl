@@ -3,6 +3,7 @@ from csdl.core.variable import Variable
 from csdl.core.output import Output
 from csdl.core.subgraph import Subgraph
 from csdl.core.operation import Operation
+from csdl.core.implicit_operation import ImplicitOperation
 from csdl.core.input import Input
 from csdl.core.standard_operation import StandardOperation
 from csdl.operations.combined import combined
@@ -358,7 +359,8 @@ def count_std_operations(m, elementwise_only=False) -> int:
     subgraphs = list(
         filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
     for sg in subgraphs:
-        n += count_operations(sg.submodel)
+        n += count_std_operations(sg.submodel,
+                                  elementwise_only=elementwise_only)
     return n
 
 
@@ -368,7 +370,7 @@ def count_combined_operations(m) -> int:
     subgraphs = list(
         filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
     for sg in subgraphs:
-        n += count_operations(sg.submodel)
+        n += count_combined_operations(sg.submodel)
     return n
 
 
@@ -383,6 +385,18 @@ def count_operations(m) -> int:
     return n
 
 
+def count_implicit_operations(m) -> int:
+    n = len(
+        list(
+            filter(lambda x: isinstance(x, ImplicitOperation),
+                   m.sorted_nodes)))
+    subgraphs = list(
+        filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
+    for sg in subgraphs:
+        n += count_implicit_operations(sg.submodel)
+    return n
+
+
 def count_variables(m, vectorized: bool = True) -> int:
     v = list(filter(lambda x: isinstance(x, Variable), m.sorted_nodes))
     if vectorized:
@@ -392,7 +406,7 @@ def count_variables(m, vectorized: bool = True) -> int:
     subgraphs = list(
         filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
     for sg in subgraphs:
-        n += count_operations(sg.submodel)
+        n += count_variables(sg.submodel)
     return n
 
 
