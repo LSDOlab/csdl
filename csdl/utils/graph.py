@@ -151,25 +151,14 @@ def modified_topological_sort(
         ``Group._root``, and the last will be an ``DocInput``,
         ``Concatenation``, ``ImplicitOutput``, or ``IndepVar``.
     """
-    print_operations: List[print_var] = []
-
     sorted_nodes: List[Union[Node, print_var]] = []
     # set of all nodes with no incoming edge (outputs and subgraphs)
-    stack = list(filter(
-        lambda x: x.dependents == [], registered_nodes)) + list(
-            filter(lambda x: x.dependents == [], subgraphs))
+    stack = list(filter(lambda x: x.dependents == [], registered_nodes))
     while stack != []:
         v = stack.pop()
-        if v.get_num_dependents() == 0 and isinstance(
-                v, Output) and isinstance(v.dependencies[0], print_var):
-            # ensure print_var operations are moved to end of model
-            print_operations.append(v.dependencies[0])
-        elif v.get_num_dependents() == 0:
+        if v.get_num_dependents() == 0:
             # registered outputs that have no dependent nodes
-            # KLUDGE: temporary
-            # TODO: remove these two lines
-            if isinstance(v, Subgraph):
-                sorted_nodes.append(v)
+            sorted_nodes.append(v)
             for w in v.dependencies:
                 stack.append(w)
         elif v.times_visited < v.get_num_dependents():
@@ -180,27 +169,7 @@ def modified_topological_sort(
                     stack.append(w)
 
             if v.times_visited == v.get_num_dependents():
-                #     if isinstance(v, Subgraph):
-                #         # TODO: raise error
-                #         if v in sorted_nodes:
-                #             print(
-                #                 "Connections made for Model {} forms a cycle"
-                #                 .format(v.name))
-                #             print("Check the following connections:")
-                #             # TODO: these aren't the connections
-                #             you're looking for
-                #             for a, b in v.submodel.connections:
-                #                 print("connect('{}', '{}')".format(a, b))
-                #             exit()
-
                 sorted_nodes.append(v)
-    # ensure print_var operations are moved to end of model
-    sorted_nodes = print_operations + sorted_nodes
-    # KLUDGE: there has to be a better way to make sure registered nodes
-    # without dependent nodes are sorted
-    sorted_nodes = list(
-        filter(lambda x: x not in sorted_nodes,
-               registered_nodes)) + sorted_nodes
     return sorted_nodes
 
 
