@@ -3,6 +3,7 @@ from csdl.core.node import Node
 
 
 class passthrough(StandardOperation):
+
     def __init__(self, *args, **kwargs):
         name = 'passthrough'
         self.nargs = 1
@@ -13,4 +14,3 @@ class passthrough(StandardOperation):
                 name, self.nargs))
         self.iterative = True
         self.properties['elementwise'] = True
-        self.properties['iterative'] = True

@@ -162,7 +162,6 @@ const katex = require('rehype-katex');
                         ],
                     },
                 ],
-                copyright: `Copyright © ${new Date().getFullYear()} Large Scale Design Optimization Lab, University of California San Diego`,
             },
             prism: {
                 theme: lightCodeTheme,
