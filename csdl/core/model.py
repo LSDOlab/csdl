@@ -245,8 +245,8 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
 
             # Define child models recursively
             for subgraph in self.subgraphs:
-                if not isinstance(subgraph.submodel, CustomOperation):
-                    subgraph.submodel.define()
+                subgraph.submodel.optimize_ir(self._optimize_ir)
+                subgraph.submodel.define()
 
             _, _ = set_default_values(self)
 
@@ -1485,6 +1485,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             return outs[0]
 
     def create_implicit_operation(self, model):
+        model.optimize_ir(self._optimize_ir)
         return ImplicitOperationFactory(self, model)
 
     def __enter__(self):
