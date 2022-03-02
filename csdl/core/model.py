@@ -285,7 +285,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self.parameters = Parameters()
         self.initialize()
         self.parameters.update(kwargs)
-        self._optimize_ir = True
+        self._optimize_ir = False
 
     def optimize_ir(self, flag: bool = True):
         self._optimize_ir = flag
