@@ -38,7 +38,6 @@ _residual = '_residual'
 
 
 class ImplicitOperationFactory(object):
-
     def __init__(self, parent, model):
         self.parent = parent
         self.model = model
@@ -141,7 +140,6 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
     The user does not need to opt into running the middle end and cannot
     opt out of running the middle end.
     """
-
     def _run_middle_end(self):
         if self._defined is False:
             run_front_end(self)
@@ -256,7 +254,6 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
 
 
 class _CompilerFrontEndMiddleEnd(type):
-
     def __new__(cls, name, bases, attr):
         attr['define'] = _run_front_end_and_middle_end(attr['define'])
         return super(_CompilerFrontEndMiddleEnd,
@@ -1526,7 +1523,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         finally:
             self.add(m, name=name)
 
-    def visualize_sparsity(self):
+    def visualize_sparsity(self, recursive: bool = False):
         """
         Visualize the sparsity pattern of jacobian for this model
         """
@@ -1543,6 +1540,11 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             ax.spines[axis].set_linewidth(2)
 
         plt.show()
+
+        if recursive is True:
+            for node in nodes:
+                if isinstance(node, ImplicitOperation):
+                    node._model.visualize_sparsity(recursive=recursive)
 
     def visualize_graph(self):
         import networkx as nx
