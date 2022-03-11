@@ -1527,6 +1527,9 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         """
         Visualize the sparsity pattern of jacobian for this model
         """
+        print(
+            "Visualizing sparsity pattern for intermediate representation of model {}"
+            .format(type(self).__name__))
         self.define()
         nodes = self.sorted_nodes
         n = len(nodes)
