@@ -3,6 +3,7 @@ from csdl.core.variable import Variable
 from csdl.core.output import Output
 from csdl.core.subgraph import Subgraph
 from csdl.core.operation import Operation
+from csdl.core.implicit_operation import ImplicitOperation
 from csdl.core.input import Input
 from csdl.core.standard_operation import StandardOperation
 from csdl.operations.combined import combined
@@ -150,25 +151,14 @@ def modified_topological_sort(
         ``Group._root``, and the last will be an ``DocInput``,
         ``Concatenation``, ``ImplicitOutput``, or ``IndepVar``.
     """
-    print_operations: List[print_var] = []
-
     sorted_nodes: List[Union[Node, print_var]] = []
     # set of all nodes with no incoming edge (outputs and subgraphs)
-    stack = list(filter(
-        lambda x: x.dependents == [], registered_nodes)) + list(
-            filter(lambda x: x.dependents == [], subgraphs))
+    stack = list(filter(lambda x: x.dependents == [], registered_nodes))
     while stack != []:
         v = stack.pop()
-        if v.get_num_dependents() == 0 and isinstance(
-                v, Output) and isinstance(v.dependencies[0], print_var):
-            # ensure print_var operations are moved to end of model
-            print_operations.append(v.dependencies[0])
-        elif v.get_num_dependents() == 0:
+        if v.get_num_dependents() == 0:
             # registered outputs that have no dependent nodes
-            # KLUDGE: temporary
-            # TODO: remove these two lines
-            if isinstance(v, Subgraph):
-                sorted_nodes.append(v)
+            sorted_nodes.append(v)
             for w in v.dependencies:
                 stack.append(w)
         elif v.times_visited < v.get_num_dependents():
@@ -179,27 +169,7 @@ def modified_topological_sort(
                     stack.append(w)
 
             if v.times_visited == v.get_num_dependents():
-                #     if isinstance(v, Subgraph):
-                #         # TODO: raise error
-                #         if v in sorted_nodes:
-                #             print(
-                #                 "Connections made for Model {} forms a cycle"
-                #                 .format(v.name))
-                #             print("Check the following connections:")
-                #             # TODO: these aren't the connections
-                #             you're looking for
-                #             for a, b in v.submodel.connections:
-                #                 print("connect('{}', '{}')".format(a, b))
-                #             exit()
-
                 sorted_nodes.append(v)
-    # ensure print_var operations are moved to end of model
-    sorted_nodes = print_operations + sorted_nodes
-    # KLUDGE: there has to be a better way to make sure registered nodes
-    # without dependent nodes are sorted
-    sorted_nodes = list(
-        filter(lambda x: x not in sorted_nodes,
-               registered_nodes)) + sorted_nodes
     return sorted_nodes
 
 
@@ -358,7 +328,8 @@ def count_std_operations(m, elementwise_only=False) -> int:
     subgraphs = list(
         filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
     for sg in subgraphs:
-        n += count_operations(sg.submodel)
+        n += count_std_operations(sg.submodel,
+                                  elementwise_only=elementwise_only)
     return n
 
 
@@ -368,7 +339,7 @@ def count_combined_operations(m) -> int:
     subgraphs = list(
         filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
     for sg in subgraphs:
-        n += count_operations(sg.submodel)
+        n += count_combined_operations(sg.submodel)
     return n
 
 
@@ -383,6 +354,18 @@ def count_operations(m) -> int:
     return n
 
 
+def count_implicit_operations(m) -> int:
+    n = len(
+        list(
+            filter(lambda x: isinstance(x, ImplicitOperation),
+                   m.sorted_nodes)))
+    subgraphs = list(
+        filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
+    for sg in subgraphs:
+        n += count_implicit_operations(sg.submodel)
+    return n
+
+
 def count_variables(m, vectorized: bool = True) -> int:
     v = list(filter(lambda x: isinstance(x, Variable), m.sorted_nodes))
     if vectorized:
@@ -392,7 +375,7 @@ def count_variables(m, vectorized: bool = True) -> int:
     subgraphs = list(
         filter(lambda x: isinstance(x, Subgraph), m.sorted_nodes))
     for sg in subgraphs:
-        n += count_operations(sg.submodel)
+        n += count_variables(sg.submodel)
     return n
 
 

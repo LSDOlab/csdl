@@ -1,7 +1,7 @@
 from csdl import CustomImplicitOperation, NewtonSolver, ScipyKrylov
 
 
-class QuadraticExplicit(CustomImplicitOperation):
+class SolveQuadratic(CustomImplicitOperation):
 
     def define(self):
         self.add_input('a', val=1.)

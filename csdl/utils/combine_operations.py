@@ -17,6 +17,12 @@ def can_combine(a: StandardOperation, b: StandardOperation,
         return False
     if not isinstance(b, StandardOperation):
         return False
+    # only allow standard operations with single input and single output
+    # to make derivative computation more efficient
+    if len(a.dependencies) == 1 or len(a.dependents) != 1:
+        return False
+    if len(b.dependencies) == 1 or len(b.dependents) != 1:
+        return False
     if check_property(a, 'elementwise', True) is False:
         return False
     if check_property(b, 'elementwise', True) is False:

@@ -1,6 +1,14 @@
 def example(Simulator):
+    import imp
     from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl.examples.models.fixed_point import FixedPoint2Expose
     import numpy as np
+    from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
+    from csdl.examples.models.fixed_point import FixedPoint1Expose, FixedPoint2Expose, FixedPoint3Expose
+    from csdl.examples.models.simple_add import SimpleAdd
+    from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
+    from csdl.examples.models.fixed_point import FixedPoint2Expose
+    from csdl.examples.models.circle_parabola import CircleParabolaExpose
     
     
     class ExampleWithSubsystemsWithExpose(Model):
@@ -22,10 +30,10 @@ def example(Simulator):
             b = m3.declare_variable('b')
             c = m3.declare_variable('c')
             r = m3.declare_variable('r')
-            y = m3.declare_variable('y')
-            m3.register_output('z', a * y**2 + b * y + c - r)
+            x = m3.declare_variable('x')
+            m3.register_output('y', a * x**2 + b * x + c - r)
             m3.register_output('t3', a + b + c - r)
-            m3.register_output('t4', y**2)
+            m3.register_output('t4', x**2)
     
             solve_fixed_point_iteration = self.create_implicit_operation(m2)
             solve_fixed_point_iteration.declare_state('a', residual='r')
@@ -35,7 +43,7 @@ def example(Simulator):
     
             solve_quadratic = self.create_implicit_operation(m3)
             b = self.create_input('b', val=-4)
-            solve_quadratic.declare_state('y', residual='z')
+            solve_quadratic.declare_state('x', residual='y')
             solve_quadratic.nonlinear_solver = NewtonSolver(
                 solve_subsystems=False,
                 maxiter=100,
@@ -44,7 +52,7 @@ def example(Simulator):
             solve_quadratic.linear_solver = ScipyKrylov()
     
             c = self.declare_variable('c', val=18)
-            y, t3, t4 = solve_quadratic(a, b, c, r, expose=['t3', 't4'])
+            x, t3, t4 = solve_quadratic(a, b, c, r, expose=['t3', 't4'])
     
     
     sim = Simulator(ExampleWithSubsystemsWithExpose())

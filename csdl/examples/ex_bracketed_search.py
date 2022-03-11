@@ -7,6 +7,130 @@ class ExampleBracketedScalar(Model):
     :param var: x
     """
     def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.quadratic_function import QuadraticFunction
+
+        solve_quadratic = self.create_implicit_operation(
+            QuadraticFunction(shape=(1, )))
+        solve_quadratic.declare_state('x', residual='y', bracket=(0, 2))
+
+        a = self.declare_variable('a', val=1)
+        b = self.declare_variable('b', val=-4)
+        c = self.declare_variable('c', val=3)
+        x = solve_quadratic(a, b, c)
+
+
+class ExampleBracketedArray(Model):
+    """
+    :param var: x
+    """
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.quadratic_function import QuadraticFunction
+        solve_quadratic = self.create_implicit_operation(
+            QuadraticFunction(shape=(2, )))
+        solve_quadratic.declare_state('x',
+                                      residual='y',
+                                      bracket=(
+                                          np.array([0, 2.]),
+                                          np.array([2, np.pi], ),
+                                      ))
+
+        a = self.declare_variable('a', val=[1, -1])
+        b = self.declare_variable('b', val=[-4, 4])
+        c = self.declare_variable('c', val=[3, -3])
+        x = solve_quadratic(a, b, c)
+
+
+class ExampleWithSubsystemsBracketedScalar(Model):
+    """
+    :param var: y
+    """
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.quadratic_wih_extra_term import QuadraticWithExtraTerm
+        from csdl.examples.models.simple_add import SimpleAdd
+        from csdl.examples.models.fixed_point import FixedPoint2
+        self.add(SimpleAdd(p=7, q=8), name='R')
+        solve_fixed_point_iteration = self.create_implicit_operation(
+            FixedPoint2(name='a'))
+        solve_fixed_point_iteration.declare_state('a', residual='r')
+        solve_fixed_point_iteration.nonlinear_solver = NonlinearBlockGS(
+            maxiter=100)
+
+        solve_quadratic = self.create_implicit_operation(
+            QuadraticWithExtraTerm(shape=(1, )))
+        solve_quadratic.declare_state('y', residual='z', bracket=(0, 2))
+        solve_quadratic.nonlinear_solver = NonlinearBlockGS(maxiter=100)
+
+        a = solve_fixed_point_iteration()
+
+        b = self.declare_variable('b', val=-4)
+        c = self.declare_variable('c', val=18)
+        r = self.declare_variable('r')
+        y = solve_quadratic(a, b, c, r)
+
+
+class ExampleWithSubsystemsBracketedArray(Model):
+    """
+    :param var: y
+    """
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.quadratic_wih_extra_term import QuadraticWithExtraTerm
+        from csdl.examples.models.simple_add import SimpleAdd
+        from csdl.examples.models.fixed_point import FixedPoint2
+        self.add(SimpleAdd(p=[7, -7], q=[8, -8]), name='R')
+
+        solve_fixed_point_iteration = self.create_implicit_operation(
+            FixedPoint2(name='ap'))
+        solve_fixed_point_iteration.declare_state('ap', residual='r')
+        solve_fixed_point_iteration.nonlinear_solver = NonlinearBlockGS(
+            maxiter=100)
+
+        solve_quadratic = self.create_implicit_operation(
+            QuadraticWithExtraTerm(shape=(2, )))
+        solve_quadratic.declare_state('y',
+                                      residual='z',
+                                      bracket=(
+                                          np.array([0, 2.]),
+                                          np.array([2, np.pi], ),
+                                      ))
+        solve_quadratic.nonlinear_solver = NonlinearBlockGS(maxiter=100)
+
+        ap = solve_fixed_point_iteration()
+        a = self.create_output('a', shape=(2, ))
+        a[0] = ap
+        a[1] = -ap
+
+        b = self.declare_variable('b', val=[-4, 4])
+        c = self.declare_variable('c', val=[18, -18])
+        r = self.declare_variable('r', shape=(2, ))
+        y = solve_quadratic(a, b, c, r)
+
+
+# ----------------------------------------------------------------------
+class ExampleBracketedScalarDefineModelInline(Model):
+    """
+    :param var: x
+    """
+    def define(self):
         model = Model()
         a = model.declare_variable('a')
         b = model.declare_variable('b')
@@ -24,7 +148,7 @@ class ExampleBracketedScalar(Model):
         x = solve_quadratic(a, b, c)
 
 
-class ExampleBracketedArray(Model):
+class ExampleBracketedArrayDefineModelInline(Model):
     """
     :param var: x
     """
@@ -45,13 +169,13 @@ class ExampleBracketedArray(Model):
                                           np.array([2, np.pi], ),
                                       ))
 
-        a = model.declare_variable('a', val=[1, -1])
-        b = model.declare_variable('b', val=[-4, 4])
-        c = model.declare_variable('c', val=[3, -3])
+        a = self.declare_variable('a', val=[1, -1])
+        b = self.declare_variable('b', val=[-4, 4])
+        c = self.declare_variable('c', val=[3, -3])
         x = solve_quadratic(a, b, c)
 
 
-class ExampleWithSubsystemsBracketedScalar(Model):
+class ExampleWithSubsystemsBracketedScalarDefineModelInline(Model):
     """
     :param var: y
     """
@@ -74,16 +198,16 @@ class ExampleWithSubsystemsBracketedScalar(Model):
         y = m3.declare_variable('y')
         m3.register_output('z', a * y**2 + b * y + c - r)
 
-        solve_fixed_point_iteratoin = self.create_implicit_operation(m2)
-        solve_fixed_point_iteratoin.declare_state('a', residual='r')
-        solve_fixed_point_iteratoin.nonlinear_solver = NonlinearBlockGS(
+        solve_fixed_point_iteration = self.create_implicit_operation(m2)
+        solve_fixed_point_iteration.declare_state('a', residual='r')
+        solve_fixed_point_iteration.nonlinear_solver = NonlinearBlockGS(
             maxiter=100)
 
         solve_quadratic = self.create_implicit_operation(m3)
         solve_quadratic.declare_state('y', residual='z', bracket=(0, 2))
         solve_quadratic.nonlinear_solver = NonlinearBlockGS(maxiter=100)
 
-        a = solve_fixed_point_iteratoin()
+        a = solve_fixed_point_iteration()
 
         b = self.declare_variable('b', val=-4)
         c = self.declare_variable('c', val=18)
@@ -91,7 +215,7 @@ class ExampleWithSubsystemsBracketedScalar(Model):
         y = solve_quadratic(a, b, c, r)
 
 
-class ExampleWithSubsystemsBracketedArray(Model):
+class ExampleWithSubsystemsBracketedArrayDefineModelInline(Model):
     """
     :param var: y
     """
@@ -114,9 +238,9 @@ class ExampleWithSubsystemsBracketedArray(Model):
         y = m3.declare_variable('y', shape=(2, ))
         m3.register_output('z', a * y**2 + b * y + c - r)
 
-        solve_fixed_point_iteratoin = self.create_implicit_operation(m2)
-        solve_fixed_point_iteratoin.declare_state('ap', residual='r')
-        solve_fixed_point_iteratoin.nonlinear_solver = NonlinearBlockGS(
+        solve_fixed_point_iteration = self.create_implicit_operation(m2)
+        solve_fixed_point_iteration.declare_state('ap', residual='r')
+        solve_fixed_point_iteration.nonlinear_solver = NonlinearBlockGS(
             maxiter=100)
 
         solve_quadratic = self.create_implicit_operation(m3)
@@ -128,7 +252,7 @@ class ExampleWithSubsystemsBracketedArray(Model):
                                       ))
         solve_quadratic.nonlinear_solver = NonlinearBlockGS(maxiter=100)
 
-        ap = solve_fixed_point_iteratoin()
+        ap = solve_fixed_point_iteration()
         a = self.create_output('a', shape=(2, ))
         a[0] = ap
         a[1] = -ap

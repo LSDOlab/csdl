@@ -11,19 +11,17 @@ def example(Simulator):
     from csdl.examples.models.circle_parabola import CircleParabolaExpose
     
     
-    class ExampleApplyNonlinearWithExpose(Model):
+    class ExampleApplyNonlinearWithExposeDefineModelInline(Model):
         def define(self):
-            # define internal model that defines a residual
-            model = Model()
-            a = model.declare_variable('a', val=1)
-            b = model.declare_variable('b', val=-4)
-            c = model.declare_variable('c', val=3)
-            x = model.declare_variable('x')
-            y = a * x**2 + b * x + c
-            model.register_output('y', y)
-            model.register_output('t', a + b + c)
+            # NOTE: Importing definitions within a method is bad practice.
+            # This is only done here to automate example/test case
+            # generation more easily.
+            # When defining CSDL models, please put the import statements at
+            # the top of your Python file(s).
+            from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
     
-            solve_quadratic = self.create_implicit_operation(model)
+            solve_quadratic = self.create_implicit_operation(
+                QuadraticFunctionExpose(shape=(1, )))
             solve_quadratic.declare_state('x', residual='y')
             solve_quadratic.nonlinear_solver = NewtonSolver(
                 solve_subsystems=False,
@@ -38,7 +36,12 @@ def example(Simulator):
             x, t = solve_quadratic(a, b, c, expose=['t'])
     
     
-    sim = Simulator(ExampleApplyNonlinearWithExpose())
+    sim = Simulator(ExampleApplyNonlinearWithExposeDefineModelInline())
     sim.run()
+    
+    print('x', sim['x'].shape)
+    print(sim['x'])
+    print('t', sim['t'].shape)
+    print(sim['t'])
     
     return sim

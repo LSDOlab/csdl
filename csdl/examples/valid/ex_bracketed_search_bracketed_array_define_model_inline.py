@@ -11,16 +11,17 @@ def example(Simulator):
     from csdl.examples.models.fixed_point import FixedPoint2
     
     
-    class ExampleBracketedArray(Model):
+    class ExampleBracketedArrayDefineModelInline(Model):
         def define(self):
-            # NOTE: Importing definitions within a method is bad practice.
-            # This is only done here to automate example/test case
-            # generation more easily.
-            # When defining CSDL models, please put the import statements at
-            # the top of your Python file(s).
-            from csdl.examples.models.quadratic_function import QuadraticFunction
-            solve_quadratic = self.create_implicit_operation(
-                QuadraticFunction(shape=(2, )))
+            model = Model()
+            a = model.declare_variable('a', shape=(2, ))
+            b = model.declare_variable('b', shape=(2, ))
+            c = model.declare_variable('c', shape=(2, ))
+            x = model.declare_variable('x', shape=(2, ))
+            y = a * x**2 + b * x + c
+            model.register_output('y', y)
+    
+            solve_quadratic = self.create_implicit_operation(model)
             solve_quadratic.declare_state('x',
                                           residual='y',
                                           bracket=(
@@ -34,7 +35,7 @@ def example(Simulator):
             x = solve_quadratic(a, b, c)
     
     
-    sim = Simulator(ExampleBracketedArray())
+    sim = Simulator(ExampleBracketedArrayDefineModelInline())
     sim.run()
     
     print('x', sim['x'].shape)

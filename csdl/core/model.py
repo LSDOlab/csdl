@@ -38,6 +38,7 @@ _residual = '_residual'
 
 
 class ImplicitOperationFactory(object):
+
     def __init__(self, parent, model):
         self.parent = parent
         self.model = model
@@ -140,10 +141,11 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
     The user does not need to opt into running the middle end and cannot
     opt out of running the middle end.
     """
+
     def _run_middle_end(self):
         if self._defined is False:
-            self._defined = True
             run_front_end(self)
+            self._defined = True
 
             # TODO: get name of model to make error/warning more clear
             # check for empty model
@@ -245,8 +247,8 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
 
             # Define child models recursively
             for subgraph in self.subgraphs:
-                if not isinstance(subgraph.submodel, CustomOperation):
-                    subgraph.submodel.define()
+                subgraph.submodel.optimize_ir(self._optimize_ir)
+                subgraph.submodel.define()
 
             _, _ = set_default_values(self)
 
@@ -254,6 +256,7 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
 
 
 class _CompilerFrontEndMiddleEnd(type):
+
     def __new__(cls, name, bases, attr):
         attr['define'] = _run_front_end_and_middle_end(attr['define'])
         return super(_CompilerFrontEndMiddleEnd,
@@ -278,14 +281,14 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self.inputs: List[Input] = []
         self.declared_variables: List[DeclaredVariable] = []
         self.registered_outputs: List[Union[Output, Subgraph]] = []
-        self.objective = None
-        self.constraints = dict()
+        self.objective: Union[dict, None] = None
+        self.constraints: Dict[str, dict] = dict()
         self.design_variables: Dict[str, dict] = dict()
         self.connections: List[Tuple[str, str]] = []
         self.parameters = Parameters()
         self.initialize()
         self.parameters.update(kwargs)
-        self._optimize_ir = True
+        self._optimize_ir = False
 
     def optimize_ir(self, flag: bool = True):
         self._optimize_ir = flag
@@ -372,32 +375,33 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         This is *only* used when exposing intermediate variables for a
         composite residual.
         """
-        if self._defined == True:
-            self._defined = False
-            for out in self.registered_outputs:
-                out.remove_fwd_edges()
-            for out in self.registered_outputs:
-                out.remove_dependencies()
-        from csdl.operations.passthrough import passthrough
-        se = set(expose)
-        vars = list(
-            filter(lambda x: x.name in se, self.registered_outputs))
-        for var in vars:
-            op = passthrough(var)
-            out = Output(
-                _residual + var._id,
-                val=var.val,
-                shape=var.shape,
-                units=var.units,
-                desc=var.desc,
-                tags=var.tags,
-                shape_by_conn=var.shape_by_conn,
-                copy_shape=var.copy_shape,
-                distributed=var.distributed,
-                op=op,
-            )
-            op.outs = (out, )
-            self.register_output(out.name, out)
+        if len(expose) > 0:
+            if self._defined == True:
+                self._defined = False
+                for out in self.registered_outputs:
+                    out.remove_fwd_edges()
+                for out in self.registered_outputs:
+                    out.remove_dependencies()
+            from csdl.operations.passthrough import passthrough
+            se = set(expose)
+            vars = list(
+                filter(lambda x: x.name in se, self.registered_outputs))
+            for var in vars:
+                op = passthrough(var)
+                out = Output(
+                    _residual + var._id,
+                    val=var.val,
+                    shape=var.shape,
+                    units=var.units,
+                    desc=var.desc,
+                    tags=var.tags,
+                    shape_by_conn=var.shape_by_conn,
+                    copy_shape=var.copy_shape,
+                    distributed=var.distributed,
+                    op=op,
+                )
+                op.outs = (out, )
+                self.register_output(out.name, out)
         self.define()
 
     def print_var(self, var: Variable):
@@ -1138,7 +1142,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             residuals,
             expose,
         )
-        new_defaults: Dict[str, np.ndarray] = dict()
+        new_default_values: Dict[str, np.ndarray] = dict()
         for k, v in defaults.items():
             if k not in states:
                 raise ValueError(
@@ -1157,7 +1161,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
                         raise ValueError(
                             "Shape of value must match shape of state {}; {} != {}"
                             .format(k, f[0].shape, v.shape))
-                new_defaults[k] = np.array(v) * np.ones(f[0].shape)
+                new_default_values[k] = np.array(v) * np.ones(
+                    f[0].shape)
 
         # create operation, establish dependencies on arguments
         op = ImplicitOperation(
@@ -1168,7 +1173,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             res_out_map=res_out_map,
             out_in_map=out_in_map,
             expose=expose,
-            defaults=new_defaults,
+            defaults=new_default_values,
         )
         return self._return_implicit_outputs(
             model,
@@ -1195,6 +1200,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         # self.deterministic = False
         if not isinstance(model, (Model, )):
             raise TypeError("{} is not a Model".format(model))
+        # if model._defined is False:
+        #     model.define()
 
         # check for duplicate arguments, states, and residuals
         arg_names = [var.name for var in arguments]
@@ -1485,6 +1492,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             return outs[0]
 
     def create_implicit_operation(self, model):
+        model.optimize_ir(self._optimize_ir)
         return ImplicitOperationFactory(self, model)
 
     def __enter__(self):
