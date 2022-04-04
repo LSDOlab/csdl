@@ -139,41 +139,6 @@ class Node():
     def remove_dependency_node(self, dependent):
         self.dependencies.remove(dependent)
 
-    def register_nodes(self, nodes: dict):
-        """
-        Register all nodes in DAG.
-
-        **Parameters**
-
-        nodes: dict[Variable]
-            Dictionary of nodes registered so far
-        """
-        # nodes = set()
-        # for r in m.registered_outputs:
-        #     nodes.union(gather_nodes(r, nodes))
-        # print('gathered nodes:', [node.name for node in list(nodes)])
-        # for r in self.registered_outputs:
-        #     self.nodes.update(gather_nodes(r, self.nodes))
-        # print('gathered nodes:', [node.name for node in list(nodes)])
-
-        for node in self.dependencies:
-            # Check for name collisions
-            if node._id in nodes.keys():
-                if nodes[node._id] is not None:
-                    # if name is in use and a separate object is already
-                    # registered, then we have a name collision
-                    if nodes[node._id] is not node:
-                        raise ValueError(
-                            "Name collision (", node.name, ") between ",
-                            nodes[node._id], " and ", node,
-                            "; check that calls to regiser_output and ",
-                            "create_* do not give the same name to ",
-                            "two outputs")
-            else:
-                # register node
-                nodes[node._id] = node
-                node.register_nodes(nodes)
-
     def incr_times_visited(self):
         """
         Increment number of times a node is visited during ``topological_sort``.
