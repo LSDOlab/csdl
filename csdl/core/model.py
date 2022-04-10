@@ -4,7 +4,6 @@ from copy import deepcopy
 from csdl.utils.typehints import Shape
 
 from csdl.utils.graph import (
-    remove_indirect_dependencies,
     modified_topological_sort,
     # remove_duplicate_nodes,
 )
@@ -18,15 +17,13 @@ from csdl.core.declared_variable import DeclaredVariable
 from csdl.core.input import Input
 from csdl.core.output import Output
 from csdl.core.concatenation import Concatenation
-from csdl.core.operation import Operation
 from csdl.core.custom_operation import CustomOperation
 from csdl.core.subgraph import Subgraph
+from csdl.core.implicit_operation_factory import ImplicitOperationFactory
 from csdl.solvers.nonlinear_solver import NonlinearSolver
 from csdl.solvers.linear_solver import LinearSolver
 from csdl.operations.print_var import print_var
-from csdl.utils.gen_hex_name import gen_hex_name
 from csdl.utils.parameters import Parameters
-from csdl.utils.combine_operations import combine_operations
 from csdl.utils.set_default_values import set_default_values
 from csdl.utils.collect_terminals import collect_terminals
 from csdl.utils.check_default_val_type import check_default_val_type
@@ -34,95 +31,8 @@ from csdl.utils.check_constraint_value_type import check_constraint_value_type
 from csdl.utils.combine_operations import combine_operation_pass
 from warnings import warn
 import numpy as np
-import matplotlib.pylab as plt
-import scipy.sparse as sparse
 
 _residual = '_residual'
-
-
-class ImplicitOperationFactory(object):
-
-    def __init__(self, parent: 'Model', model: 'Model'):
-        self.parent = parent
-        self.model: 'Model' = model
-        self.states: List[str] = []
-        self.residuals: List[str] = []
-        self.nonlinear_solver: NonlinearSolver | None = None
-        self.linear_solver: LinearSolver | None = None
-        self.brackets: Dict[str,
-                            Tuple[int | float | np.ndarray,
-                                  int | float | np.ndarray]] = dict()
-        self.implicit_metadata: Dict[str, dict] = dict()
-
-    def declare_state(
-        self,
-        state: str,
-        bracket: Tuple[int | float | np.ndarray,
-                       int | float | np.ndarray] = None,
-        val=1.0,
-        units=None,
-        desc='',
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
-        distributed=None,
-        res_units=None,
-        lower=None,
-        upper=None,
-        ref=1.0,
-        ref0=0.0,
-        res_ref=1.0,
-        *,
-        residual: str,
-    ):
-        self.states.append(state)
-        self.residuals.append(residual)
-        if bracket is not None:
-            self.brackets[state] = bracket
-        self.implicit_metadata[state] = dict(
-            val=check_default_val_type(val),
-            units=units,
-            desc=desc,
-            tags=tags,
-            shape_by_conn=shape_by_conn,
-            copy_shape=copy_shape,
-            distributed=distributed,
-            res_units=res_units,
-            lower=lower,
-            upper=upper,
-            ref=ref,
-            ref0=ref0,
-            res_ref=res_ref,
-        )
-
-    def __call__(
-            self,
-            *arguments: Variable,
-            expose: List[str] = [],
-            defaults: Dict[str, int | float | np.ndarray] = dict(),
-    ):
-        if len(self.brackets) > 0:
-            return self.parent._bracketed_search(
-                self.implicit_metadata,
-                *arguments,
-                states=self.states,
-                residuals=self.residuals,
-                model=self.model,
-                brackets=self.brackets,
-                expose=expose,
-            )
-        else:
-            return self.parent._implicit_operation(
-                self.implicit_metadata,
-                *arguments,
-                states=self.states,
-                residuals=self.residuals,
-                model=self.model,
-                nonlinear_solver=self.nonlinear_solver,
-                linear_solver=self.linear_solver,
-                expose=expose,
-                defaults=defaults,
-            )
 
 
 # TODO: collect all inputs from all models to ensure that the entire
