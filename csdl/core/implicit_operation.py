@@ -1,4 +1,4 @@
-from typing import Dict, List, Set, Optional
+from typing import Dict, List, Set
 from csdl.core.declared_variable import DeclaredVariable
 from csdl.core.output import Output
 from csdl.core.operation import Operation
@@ -13,11 +13,12 @@ class ImplicitOperation(Operation):
     """
     Class for solving implicit functions using the specified solvers
     """
+
     def __init__(
             self,
             model,
             nonlinear_solver: NonlinearSolver,
-            linear_solver: Optional[LinearSolver],
+            linear_solver: LinearSolver | None,
             out_res_map: Dict[str, Output],
             res_out_map: Dict[str, DeclaredVariable],
             out_in_map: Dict[str, List[DeclaredVariable]],
@@ -32,7 +33,8 @@ class ImplicitOperation(Operation):
             in_vars = in_vars.union(set(v))
         self.nargs = len(in_vars)
         super().__init__(*list(in_vars), **kwargs)
-        self._model = model
+        from csdl.core.model import Model
+        self._model: Model = model
         if linear_solver is None and isinstance(
                 nonlinear_solver, (NewtonSolver, BroydenSolver)):
             raise ValueError(

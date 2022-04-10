@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 
 from csdl.utils.gen_hex_name import gen_hex_name
@@ -147,7 +145,7 @@ class Node():
         """
         self.times_visited += 1
 
-    def get_dependency_index(self, candidate) -> Optional[int]:
+    def get_dependency_index(self, candidate) -> int | None:
         """
         Get index of dependency in ``self.dependencies``. Used for
         removing indirect dependencies that woud otherwise affect the
@@ -161,7 +159,7 @@ class Node():
 
         **Returns**
 
-        Optional[int]
+        int | None
             If ``dependency`` is a dependency of ``self``, then the index of
             ``dependency`` in ``self.dependencies`` is returned. Otherwise,
             ``None`` is returned.
@@ -201,7 +199,7 @@ class Node():
         if index is not None:
             self.remove_dependency_by_index(index)
 
-    def get_dependent_index(self, candidate) -> Optional[int]:
+    def get_dependent_index(self, candidate) -> int | None:
         """
         Get index of dependency in ``self.dependencies``. Used for
         removing indirect dependencies that woud otherwise affect the
@@ -215,7 +213,7 @@ class Node():
 
         **Returns**
 
-        Optional[int]
+        int | None
             If ``dependency`` is a dependency of ``self``, then the index of
             ``dependency`` in ``self.dependencies`` is returned. Otherwise,
             ``None`` is returned.

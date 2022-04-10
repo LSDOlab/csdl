@@ -1,12 +1,15 @@
 from contextlib import contextmanager
-from typing import Callable, Tuple, List, Union, Dict
+from typing import Callable, Tuple, List, Dict
 from copy import deepcopy
+from csdl.utils.typehints import Shape
 
 from csdl.utils.graph import (
     remove_indirect_dependencies,
     modified_topological_sort,
     # remove_duplicate_nodes,
 )
+import networkx as nx
+# from csdl.core.intermediate_representation import IntermediateRepresentation
 from csdl.core.implicit_operation import ImplicitOperation
 from csdl.core.bracketed_search_operation import BracketedSearchOperation
 from csdl.core.node import Node
@@ -38,23 +41,24 @@ _residual = '_residual'
 
 
 class ImplicitOperationFactory(object):
-    def __init__(self, parent, model):
+
+    def __init__(self, parent: 'Model', model: 'Model'):
         self.parent = parent
-        self.model = model
-        self.states: List(str) = []
-        self.residuals: List(str) = []
-        self.nonlinear_solver = None
-        self.linear_solver = None
-        self.brackets: Dict[str, Tuple[Union[int, float, np.ndarray],
-                                       Union[int, float,
-                                             np.ndarray]]] = dict()
+        self.model: 'Model' = model
+        self.states: List[str] = []
+        self.residuals: List[str] = []
+        self.nonlinear_solver: NonlinearSolver | None = None
+        self.linear_solver: LinearSolver | None = None
+        self.brackets: Dict[str,
+                            Tuple[int | float | np.ndarray,
+                                  int | float | np.ndarray]] = dict()
         self.implicit_metadata: Dict[str, dict] = dict()
 
     def declare_state(
         self,
         state: str,
-        bracket: Tuple[Union[int, float, np.ndarray],
-                       Union[int, float, np.ndarray]] = None,
+        bracket: Tuple[int | float | np.ndarray,
+                       int | float | np.ndarray] = None,
         val=1.0,
         units=None,
         desc='',
@@ -95,7 +99,7 @@ class ImplicitOperationFactory(object):
             self,
             *arguments: Variable,
             expose: List[str] = [],
-            defaults: Dict[str, Union[int, float, np.ndarray]] = dict(),
+            defaults: Dict[str, int | float | np.ndarray] = dict(),
     ):
         if len(self.brackets) > 0:
             return self.parent._bracketed_search(
@@ -121,15 +125,10 @@ class ImplicitOperationFactory(object):
             )
 
 
-def build_symbol_table(symbol_table, node):
-    for n in node.dependencies:
-        symbol_table[n._id] = n
-        build_symbol_table(symbol_table, n)
-
-
 # TODO: collect all inputs from all models to ensure that the entire
 # model does have inputs; issue warning if not
-def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
+def _run_front_end_and_middle_end(
+        run_front_end: Callable[['Model'], None]) -> Callable:
     """
     Run CSDL compiler front end (`Model.define`) and middle end.
     The middle end is run immediately after the front end automatically.
@@ -140,7 +139,8 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
     The user does not need to opt into running the middle end and cannot
     opt out of running the middle end.
     """
-    def _run_middle_end(self):
+
+    def _run_middle_end(self: 'Model'):
         if self._defined is False:
             run_front_end(self)
             self._defined = True
@@ -158,9 +158,6 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
                     )
 
             # Check if all design variables are inputs
-            # input_names = set(
-            #     filter(lambda x: isinstance(x, Input),
-            #            [inp.name for inp in self.inputs]))
             input_names = [inp.name for inp in self.inputs]
             for name in self.design_variables.keys():
                 if name not in input_names:
@@ -168,46 +165,6 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
                         "{} is not the CSDL name of an input to the model"
                         .format(name))
             del input_names
-
-            # # check promotions
-            # for subgraph in self.subgraphs:
-            #     promoted_ins = find_promoted_inputs(subgraph)
-            #     promoted_outs = find_promoted_outputs(subgraph)
-            #     # if promoted_ins contains a name that's already in
-            #     # self.promoted_ins, check shape; if shape mismatch,
-            #     # error
-            #     # if promoted_outs contains a name that's already in
-            #     # self.promoted_outs, error
-            #     seta = set(promoted_ins)
-            #     setb = set(promoted_outs)
-            #     intersection = seta & setb
-            #     if intersection != set():
-            #         raise ValueError("invalid {}".format(
-            #             [name for name in intersection]))
-            #     self.promoted_ins.extend(promoted_ins)
-            #     self.promoted_outs.extend(promoted_outs)
-            #     # **need to check for mismatched shapes among duplicates and emit error**
-
-            # check that all connections are valid
-            # output_names = set([n.name for n in nodes if isinstance(n, Output)], )
-            # output_shapes = set([(n.name, n.shape)
-            #                      for n in nodes if isinstance(n, Output)], )
-            # variable_names = set([
-            #     n.name for n in nodes
-            #     if isinstance(n, Variable) and not isinstance(n, Output)
-            # ], )
-            # variable_shapes = set(
-            #     [(n.name, n.shape) for n in nodes
-            #      if isinstance(n, Variable) and not isinstance(n, Output)], )
-            # for (a, b) in self.connections:
-            #     if a not in output_names:
-            #         raise KeyError(
-            #             "No output named {} for connection from {} to {}".format(
-            #                 a, a, b))
-            #     if b not in input_names:
-            #         raise KeyError(
-            #             "No input named {} for connection from {} to {}".format(
-            #                 b, a, b))
 
             # Check that all outputs are defined
             # for output in self.sorted_nodes:
@@ -233,8 +190,6 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
             # Create record of all nodes in optimized IR
             for r in self.registered_outputs:
                 self.symbol_table[r._id] = r
-            for r in self.registered_outputs:
-                build_symbol_table(self.symbol_table, r)
 
             # Use Kahn's algorithm to sort nodes, reordering
             # expressions without regard for the order in which user
@@ -254,6 +209,7 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
 
 
 class _CompilerFrontEndMiddleEnd(type):
+
     def __new__(cls, name, bases, attr):
         attr['define'] = _run_front_end_and_middle_end(attr['define'])
         return super(_CompilerFrontEndMiddleEnd,
@@ -267,25 +223,33 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         Model._count += 1
         self._defined = False
         self.symbol_table: dict = {}
-        self.input_vals: dict = {}
-        self.sorted_nodes = []
-        self.reverse_branch_sorting: bool = False
+        self.sorted_nodes: List[Node] = []
         self._most_recently_added_subgraph: Subgraph = None
-        self.brackets_map = None
-        self.out_vals = dict()
         self.subgraphs: List[Subgraph] = []
         self.variables_promoted_from_children: List[Variable] = []
         self.inputs: List[Input] = []
         self.declared_variables: List[DeclaredVariable] = []
-        self.registered_outputs: List[Union[Output, Subgraph]] = []
-        self.objective: Union[dict, None] = None
+        self.registered_outputs: List[Output | Subgraph] = []
+        self.objective: dict | None = None
         self.constraints: Dict[str, dict] = dict()
         self.design_variables: Dict[str, dict] = dict()
+        self.user_declared_connections: List[Tuple[str, str]] = []
         self.connections: List[Tuple[str, str]] = []
-        self.parameters = Parameters()
+        self.parameters: Parameters = Parameters()
         self.initialize()
         self.parameters.update(kwargs)
         self._optimize_ir = False
+        # self.intermediate_representation: IntermediateRepresentation | None = None
+        self.promoted_sources: Dict[str, Shape] = dict()
+        """
+        Map from source name to shape for sources (inputs and outputs)
+        promoted from submodels
+        """
+        self.promoted_sinks: Dict[str, Shape] = dict()
+        """
+        Map from source name to shape for sinks (declared variables)
+        promoted from submodels
+        """
 
     def optimize_ir(self, flag: bool = True):
         self._optimize_ir = flag
@@ -551,9 +515,10 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             "Error messages for connections are not yet built into "
             "CSDL frontend. Pay attention to any errors emmited by back end."
         )
-        if (a, b) in self.connections:
+        if (a, b) in self.user_declared_connections:
             warn("Connection from {} to {} issued twice.".format(a, b))
-        self.connections.append((a, b))
+        else:
+            self.user_declared_connections.append((a, b))
 
     def declare_variable(
         self,
@@ -606,6 +571,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             copy_shape=copy_shape,
             distributed=distributed,
         )
+        # TODO: remove
         if self._most_recently_added_subgraph is not None:
             v.add_dependency_node(self._most_recently_added_subgraph)
         self.declared_variables.append(v)
@@ -764,9 +730,9 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
     def add(
         self,
         submodel,
-        name: str = '',
+        name: str | None = None,
         promotes: List[str] = None,
-    ):
+    ) -> 'Model':
         """
         Add a submodel to the `Model`.
 
@@ -802,7 +768,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             promotes = promotes
 
         subgraph = Subgraph(
-            gen_hex_name(Node._count + 1) if name == '' else name,
+            name,
             submodel,
             promotes=promotes,
         )
@@ -834,8 +800,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         states: List[str],
         residuals: List[str],
         model,
-        brackets: Dict[str, Tuple[Union[int, float, np.ndarray],
-                                  Union[int, float, np.ndarray]]],
+        brackets: Dict[str, Tuple[int | float | np.ndarray,
+                                  int | float | np.ndarray]],
         expose: List[str] = [],
         maxiter: int = 100,
     ):
@@ -1012,11 +978,11 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         *arguments: Variable,
         states: List[str],
         residuals: List[str],
-        model,
+        model: 'Model',
         nonlinear_solver: NonlinearSolver,
-        linear_solver: LinearSolver = None,
+        linear_solver: LinearSolver | None = None,
         expose: List[str] = [],
-        defaults: Dict[str, Union[int, float, np.ndarray]] = dict(),
+        defaults: Dict[str, int | float | np.ndarray] = dict(),
     ) -> Tuple[Output, ...]:
         """
         Create an implicit operation whose residuals are defined by a
@@ -1334,7 +1300,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         # objects
         # TODO: explain why
         out_res_map: Dict[str, Output] = dict()
-        res_out_map: Dict[str, Union[DeclaredVariable, Output]] = dict()
+        res_out_map: Dict[str, DeclaredVariable | Output] = dict()
         for s, r in zip(states, residuals):
             if registered_output_map[r].shape != declared_variables_map[
                     s].shape:
@@ -1522,193 +1488,3 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
                 yield m
         finally:
             self.add(m, name=name)
-
-    def visualize_sparsity(self, recursive: bool = False):
-        """
-        Visualize the sparsity pattern of jacobian for this model
-        """
-        print(
-            "Visualizing sparsity pattern for intermediate representation of model {}"
-            .format(type(self).__name__))
-        self.define()
-        nodes = self.sorted_nodes
-        n = len(nodes)
-        A = sparse.lil_matrix((n, n))
-        A, _, indices, implicit_nodes = add_diag(A, nodes)
-        A = add_off_diag(A, self, indices)
-        A = add_off_diag_implicit(A, indices, implicit_nodes)
-        plt.spy(A, markersize=1)
-        ax = plt.gca()
-        for axis in 'left', 'right', 'bottom', 'top':
-            ax.spines[axis].set_linewidth(2)
-
-        plt.show()
-
-        if recursive is True:
-            for node in nodes:
-                if isinstance(node, ImplicitOperation):
-                    node._model.visualize_sparsity(recursive=recursive)
-
-    def visualize_graph(self):
-        import networkx as nx
-        G = nx.DiGraph()
-
-        names = [node.name for node in self.symbol_table.values()]
-
-        G.add_nodes_from(names)
-        G.add_node('BEGIN')
-        G.add_node('END')
-
-        edge_tuples = []
-        for r in self.registered_outputs:
-            edge_tuples.append((r.name, 'END', 1))
-        for i in self.inputs:
-            edge_tuples.append(('BEGIN', i.name, 1))
-        for node in self.symbol_table.values():
-            for dep in node.dependencies:
-                edge_tuples.append((dep.name, node.name, 1))
-        G.add_weighted_edges_from(edge_tuples)
-
-        variables = [
-            node for node in list(
-                filter(lambda x: isinstance(x, Variable),
-                       self.symbol_table.values()))
-        ]
-        operations = [
-            node for node in list(
-                filter(lambda x: isinstance(x, (Operation, Subgraph)),
-                       self.symbol_table.values()))
-        ]
-
-        pos = dict()
-        pos.update((n.name, (1, i)) for i, n in enumerate(variables))
-        pos.update(
-            (n.name, (2, i + 1)) for i, n in enumerate(operations))
-        pos['BEGIN'] = (2, 0)
-        pos['END'] = (2, len(operations) + 1)
-        nx.draw(G, pos=pos, with_labels=True, font_weight='bold')
-        plt.show()
-
-
-def add_diag_implicit(A,
-                      variables,
-                      implicit_outputs,
-                      indices=dict(),
-                      implicit_nodes=dict(),
-                      p=0,
-                      indent=''):
-    i = p
-    implicit_operator = Node()
-    implicit_nodes[implicit_operator] = dict()
-    implicit_nodes[implicit_operator]['vars'] = variables
-    implicit_nodes[implicit_operator]['outs'] = implicit_outputs
-    for node in variables:
-        print(indent + str(i), node.name)
-        A[i, i] = 1
-        # NOTE: the keys are nodes, not names of nodes
-        # NOTE: there will be multiple keys with same .name
-        # attribute
-        indices[node] = i
-        i += 1
-    A[i, i] = 1
-    indices[implicit_operator] = i
-    i += 1
-    for node in implicit_outputs:
-        print(indent + str(i), node.name)
-        A[i, i] = 1
-        # NOTE: the keys are nodes, not names of nodes
-        # NOTE: there will be multiple keys with same .name
-        # attribute
-        indices[node] = i
-        i += 1
-    return A, i, indices, implicit_nodes
-
-
-def add_off_diag_implicit(A, indices, implicit_nodes):
-    print(implicit_nodes)
-    for implicit_operator in implicit_nodes.keys():
-        print(implicit_operator)
-        for node in implicit_nodes[implicit_operator]['vars']:
-            print(node.name)
-            print(indices[implicit_operator])
-            print(indices[node])
-            A[indices[node], indices[implicit_operator]] = 1
-        for node in implicit_nodes[implicit_operator]['outs']:
-            A[indices[implicit_operator], indices[node]] = 1
-    return A
-
-
-def add_diag(A,
-             nodes,
-             indices=dict(),
-             implicit_nodes=dict(),
-             p=0,
-             indent=''):
-    from csdl.core.implicit_operation import ImplicitOperation
-    # NOTE: A must have shape (len(nodes), len(nodes))
-    print(p)
-    i = p
-    for node in reversed(nodes):
-        if i < A.get_shape()[0]:
-            print(indent + str(i), node.name)
-            if isinstance(node, Subgraph):
-                # TODO: check CustomOperation
-                if isinstance(node.submodel, Model):
-                    m = len(node.submodel.sorted_nodes)
-                    q = A.get_shape()[0] + m - 1
-                    C = sparse.lil_matrix((q, q))
-                    C[:i, :i] = A[:i, :i]
-                    print(indent + str(i), node.name, A.get_shape(),
-                          C.get_shape())
-                    A, i, indices, implicit_nodes = add_diag(
-                        C,
-                        node.submodel.sorted_nodes,
-                        implicit_nodes=implicit_nodes,
-                        p=i,
-                        indent=indent + ' ',
-                    )
-                elif isinstance(node.submodel, ImplicitOperation):
-                    variables = list(
-                        filter(lambda x: len(x.dependencies) == 0,
-                               node.submodel._model.declared_variables))
-                    m = len(variables) + len(
-                        node.submodel.implicit_outputs) + 1
-                    if m > 0:
-                        q = A.get_shape()[0] + m - 1
-                        C = sparse.lil_matrix((q, q))
-                        print((q, q), A.get_shape(), C.get_shape())
-                        C[:i, :i] = A[:i, :i]
-                        A, i, indices, implicit_nodes = add_diag_implicit(
-                            C,
-                            variables,
-                            node.submodel.implicit_outputs,
-                            indices=indices,
-                            implicit_nodes=implicit_nodes,
-                            p=i,
-                            indent=indent + ' ',
-                        )
-            else:
-                print(indent + str(i), node.name, A.get_shape())
-                A[i, i] = 1
-                # NOTE: the keys are nodes, not names of nodes
-                # NOTE: there will be multiple keys with same .name
-                # attribute
-                indices[node] = i
-                i += 1
-    return A, i, indices, implicit_nodes
-
-
-# TODO: make triangular only if there are no cycles
-def add_off_diag(A, model, indices):
-    for node in reversed(model.sorted_nodes):
-        if isinstance(node, Subgraph):
-            if isinstance(node.submodel, Model):
-                add_off_diag(A, node.submodel, indices)
-        else:
-            for dep in node.dependencies:
-                if node in indices.keys() and dep in indices.keys():
-                    if dep.name == node.name:
-                        A[indices[node], indices[dep]] = 1
-                    else:
-                        A[indices[dep], indices[node]] = 1
-    return A

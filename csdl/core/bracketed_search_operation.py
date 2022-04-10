@@ -1,4 +1,4 @@
-from typing import Dict, List, Set, Tuple, Union
+from typing import Dict, List, Set, Tuple
 from csdl.core.declared_variable import DeclaredVariable
 from csdl.core.output import Output
 from csdl.core.operation import Operation
@@ -10,6 +10,7 @@ class BracketedSearchOperation(Operation):
     """
     Class for solving implicit functions using a bracketed search
     """
+
     def __init__(
         self,
         model,

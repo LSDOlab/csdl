@@ -8,9 +8,8 @@ from csdl.core.input import Input
 from csdl.core.standard_operation import StandardOperation
 from csdl.operations.combined import combined
 from csdl.utils.check_property import check_property
-from typing import List, Union, Dict
+from typing import List
 from copy import copy
-from warnings import warn
 import numpy as np
 
 
@@ -151,7 +150,7 @@ def modified_topological_sort(
         ``Group._root``, and the last will be an ``DocInput``,
         ``Concatenation``, ``ImplicitOutput``, or ``IndepVar``.
     """
-    sorted_nodes: List[Union[Node, print_var]] = []
+    sorted_nodes: List[Node | print_var] = []
     # set of all nodes with no incoming edge (outputs and subgraphs)
     stack = list(filter(lambda x: x.dependents == [], registered_nodes))
     while stack != []:

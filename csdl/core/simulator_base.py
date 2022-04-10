@@ -1,4 +1,3 @@
-from typing import Dict, Any, Union
 from collections import OrderedDict
 import numpy as np
 
@@ -82,14 +81,14 @@ class SimulatorBase:
     def compute_total_derivatives(
         self,
         return_format='array',
-    ) -> Union[OrderedDict, np.ndarray]:
+    ) -> OrderedDict | np.ndarray:
         """
         Method to compute total derivatives (objective gradient and
         constraint jacobian)
 
         **Returns**
 
-            Union[OrderedDict, np.ndarray]`
+            OrderedDict | np.ndarray`
         """
         raise NotImplementedError(msg)
 
@@ -165,12 +164,12 @@ class SimulatorBase:
     def design_variables(
         self,
         return_format='array',
-    ) -> Union[OrderedDict, np.ndarray]:
+    ) -> OrderedDict | np.ndarray:
         """
         Method to provide optimizer with design variables
         **Returns**
 
-            `Union[OrderedDict, np.ndarray]`
+            `OrderedDict | np.ndarray`
         """
         raise NotImplementedError(msg)
 
@@ -183,13 +182,13 @@ class SimulatorBase:
     def constraints(
         self,
         return_format='array',
-    ) -> Union[OrderedDict, np.ndarray]:
+    ) -> OrderedDict | np.ndarray:
         """
         Method to provide optimizer with constraints
 
         **Returns**
 
-            `Union[OrderedDict, np.ndarray]`
+            `OrderedDict | np.ndarray`
         """
         raise NotImplementedError(msg)
 
@@ -199,13 +198,13 @@ class SimulatorBase:
         """
         raise NotImplementedError(msg)
 
-    def residuals(self) -> Union[OrderedDict, np.ndarray]:
+    def residuals(self) -> OrderedDict | np.ndarray:
         """
         Method to provide optimizer with residuals
         """
         raise NotImplementedError(msg)
 
-    def objective_gradient(self) -> Union[OrderedDict, np.ndarray]:
+    def objective_gradient(self) -> OrderedDict | np.ndarray:
         """
         Method to provide optimizer with total derivative of objective
         with respect to design variables; does not compute derivatives;
@@ -214,11 +213,11 @@ class SimulatorBase:
 
         **Returns**
 
-            `Union[OrderedDict, np.ndarray]`
+            `OrderedDict | np.ndarray`
         """
         raise NotImplementedError(msg)
 
-    def constraint_jacobian(self) -> Union[OrderedDict, np.ndarray]:
+    def constraint_jacobian(self) -> OrderedDict | np.ndarray:
         """
         Method to provide optimizer with total derivative of constraints
         with respect to design variables; does not compute derivatives;
@@ -227,11 +226,11 @@ class SimulatorBase:
 
         **Returns**
 
-            `Union[OrderedDict, np.ndarray]`
+            `OrderedDict | np.ndarray`
         """
         raise NotImplementedError(msg)
 
-    def residuals_jacobian(self) -> Union[OrderedDict, np.ndarray]:
+    def residuals_jacobian(self) -> OrderedDict | np.ndarray:
         """
         Method to provide optimizer with total derivatives of
         residuals with respect to design variables

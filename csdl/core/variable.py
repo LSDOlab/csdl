@@ -1,5 +1,5 @@
 from numbers import Number
-from typing import Optional, Tuple, Union
+from typing import Tuple
 
 import numpy as np
 
@@ -25,6 +25,7 @@ def slice_to_tuple(key: slice, size: int) -> tuple:
 
 
 class Variable(Node):
+
     def __init__(
         self,
         name,
@@ -301,7 +302,7 @@ class Variable(Node):
 
     def __getitem__(
         self,
-        key: Union[int, slice, Tuple[slice]],
+        key: int | slice | Tuple[slice],
     ):
         from csdl.operations.decompose import decompose
         from csdl.core.output import Output

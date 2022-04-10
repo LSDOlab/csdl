@@ -3,8 +3,7 @@ from typing import Union
 
 
 def check_default_val_type(
-    x: Union[float, int, np.ndarray, list]
-) -> Union[float, int, np.ndarray]:
+        x: float | int | np.ndarray | list) -> float | int | np.ndarray:
     y = np.array(x) if isinstance(x, list) else x
     if not isinstance(y, (float, int, np.ndarray)):
         raise TypeError(

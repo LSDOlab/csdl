@@ -1,16 +1,17 @@
-from typing import List, Union
+from typing import List
 import numpy as np
 
 
 def slice_to_list(
-    start: Union[int, None],
-    stop: Union[int, None],
-    step: Union[int, None],
+    start: int | None,
+    stop: int | None,
+    step: int | None,
     size: int = None,
 ) -> List[int]:
     if start is None and stop is None:
         if size is None:
-            raise ValueError("size required when start and stop are None")
+            raise ValueError(
+                "size required when start and stop are None")
         else:
             stop = size
     elif stop is not None:
