@@ -150,14 +150,14 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self.parameters.update(kwargs)
         self._optimize_ir = False
         # self.intermediate_representation: IntermediateRepresentation | None = None
-        self.promoted_sources: Dict[str, Shape] = dict()
+        self.sources_promoted_from_submodels: Dict[str, Shape] = dict()
         """
-        Map from source name to shape for sources (inputs and outputs)
+        Map from name to shape for sources (inputs and outputs)
         promoted from submodels
         """
-        self.promoted_sinks: Dict[str, Shape] = dict()
+        self.sinks_promoted_from_submodels: Dict[str, Shape] = dict()
         """
-        Map from source name to shape for sinks (declared variables)
+        Map from name to shape for sinks (declared variables)
         promoted from submodels
         """
 

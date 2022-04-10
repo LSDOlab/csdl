@@ -1,4 +1,5 @@
 from csdl.core.model import Model
+from csdl.core.subgraph import Subgraph
 from csdl.core.output import Output
 from csdl.utils.typehints import Shape
 from typing import Callable, Dict, List, Tuple, Any, TypeVar, Set
@@ -99,13 +100,12 @@ def collect_promoted_variable_names(
     """
     Collect variables promoted from submodels to `model` and return
     promotions specified by `promotes`.
-    Updates `model.promoted_sources` and `model.promoted_sinks` so that
-    CSDL can process connections later. Also updates `model.connections`
-    whenever a connection is formed due to a promoted source/sink pair
-    having the same name and shape.
+    Updates `model.sources_promoted_from_submodels` and
+    `model.sinks_promoted_from_submodels` so that CSDL can process
+    connections later.
     """
-    promoted_sources: Dict[str, Shape] = dict()
-    promoted_sinks: Dict[str, Shape] = dict()
+    sources_promoted_from_submodels: Dict[str, Shape] = dict()
+    sinks_promoted_from_submodels: Dict[str, Shape] = dict()
 
     for s in model.subgraphs:
         m = s.submodel
@@ -117,28 +117,30 @@ def collect_promoted_variable_names(
 
         # Rule: each source (input or output) name promoted to this
         # level must be unique
-        duplicate_source_names = promoted_sources.keys() & p1.keys()
+        duplicate_source_names = sources_promoted_from_submodels.keys(
+        ) & p1.keys()
         if duplicate_source_names != set():
             raise KeyError(
                 "Cannot promote two inputs, two outputs, or an input and an output with the same name. Please check the variables with the following promoted paths: {}"
                 .format(list(duplicate_source_names)))
-        promoted_sources.update(p1)
+        sources_promoted_from_submodels.update(p1)
 
         # Rule: all sinks (declared variable) with a common name
         # promoted to this level must have the same shape
-        _ = find_names_with_matching_shapes(promoted_sinks, p2)
-        promoted_sinks.update(p2)
+        _ = find_names_with_matching_shapes(
+            sinks_promoted_from_submodels, p2)
+        sinks_promoted_from_submodels.update(p2)
 
     # Rule: if a source and a sink promoted to this level have matching
     # name and shape, then they form a connection
     connected_sinks = find_names_with_matching_shapes(
-        promoted_sources, promoted_sinks)
+        sources_promoted_from_submodels, sinks_promoted_from_submodels)
 
     # Rule: If a declared variable is connected automatically by
     # promotion, then any further promotion will be applied to the
     # source (input or output) connected to the sink
     for c in connected_sinks.keys():
-        promoted_sinks.pop(c)
+        sinks_promoted_from_submodels.pop(c)
 
     # Rule: each source (input or output) name specified in this level
     # must not match the name of any source promoted to this level
@@ -151,7 +153,7 @@ def collect_promoted_variable_names(
             lambda x: x[0] in set(promotes)
             if promotes is not None else True,
             locally_defined_sources.items()))
-    duplicate_source_names = promoted_sources.keys(
+    duplicate_source_names = sources_promoted_from_submodels.keys(
     ) & locally_defined_promotable_sources.keys()
     if duplicate_source_names != set():
         raise KeyError(
@@ -190,22 +192,34 @@ def collect_promoted_variable_names(
             .format(type(model).__name__),
             invalid_promotes)
     _ = find_names_with_matching_shapes(
-        promoted_sinks, locally_defined_promotable_sinks)
+        sinks_promoted_from_submodels,
+        locally_defined_sinks,
+    )
 
-    # update names to shape mappings for variables promoted to parent
-    # model
-    promoted_sources.update(locally_defined_promotable_sources)
-    promoted_sources.update(locally_defined_promotable_sinks)
+    sources_to_promote_to_parent = dict(
+        sources_promoted_from_submodels,
+        **locally_defined_promotable_sources,
+    )
+    sinks_to_promote_to_parent = dict(
+        sinks_promoted_from_submodels,
+        **locally_defined_promotable_sinks,
+    )
+    # sources_promoted_from_submodels.update(
+    #     locally_defined_promotable_sources)
+    # sinks_promoted_from_submodels.update(
+    #     locally_defined_promotable_sinks)
 
     # store a copy of promotions in model for parent models to access,
     # but not modify unless specifically accessing this model's
     # attributes to ensure promoted variable names are unique
     variables_to_promote_no_further = gather_variables_to_promote_no_futher(
         model, locally_defined_promotable_names)
-    model.promoted_sources = copy(promoted_sources).update(
-        variables_to_promote_no_further)
-    model.promoted_sinks = copy(promoted_sources).update(
-        variables_to_promote_no_further)
+    model.sources_promoted_from_submodels = copy(
+        sources_promoted_from_submodels).update(
+            variables_to_promote_no_further)
+    model.sinks_promoted_from_submodels = copy(
+        sinks_promoted_from_submodels).update(
+            variables_to_promote_no_further)
 
     # get the variables that will be promoted no further for parent
     # model to update its map from promoted paths to unpromoted paths
@@ -213,10 +227,11 @@ def collect_promoted_variable_names(
         model.promoted_to_unpromoted[k] = {k}
 
     if main is True:
-        model.promoted_sources.update(sources)
-        model.promoted_sinks.update(sinks)
+        model.promoted_sources.update(
+            locally_defined_promotable_sources)
+        model.promoted_sinks.update(locally_defined_promotable_sinks)
 
-    return promoted_sources, promoted_sinks
+    return sources_to_promote_to_parent, sinks_to_promote_to_parent
 
 
 def collect_promoted_variable_paths(
@@ -382,17 +397,19 @@ def flatten_graph(model: Model):
 
 #     main_model = Model()
 
+#     # PROMOTIONS
 #     _, _ = collect_promoted_variable_names(main_model)
 #     check_for_promotion_induced_cycles(main_model)
 
+#     # CONNECTIONS
 #     unpromoted_to_promoted = dict()
 #     for k, v in main_model.promoted_to_unpromoted:
 #         for n in v:
 #             unpromoted_to_promoted[n] = k
-
 #     issue_user_specified_connections(main_model)
 #     connections = collect_connections(main_model)
 #     detect_cycles_in_connections(connections)
+
 #     # TODO: flatten graph
 #     # now that intermediate representation is built and all namespaces
 #     # are resolved, flatten graph and store full paths to variables in
