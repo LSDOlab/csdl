@@ -8,7 +8,7 @@ from csdl.utils.graph import (
     # remove_duplicate_nodes,
 )
 import networkx as nx
-# from csdl.core.intermediate_representation import IntermediateRepresentation
+from csdl.core.intermediate_representation import IntermediateRepresentation
 from csdl.core.implicit_operation import ImplicitOperation
 from csdl.core.bracketed_search_operation import BracketedSearchOperation
 from csdl.core.node import Node
@@ -149,7 +149,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self.initialize()
         self.parameters.update(kwargs)
         self._optimize_ir = False
-        # self.intermediate_representation: IntermediateRepresentation | None = None
+        self.intermediate_representation: IntermediateRepresentation = IntermediateRepresentation(
+            nx.DiGraph())
         self.sources_promoted_from_submodels: Dict[str, Shape] = dict()
         """
         Map from name to shape for sources (inputs and outputs)
@@ -481,9 +482,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             copy_shape=copy_shape,
             distributed=distributed,
         )
-        # TODO: remove
-        if self._most_recently_added_subgraph is not None:
-            v.add_dependency_node(self._most_recently_added_subgraph)
+        self.intermediate_representation.unflat_graph.add_node(v)
         self.declared_variables.append(v)
         return v
 
@@ -528,7 +527,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             copy_shape=copy_shape,
             distributed=distributed,
         )
-
+        self.intermediate_representation.unflat_graph.add_node(i)
         self.inputs.append(i)
         return i
 
@@ -574,26 +573,25 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         Concatenation
             An object to use in expressions
         """
-        return self.register_output(
+        c = Concatenation(
             name,
-            Concatenation(
-                name,
-                val=check_default_val_type(val),
-                shape=shape,
-                units=units,
-                desc=desc,
-                tags=tags,
-                shape_by_conn=shape_by_conn,
-                copy_shape=copy_shape,
-                res_units=res_units,
-                lower=lower,
-                upper=upper,
-                ref=ref,
-                ref0=ref0,
-                res_ref=res_ref,
-                distributed=distributed,
-            ),
+            val=check_default_val_type(val),
+            shape=shape,
+            units=units,
+            desc=desc,
+            tags=tags,
+            shape_by_conn=shape_by_conn,
+            copy_shape=copy_shape,
+            res_units=res_units,
+            lower=lower,
+            upper=upper,
+            ref=ref,
+            ref0=ref0,
+            res_ref=res_ref,
+            distributed=distributed,
         )
+        self.intermediate_representation.unflat_graph.add_node(c)
+        self.register_output(name, c)
 
     def register_output(self, name: str, var: Output) -> Output:
         """
@@ -630,6 +628,10 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
             var.name = name
             self.registered_outputs.append(var)
+        # NOTE: var is not added to the graph because the operation that
+        # constructed the output is responsible for adding the edge
+        # between the output and the operation; adding the edge
+        # automatically adds the node to the graph.
         return var
 
     # TODO: what to do about create_model?
@@ -682,25 +684,9 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             submodel,
             promotes=promotes,
         )
+        self.intermediate_representation.unflat_graph.add_node(subgraph)
         self.subgraphs.append(subgraph)
-        if self._most_recently_added_subgraph is not None:
-            subgraph.add_dependency_node(
-                self._most_recently_added_subgraph)
-        self._most_recently_added_subgraph = subgraph
-        for r in self.registered_outputs:
-            if not isinstance(r, Subgraph):
-                self._most_recently_added_subgraph.add_dependency_node(
-                    r)
-        for i in self.inputs:
-            self._most_recently_added_subgraph.add_dependency_node(i)
 
-        # TODO: for each subgraph that does not have any registered
-        # outputs, create a registered output and add subgraph as a
-        # dependency; leave note here describing process carreid out by
-        # middle end
-        self.registered_outputs.append(subgraph)
-
-        # TODO: why return submodel?
         return submodel
 
     def _bracketed_search(
@@ -872,7 +858,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             expose=expose,
         )
 
-        return self._return_implicit_outputs(
+        outputs = self._return_implicit_outputs(
             model,
             op,
             arguments,
@@ -881,6 +867,10 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             expose,
             implicit_metadata,
         )
+        for output in outputs:
+            self.intermediate_representation.unflat_graph.add_edge(
+                output, op)
+        return outputs
 
     def _implicit_operation(
         self,
@@ -1048,7 +1038,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             expose=expose,
             defaults=new_default_values,
         )
-        return self._return_implicit_outputs(
+        outputs = self._return_implicit_outputs(
             model,
             op,
             arguments,
@@ -1057,6 +1047,10 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             expose,
             implicit_metadata,
         )
+        for output in outputs:
+            self.intermediate_representation.unflat_graph.add_edge(
+                output, op)
+        return outputs
 
     def _something(
         self,
@@ -1315,7 +1309,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         implicit_metadata: Dict[str, dict],
     ) -> Tuple[Output, ...]:
         for arg in arguments:
-            op.add_dependency_node(arg)
+            self.intermediate_representation.unflat_graph.add_edge(
+                op, arg)
 
         # create outputs of operation, establish dependencies on
         # operation, and register outputs
