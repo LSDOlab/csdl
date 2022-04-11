@@ -11,6 +11,7 @@ from csdl.utils.check_property import check_property
 from typing import List
 from copy import copy
 import numpy as np
+import networkx as nx
 
 
 def remove_op_from_dag(op: Operation):
@@ -119,12 +120,10 @@ def topological_sort(
     return sorted_nodes
 
 
-from csdl.operations.print_var import print_var
-
-
 def modified_topological_sort(
+    revgraph: nx.DiGraph,
+    fwdgraph: nx.DiGraph,
     registered_nodes: List[Output],
-    subgraphs: List[Subgraph] = [],
 ) -> List[Node]:
     """
     Perform a topological sort on the Directed Acyclic Graph (DAG).
@@ -150,24 +149,26 @@ def modified_topological_sort(
         ``Group._root``, and the last will be an ``DocInput``,
         ``Concatenation``, ``ImplicitOutput``, or ``IndepVar``.
     """
-    sorted_nodes: List[Node | print_var] = []
+    sorted_nodes: List[Node] = []
     # set of all nodes with no incoming edge (outputs and subgraphs)
     stack = list(filter(lambda x: x.dependents == [], registered_nodes))
     while stack != []:
         v = stack.pop()
-        if v.get_num_dependents() == 0:
+        n_successors = len(fwdgraph.successors(v))
+        predecessors = revgraph.predecessors(v)
+        if n_successors == 0:
             # registered outputs that have no dependent nodes
             sorted_nodes.append(v)
-            for w in v.dependencies:
+            for w in predecessors:
                 stack.append(w)
-        elif v.times_visited < v.get_num_dependents():
+        elif v.times_visited < n_successors:
             # all other nodes
             v.incr_times_visited()
-            if v.times_visited == v.get_num_dependents():
-                for w in v.dependencies:
+            if v.times_visited == n_successors:
+                for w in predecessors:
                     stack.append(w)
 
-            if v.times_visited == v.get_num_dependents():
+            if v.times_visited == n_successors:
                 sorted_nodes.append(v)
     return sorted_nodes
 
