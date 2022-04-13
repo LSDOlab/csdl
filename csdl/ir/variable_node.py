@@ -1,10 +1,9 @@
+from csdl.ir.node import Node
 from csdl.core.variable import Variable
-from typing import TypeVar
-
-V = TypeVar('V', bound=Variable)
 
 
-class VariableNode:
+class VariableNode(Node):
 
-    def __init__(self, var: V):
-        self.var: V = var
+    def __init__(self, var: Variable):
+        super().__init__()
+        self.var: Variable = var
