@@ -7,63 +7,63 @@ import pytest
 def test_connections_connect_create_outputs(backend):
     from csdl.examples.invalid.ex_connections_connect_create_outputs import example
     exec('from {} import Simulator'.format(backend))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         example(eval('Simulator'))
 
 
 def test_connections_connect_different_shapes(backend):
     from csdl.examples.invalid.ex_connections_connect_different_shapes import example
     exec('from {} import Simulator'.format(backend))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         example(eval('Simulator'))
 
 
 def test_connect_to_nothing(backend):
     from csdl.examples.invalid.ex_connections_connect_to_nothing import example
     exec('from {} import Simulator'.format(backend))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         example(eval('Simulator'))
 
 
 def test_connecting_cyclical_vars(backend):
     from csdl.examples.invalid.ex_connections_connecting_cyclical_vars import example
     exec('from {} import Simulator'.format(backend))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         example(eval('Simulator'))
 
 
 def test_connecting_two_variables(backend):
     from csdl.examples.invalid.ex_connections_connecting_two_variables import example
     exec('from {} import Simulator'.format(backend))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         example(eval('Simulator'))
 
 
 def test_connecting_unpromoted_names(backend):
     from csdl.examples.invalid.ex_connections_connecting_unpromoted_names import example
     exec('from {} import Simulator'.format(backend))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         example(eval('Simulator'))
 
 
 def test_connecting_vars_in_models(backend):
     from csdl.examples.invalid.ex_connections_connecting_vars_in_models import example
     exec('from {} import Simulator'.format(backend))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         example(eval('Simulator'))
 
 
 def test_connecting_wrong_arg_order(backend):
     from csdl.examples.invalid.ex_connections_connecting_wrong_arg_order import example
     exec('from {} import Simulator'.format(backend))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         example(eval('Simulator'))
 
 
 def test_two_way_connection(backend):
     from csdl.examples.invalid.ex_connections_two_way_connection import example
     exec('from {} import Simulator'.format(backend))
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         example(eval('Simulator'))
 
 

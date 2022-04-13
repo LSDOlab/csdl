@@ -6,7 +6,9 @@ import numpy as np
 class ExampleUnpromotedConnection(Model):
     # Connecting Unpromoted variables
     # sim['f'] = 5
-
+    """
+    :param var: f
+    """
     def define(self):
 
         a = self.create_input('a')
@@ -25,7 +27,9 @@ class ExampleUnpromotedConnection(Model):
 class ExampleConnection(Model):
     # Connecting promoted variables
     # sim['f'] = 5
-
+    """
+    :param var: f
+    """
     def define(self):
 
         a = self.create_input('a')
@@ -44,7 +48,9 @@ class ExampleConnection(Model):
 class ExampleNestedPromotedConnections(Model):
     # Connecting promoted variables
     # sim['f'] = 8
-
+    """
+    :param var: f
+    """
     def define(self):
 
         a = self.create_input('a')
@@ -88,7 +94,9 @@ class ExampleNestedPromotedConnections(Model):
 class ExampleNestedUnpromotedConnections(Model):
     # Connecting unpromoted variables
     # sim['f'] = 8
-
+    """
+    :param var: f
+    """
     def define(self):
 
         a = self.create_input('a')
@@ -132,7 +140,9 @@ class ExampleNestedUnpromotedConnections(Model):
 class ExampleNestedUnpromotedConnectionsVariation1(Model):
     # Connecting unpromoted variables. 1 Model promoted
     # sim['f'] = 8
-
+    """
+    :param var: f
+    """
     def define(self):
 
         a = self.create_input('a')
@@ -177,7 +187,9 @@ class ExampleNestedUnpromotedConnectionsVariation2(Model):
     # Connecting unpromoted variables. 2 Models promoted.
     # Note: cannot connect variables in same model
     # sim['f'] = 8
-
+    """
+    :param var: f
+    """
     def define(self):
 
         a = self.create_input('a')
@@ -252,7 +264,9 @@ class ErrorConnectingTwoVariables(Model):
 class ExampleConnectingVarsAcrossModels(Model):
     # Connecting variables accross multiple models
     # return sim['f'] = 16
-
+    """
+    :param var: f
+    """
     def define(self):
 
         a = self.create_input('a', val=3)
@@ -352,8 +366,10 @@ class ErrorTwoWayConnection(Model):
 
 class ExampleValueOverwriteConnection(Model):
     # Connection should overwrite values
-    # return sim = 6
-
+    # return sim[f] = 6
+    """
+    :param var: f
+    """
     def define(self):
 
         a = self.create_input('a', val=3)
@@ -368,7 +384,9 @@ class ExampleConnectionIgnore(Model):
     # Connections should make 'ignored' variables 'unignored'
     # ****** NOT SURE IF THIS SHOULD RETURN AN ERROR OR NOT ******
     # return sim['f'] = 15
-
+    """
+    :param var: f
+    """
     def define(self):
 
         a = self.create_input('a', val=3)
@@ -411,7 +429,9 @@ class ErrorConnectToNothing(Model):
 class ExampleConnectCreateOutputs(Model):
     # Connections should work for concatenations
     # return sim['f'] = [11, 6]
-
+    """
+    :param var: f
+    """
     def define(self):
 
         a = self.create_input('a', val=5)

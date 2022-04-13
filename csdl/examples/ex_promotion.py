@@ -40,6 +40,10 @@ class ExampleSameIOUnpromoted(Model):
     # Can create two outputs in two models with same names if unpromoted
     #  sim['b'] should be = 2
 
+    """
+    :param var: b
+    """
+
     def define(self):
 
         a1 = self.create_input('a1')
@@ -129,8 +133,11 @@ class ErrorStackedModels(Model):
 
 
 class ExampleWrongShape(csdl.Model):
-    # Promotions should not be made if two variables with different shapes
+    # Promotions should not automatically be made if two variables with different shapes
     # return sim['f'] = 4
+    """
+    :param var: f
+    """
 
     def define(self):
         import numpy as np
