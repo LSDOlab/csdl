@@ -6,7 +6,7 @@ def example(Simulator):
     
     
     class ExampleWrongShape(csdl.Model):
-        # Promotions should not be made if two variables with different shapes
+        # Promotions should not automatically be made if two variables with different shapes
         # return sim['f'] = 4
     
         def define(self):
@@ -24,5 +24,8 @@ def example(Simulator):
     
     sim = Simulator(ExampleWrongShape())
     sim.run()
+    
+    print('f', sim['f'].shape)
+    print(sim['f'])
     
     return sim

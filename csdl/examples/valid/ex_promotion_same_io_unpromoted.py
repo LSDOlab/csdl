@@ -9,6 +9,7 @@ def example(Simulator):
         # Can create two outputs in two models with same names if unpromoted
         #  sim['b'] should be = 2
     
+    
         def define(self):
     
             a1 = self.create_input('a1')
@@ -23,5 +24,8 @@ def example(Simulator):
     
     sim = Simulator(ExampleSameIOUnpromoted())
     sim.run()
+    
+    print('b', sim['b'].shape)
+    print(sim['b'])
     
     return sim
