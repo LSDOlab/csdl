@@ -3,10 +3,6 @@ from typing import Callable, Tuple, List, Dict
 from copy import deepcopy
 from csdl.utils.typehints import Shape
 
-from csdl.utils.graph import (
-    modified_topological_sort,
-    # remove_duplicate_nodes,
-)
 import networkx as nx
 from csdl.core.intermediate_representation import IntermediateRepresentation
 from csdl.core.implicit_operation import ImplicitOperation
@@ -24,113 +20,22 @@ from csdl.solvers.nonlinear_solver import NonlinearSolver
 from csdl.solvers.linear_solver import LinearSolver
 from csdl.operations.print_var import print_var
 from csdl.utils.parameters import Parameters
-from csdl.utils.set_default_values import set_default_values
 from csdl.utils.collect_terminals import collect_terminals
 from csdl.utils.check_default_val_type import check_default_val_type
 from csdl.utils.check_constraint_value_type import check_constraint_value_type
-from csdl.utils.combine_operations import combine_operation_pass
 from warnings import warn
 import numpy as np
+from csdl.core.compiler_middle_end import CompilerFrontEndAndMiddleEnd
 
 _residual = '_residual'
 
 
-# TODO: collect all inputs from all models to ensure that the entire
-# model does have inputs; issue warning if not
-def _run_front_end_and_middle_end(
-        run_front_end: Callable[['Model'], None]) -> Callable:
-    """
-    Run CSDL compiler front end (`Model.define`) and middle end.
-    The middle end is run immediately after the front end automatically.
-    `Model` inherits from the metaclass `_CompilerFrontEndMiddleEnd`.
-    The metaclass `_CompilerFrontEndMiddleEnd` replaces the
-    `Model.define` method with this function, which calls `Model.define`
-    and then performs the functions of the CSDL compiler middle end.
-    The user does not need to opt into running the middle end and cannot
-    opt out of running the middle end.
-    """
-
-    def _run_middle_end(self: 'Model'):
-        if self._defined is False:
-            run_front_end(self)
-            self._defined = True
-
-            # TODO: get name of model to make error/warning more clear
-            # check for empty model
-            if self.registered_outputs == [] and self.subgraphs == []:
-                if self.inputs == []:
-                    raise ValueError(
-                        "This model doesn't do anything. Either register outputs, or create a model hierarchy."
-                    )
-                else:
-                    warn(
-                        "This model only creates inputs for the top level model"
-                    )
-
-            # Check if all design variables are inputs
-            input_names = [inp.name for inp in self.inputs]
-            for name in self.design_variables.keys():
-                if name not in input_names:
-                    raise KeyError(
-                        "{} is not the CSDL name of an input to the model"
-                        .format(name))
-            del input_names
-
-            # Check that all outputs are defined
-            # for output in self.sorted_nodes:
-            for output in self.registered_outputs:
-                if isinstance(output, Concatenation):
-                    if output.defined is False:
-                        raise ValueError(
-                            "Output not defined for {}".format(
-                                repr(output)))
-
-            # add forward edges; nodes with fewer forward edges than
-            # dependents will be ignored when sorting nodes
-            for r in self.registered_outputs:
-                r.add_fwd_edges()
-
-            if self._optimize_ir is True:
-                # combine elementwise operations and use complex step
-                combine_operation_pass(
-                    self.registered_outputs,
-                    dict([(x.name, x)
-                          for x in self.registered_outputs]))
-
-            # Create record of all nodes in optimized IR
-            for r in self.registered_outputs:
-                self.symbol_table[r._id] = r
-
-            # Use Kahn's algorithm to sort nodes, reordering
-            # expressions without regard for the order in which user
-            # registers outputs; ensure print operations and variables
-            # are moved to end of execution order
-            self.sorted_nodes = modified_topological_sort(
-                self.registered_outputs)
-
-            # Define child models recursively
-            for subgraph in self.subgraphs:
-                subgraph.submodel.optimize_ir(self._optimize_ir)
-                subgraph.submodel.define()
-
-            _, _ = set_default_values(self)
-
-    return _run_middle_end
-
-
-class _CompilerFrontEndMiddleEnd(type):
-
-    def __new__(cls, name, bases, attr):
-        attr['define'] = _run_front_end_and_middle_end(attr['define'])
-        return super(_CompilerFrontEndMiddleEnd,
-                     cls).__new__(cls, name, bases, attr)
-
-
-class Model(metaclass=_CompilerFrontEndMiddleEnd):
+class Model(metaclass=CompilerFrontEndAndMiddleEnd):
     _count = -1
 
     def __init__(self, **kwargs):
         Model._count += 1
+        self._main = True
         self._defined = False
         self.symbol_table: dict = {}
         self.sorted_nodes: List[Node] = []
@@ -149,8 +54,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self.initialize()
         self.parameters.update(kwargs)
         self._optimize_ir = False
-        self.intermediate_representation: IntermediateRepresentation = IntermediateRepresentation(
-            nx.DiGraph())
         self.sources_promoted_from_submodels: Dict[str, Shape] = dict()
         """
         Map from name to shape for sources (inputs and outputs)
@@ -482,7 +385,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             copy_shape=copy_shape,
             distributed=distributed,
         )
-        self.intermediate_representation.unflat_graph.add_node(v)
         self.declared_variables.append(v)
         return v
 
@@ -527,7 +429,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             copy_shape=copy_shape,
             distributed=distributed,
         )
-        self.intermediate_representation.unflat_graph.add_node(i)
         self.inputs.append(i)
         return i
 
@@ -590,7 +491,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             res_ref=res_ref,
             distributed=distributed,
         )
-        self.intermediate_representation.unflat_graph.add_node(c)
         self.register_output(name, c)
 
     def register_output(self, name: str, var: Output) -> Output:
@@ -628,10 +528,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
 
             var.name = name
             self.registered_outputs.append(var)
-        # NOTE: var is not added to the graph because the operation that
-        # constructed the output is responsible for adding the edge
-        # between the output and the operation; adding the edge
-        # automatically adds the node to the graph.
         return var
 
     # TODO: what to do about create_model?
@@ -643,7 +539,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self,
         submodel,
         name: str | None = None,
-        promotes: List[str] = None,
+        promotes: List[str] | None = None,
     ) -> 'Model':
         """
         Add a submodel to the `Model`.
@@ -667,24 +563,18 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         System
             Subsystem to add to `Model`
         """
-        if not isinstance(submodel, (Model, CustomOperation)):
-            raise TypeError(
-                "{} is not a Model or CustomOperation".format(submodel))
+        if not isinstance(submodel, Model):
+            raise TypeError("{} is not a Model".format(submodel))
 
-        submodel.define()
-
-        # promote by default
-        if promotes is None:
-            promotes = ['*']
-        else:
-            promotes = promotes
+        # Prevent certain compile time functions from executing for any
+        # model other than the main model
+        submodel._main = False
 
         subgraph = Subgraph(
             name,
             submodel,
             promotes=promotes,
         )
-        self.intermediate_representation.unflat_graph.add_node(subgraph)
         self.subgraphs.append(subgraph)
 
         return submodel
@@ -858,7 +748,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             expose=expose,
         )
 
-        outputs = self._return_implicit_outputs(
+        return self._return_implicit_outputs(
             model,
             op,
             arguments,
@@ -867,10 +757,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             expose,
             implicit_metadata,
         )
-        for output in outputs:
-            self.intermediate_representation.unflat_graph.add_edge(
-                output, op)
-        return outputs
 
     def _implicit_operation(
         self,
@@ -1038,7 +924,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             expose=expose,
             defaults=new_default_values,
         )
-        outputs = self._return_implicit_outputs(
+
+        return self._return_implicit_outputs(
             model,
             op,
             arguments,
@@ -1047,10 +934,6 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             expose,
             implicit_metadata,
         )
-        for output in outputs:
-            self.intermediate_representation.unflat_graph.add_edge(
-                output, op)
-        return outputs
 
     def _something(
         self,
@@ -1309,8 +1192,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         implicit_metadata: Dict[str, dict],
     ) -> Tuple[Output, ...]:
         for arg in arguments:
-            self.intermediate_representation.unflat_graph.add_edge(
-                op, arg)
+            op.add_dependency_node(arg)
 
         # create outputs of operation, establish dependencies on
         # operation, and register outputs
