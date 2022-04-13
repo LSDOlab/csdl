@@ -121,6 +121,54 @@ def topological_sort(
 
 
 def modified_topological_sort(
+    registered_nodes: List[Output], ) -> List[Node]:
+    """
+    Perform a topological sort on the Directed Acyclic Graph (DAG).
+    If any cycles are detected when traversing the graph,
+    ``topological_sort`` will not terminate, and it will cause a memory
+    overflow.
+
+    This version of a topological sort is modified so that a node will
+    not be added to the sorted list until the node has been visited as
+    many times as its in-degree; i.e. the number of dependents.
+
+    **Parameters**
+
+    node: Variable
+        The node to treat as "root". In ``csdl.model``,
+        ``Group._root`` is treated as the "root" node.
+
+    **Returns**
+
+    list[Variable]
+        List of ``Variable`` objects sorted from root to leaf. When
+        overriding ``csdl.Model.setup``, the first node will be
+        ``Group._root``, and the last will be an ``DocInput``,
+        ``Concatenation``, ``ImplicitOutput``, or ``IndepVar``.
+    """
+    sorted_nodes: List[Node] = []
+    # set of all nodes with no incoming edge (outputs and subgraphs)
+    stack = list(filter(lambda x: x.dependents == [], registered_nodes))
+    while stack != []:
+        v = stack.pop()
+        if v.get_num_dependents() == 0:
+            # registered outputs that have no dependent nodes
+            sorted_nodes.append(v)
+            for w in v.dependencies:
+                stack.append(w)
+        elif v.times_visited < v.get_num_dependents():
+            # all other nodes
+            v.incr_times_visited()
+            if v.times_visited == v.get_num_dependents():
+                for w in v.dependencies:
+                    stack.append(w)
+
+            if v.times_visited == v.get_num_dependents():
+                sorted_nodes.append(v)
+    return sorted_nodes
+
+
+def modified_topological_sort_nx(
     revgraph: nx.DiGraph,
     fwdgraph: nx.DiGraph,
     registered_nodes: List[Output],
