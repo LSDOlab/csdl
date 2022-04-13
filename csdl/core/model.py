@@ -28,20 +28,13 @@ from csdl.utils.set_default_values import set_default_values
 from csdl.utils.collect_terminals import collect_terminals
 from csdl.utils.check_default_val_type import check_default_val_type
 from csdl.utils.check_constraint_value_type import check_constraint_value_type
+from csdl.utils.combine_operations import combine_operation_pass
 from warnings import warn
 import numpy as np
 import matplotlib.pylab as plt
 import scipy.sparse as sparse
 
 _residual = '_residual'
-
-
-def check_constraint_value_type(val):
-    if val is not None and not isinstance(val,
-                                          (int, float, np.ndarray)):
-        raise TypeError(
-            'Constraint values must be of type int, float, or np.ndarray; {} given'
-            .format(type(val)))
 
 
 class ImplicitOperationFactory(object):
@@ -134,24 +127,6 @@ def build_symbol_table(symbol_table, node):
         build_symbol_table(symbol_table, n)
 
 
-def build_clean_dag(registered_outputs):
-    symbol_table = dict()
-    for r in registered_outputs:
-        symbol_table[r._id] = r
-    for r in registered_outputs:
-        build_symbol_table(symbol_table, r)
-
-    # Clean up graph, removing dependencies that do not constrain
-    # execution order
-    for node in symbol_table.values():
-        remove_indirect_dependencies(node)
-        if isinstance(node, Operation):
-            if len(node.dependencies) < 1:
-                raise ValueError(
-                    "Operation objects must have at least one dependency"
-                )
-
-
 # TODO: collect all inputs from all models to ensure that the entire
 # model does have inputs; issue warning if not
 def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
@@ -167,8 +142,8 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
     """
     def _run_middle_end(self):
         if self._defined is False:
-            self._defined = True
             run_front_end(self)
+            self._defined = True
 
             # TODO: get name of model to make error/warning more clear
             # check for empty model
@@ -248,19 +223,14 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
             for r in self.registered_outputs:
                 r.add_fwd_edges()
 
-            # remove_duplicate_nodes(self.nodes, self.registered_outputs)
+            if self._optimize_ir is True:
+                # combine elementwise operations and use complex step
+                combine_operation_pass(
+                    self.registered_outputs,
+                    dict([(x.name, x)
+                          for x in self.registered_outputs]))
 
-            # combine elementwise operations and use complex step
-            # terminate = False
-            # if len(self.registered_outputs) == 0:
-            #     terminate = True
-            # while terminate is False:
-            #     for r in self.registered_outputs:
-            #         terminate = combine_operations(
-            #             self.registered_outputs, r)
-            #     terminate = True
-
-            # Create record of all nodes in DAG
+            # Create record of all nodes in optimized IR
             for r in self.registered_outputs:
                 self.symbol_table[r._id] = r
             for r in self.registered_outputs:
@@ -275,12 +245,8 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
 
             # Define child models recursively
             for subgraph in self.subgraphs:
-                if not isinstance(subgraph.submodel, CustomOperation):
-                    subgraph.submodel.define()
-                #     if subgraph.submodel.deterministic is False:
-                #         self.deterministic = False
-                # else:
-                #     self.deterministic = False
+                subgraph.submodel.optimize_ir(self._optimize_ir)
+                subgraph.submodel.define()
 
             _, _ = set_default_values(self)
 
@@ -312,14 +278,17 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         self.inputs: List[Input] = []
         self.declared_variables: List[DeclaredVariable] = []
         self.registered_outputs: List[Union[Output, Subgraph]] = []
-        self.objective = None
-        self.constraints = dict()
+        self.objective: Union[dict, None] = None
+        self.constraints: Dict[str, dict] = dict()
         self.design_variables: Dict[str, dict] = dict()
         self.connections: List[Tuple[str, str]] = []
         self.parameters = Parameters()
         self.initialize()
         self.parameters.update(kwargs)
-        # self.deterministic = True
+        self._optimize_ir = False
+
+    def optimize_ir(self, flag: bool = True):
+        self._optimize_ir = flag
 
     def initialize(self):
         """
@@ -403,32 +372,33 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         This is *only* used when exposing intermediate variables for a
         composite residual.
         """
-        if self._defined == True:
-            self._defined = False
-            for out in self.registered_outputs:
-                out.remove_fwd_edges()
-            for out in self.registered_outputs:
-                out.remove_dependencies()
-        from csdl.operations.passthrough import passthrough
-        se = set(expose)
-        vars = list(
-            filter(lambda x: x.name in se, self.registered_outputs))
-        for var in vars:
-            op = passthrough(var)
-            out = Output(
-                _residual + var._id,
-                val=var.val,
-                shape=var.shape,
-                units=var.units,
-                desc=var.desc,
-                tags=var.tags,
-                shape_by_conn=var.shape_by_conn,
-                copy_shape=var.copy_shape,
-                distributed=var.distributed,
-                op=op,
-            )
-            op.outs = (out, )
-            self.register_output(out.name, out)
+        if len(expose) > 0:
+            if self._defined == True:
+                self._defined = False
+                for out in self.registered_outputs:
+                    out.remove_fwd_edges()
+                for out in self.registered_outputs:
+                    out.remove_dependencies()
+            from csdl.operations.passthrough import passthrough
+            se = set(expose)
+            vars = list(
+                filter(lambda x: x.name in se, self.registered_outputs))
+            for var in vars:
+                op = passthrough(var)
+                out = Output(
+                    _residual + var._id,
+                    val=var.val,
+                    shape=var.shape,
+                    units=var.units,
+                    desc=var.desc,
+                    tags=var.tags,
+                    shape_by_conn=var.shape_by_conn,
+                    copy_shape=var.copy_shape,
+                    distributed=var.distributed,
+                    op=op,
+                )
+                op.outs = (out, )
+                self.register_output(out.name, out)
         self.define()
 
     def print_var(self, var: Variable):
@@ -1169,7 +1139,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             residuals,
             expose,
         )
-        new_defaults: Dict[str, np.ndarray] = dict()
+        new_default_values: Dict[str, np.ndarray] = dict()
         for k, v in defaults.items():
             if k not in states:
                 raise ValueError(
@@ -1188,7 +1158,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
                         raise ValueError(
                             "Shape of value must match shape of state {}; {} != {}"
                             .format(k, f[0].shape, v.shape))
-                new_defaults[k] = np.array(v) * np.ones(f[0].shape)
+                new_default_values[k] = np.array(v) * np.ones(
+                    f[0].shape)
 
         # create operation, establish dependencies on arguments
         op = ImplicitOperation(
@@ -1199,7 +1170,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             res_out_map=res_out_map,
             out_in_map=out_in_map,
             expose=expose,
-            defaults=new_defaults,
+            defaults=new_default_values,
         )
         return self._return_implicit_outputs(
             model,
@@ -1226,6 +1197,8 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         # self.deterministic = False
         if not isinstance(model, (Model, )):
             raise TypeError("{} is not a Model".format(model))
+        # if model._defined is False:
+        #     model.define()
 
         # check for duplicate arguments, states, and residuals
         arg_names = [var.name for var in arguments]
@@ -1516,6 +1489,7 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             return outs[0]
 
     def create_implicit_operation(self, model):
+        model.optimize_ir(self._optimize_ir)
         return ImplicitOperationFactory(self, model)
 
     def __enter__(self):
@@ -1549,10 +1523,13 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
         finally:
             self.add(m, name=name)
 
-    def visualize_sparsity(self):
+    def visualize_sparsity(self, recursive: bool = False):
         """
         Visualize the sparsity pattern of jacobian for this model
         """
+        print(
+            "Visualizing sparsity pattern for intermediate representation of model {}"
+            .format(type(self).__name__))
         self.define()
         nodes = self.sorted_nodes
         n = len(nodes)
@@ -1566,6 +1543,11 @@ class Model(metaclass=_CompilerFrontEndMiddleEnd):
             ax.spines[axis].set_linewidth(2)
 
         plt.show()
+
+        if recursive is True:
+            for node in nodes:
+                if isinstance(node, ImplicitOperation):
+                    node._model.visualize_sparsity(recursive=recursive)
 
     def visualize_graph(self):
         import networkx as nx

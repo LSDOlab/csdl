@@ -5,6 +5,7 @@ import numpy as np
 
 
 class decompose(StandardOperation):
+
     def __init__(self, *args, **kwargs):
         self.nargs = 1
         self.nouts = 1
@@ -12,4 +13,3 @@ class decompose(StandardOperation):
         self.outs = []
         self._key_out_pairs: Dict[Tuple[Tuple[int]], Output] = dict()
         self.src_indices: Dict[Output, np.ndarray] = dict()
-        self.properties['iterative'] = False

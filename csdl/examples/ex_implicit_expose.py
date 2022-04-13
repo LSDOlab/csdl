@@ -1,4 +1,6 @@
+import imp
 from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+from csdl.examples.models.fixed_point import FixedPoint2Expose
 import numpy as np
 
 
@@ -94,10 +96,10 @@ class ExampleWithSubsystemsWithExpose(Model):
         b = m3.declare_variable('b')
         c = m3.declare_variable('c')
         r = m3.declare_variable('r')
-        y = m3.declare_variable('y')
-        m3.register_output('z', a * y**2 + b * y + c - r)
+        x = m3.declare_variable('x')
+        m3.register_output('y', a * x**2 + b * x + c - r)
         m3.register_output('t3', a + b + c - r)
-        m3.register_output('t4', y**2)
+        m3.register_output('t4', x**2)
 
         solve_fixed_point_iteration = self.create_implicit_operation(m2)
         solve_fixed_point_iteration.declare_state('a', residual='r')
@@ -107,7 +109,7 @@ class ExampleWithSubsystemsWithExpose(Model):
 
         solve_quadratic = self.create_implicit_operation(m3)
         b = self.create_input('b', val=-4)
-        solve_quadratic.declare_state('y', residual='z')
+        solve_quadratic.declare_state('x', residual='y')
         solve_quadratic.nonlinear_solver = NewtonSolver(
             solve_subsystems=False,
             maxiter=100,
@@ -116,7 +118,7 @@ class ExampleWithSubsystemsWithExpose(Model):
         solve_quadratic.linear_solver = ScipyKrylov()
 
         c = self.declare_variable('c', val=18)
-        y, t3, t4 = solve_quadratic(a, b, c, r, expose=['t3', 't4'])
+        x, t3, t4 = solve_quadratic(a, b, c, r, expose=['t3', 't4'])
 
 
 class ExampleMultipleResidualsWithExpose(Model):
@@ -154,6 +156,148 @@ class ExampleMultipleResidualsWithExpose(Model):
         solve_multiple_implicit.nonlinear_solver = NewtonSolver(
             solve_subsystems=False)
 
+        x, y, t1, t2, t3, t4 = solve_multiple_implicit(
+            r,
+            a,
+            b,
+            c,
+            expose=['t1', 't2', 't3', 't4'],
+        )
+
+
+# ----------------------------------------------------------------------
+
+
+class ExampleApplyNonlinearWithExposeDefineModelInline(Model):
+    """
+    :param var: x
+    :param var: t
+    """
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
+
+        solve_quadratic = self.create_implicit_operation(
+            QuadraticFunctionExpose(shape=(1, )))
+        solve_quadratic.declare_state('x', residual='y')
+        solve_quadratic.nonlinear_solver = NewtonSolver(
+            solve_subsystems=False,
+            maxiter=100,
+            iprint=False,
+        )
+        solve_quadratic.linear_solver = ScipyKrylov()
+
+        a = self.declare_variable('a', val=1)
+        b = self.declare_variable('b', val=-4)
+        c = self.declare_variable('c', val=3)
+        x, t = solve_quadratic(a, b, c, expose=['t'])
+
+
+class ExampleFixedPointIterationWithExposeDefineModelInline(Model):
+    """
+    :param var: a
+    :param var: b
+    :param var: c
+    """
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.fixed_point import FixedPoint1Expose, FixedPoint2Expose, FixedPoint3Expose
+
+        solve_fixed_point_iteration1 = self.create_implicit_operation(
+            FixedPoint1Expose(name='a'))
+        solve_fixed_point_iteration1.declare_state('a', residual='r')
+        solve_fixed_point_iteration1.nonlinear_solver = NonlinearBlockGS(
+            maxiter=100)
+        a, t1 = solve_fixed_point_iteration1(expose=['t1'])
+
+        solve_fixed_point_iteration2 = self.create_implicit_operation(
+            FixedPoint2Expose(name='b'))
+        solve_fixed_point_iteration2.declare_state('b', residual='r')
+        solve_fixed_point_iteration2.nonlinear_solver = NonlinearBlockGS(
+            maxiter=100)
+        b, t2 = solve_fixed_point_iteration2(expose=['t2'])
+
+        solve_fixed_point_iteration3 = self.create_implicit_operation(
+            FixedPoint3Expose(name='c'))
+        solve_fixed_point_iteration3.declare_state('c', residual='r')
+        solve_fixed_point_iteration3.nonlinear_solver = NonlinearBlockGS(
+            maxiter=100)
+        c = solve_fixed_point_iteration3()
+
+
+class ExampleWithSubsystemsWithExposeDefineModelInline(Model):
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.simple_add import SimpleAdd
+        from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
+        from csdl.examples.models.fixed_point import FixedPoint2Expose
+
+        self.add(SimpleAdd(p=7, q=8), name='R')
+        r = self.declare_variable('r')
+
+        solve_fixed_point_iteration = self.create_implicit_operation(
+            FixedPoint2Expose(name='a'))
+        solve_fixed_point_iteration.declare_state('a', residual='r')
+        solve_fixed_point_iteration.nonlinear_solver = NonlinearBlockGS(
+            maxiter=100)
+        a, t2 = solve_fixed_point_iteration(expose=['t2'])
+
+        solve_quadratic = self.create_implicit_operation(
+            QuadraticFunctionExpose(shape=(1, )))
+        b = self.create_input('b', val=-4)
+        solve_quadratic.declare_state('x', residual='y')
+        solve_quadratic.nonlinear_solver = NewtonSolver(
+            solve_subsystems=False,
+            maxiter=100,
+            iprint=False,
+        )
+        solve_quadratic.linear_solver = ScipyKrylov()
+
+        c = self.declare_variable('c', val=18)
+        y, t3, t4 = solve_quadratic(a, b, c, r, expose=['t3', 't4'])
+
+
+class ExampleMultipleResidualsWithExposeDefineModelInline(Model):
+    """
+    :param var: x
+    :param var: y
+    :param var: t1
+    :param var: t2
+    :param var: t3
+    :param var: t4
+    """
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.circle_parabola import CircleParabolaExpose
+
+        solve_multiple_implicit = self.create_implicit_operation(
+            CircleParabolaExpose())
+        solve_multiple_implicit.declare_state('x', residual='rx')
+        solve_multiple_implicit.declare_state('y', residual='ry')
+        solve_multiple_implicit.linear_solver = ScipyKrylov()
+        solve_multiple_implicit.nonlinear_solver = NewtonSolver(
+            solve_subsystems=False)
+
+        r = self.declare_variable('r', val=2)
+        a = self.declare_variable('a', val=1)
+        b = self.declare_variable('b', val=-3)
+        c = self.declare_variable('c', val=2)
         x, y, t1, t2, t3, t4 = solve_multiple_implicit(
             r,
             a,

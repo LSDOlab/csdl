@@ -1,6 +1,14 @@
 def example(Simulator):
+    import imp
     from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl.examples.models.fixed_point import FixedPoint2Expose
     import numpy as np
+    from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
+    from csdl.examples.models.fixed_point import FixedPoint1Expose, FixedPoint2Expose, FixedPoint3Expose
+    from csdl.examples.models.simple_add import SimpleAdd
+    from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
+    from csdl.examples.models.fixed_point import FixedPoint2Expose
+    from csdl.examples.models.circle_parabola import CircleParabolaExpose
     
     
     class ExampleFixedPointIterationWithExpose(Model):

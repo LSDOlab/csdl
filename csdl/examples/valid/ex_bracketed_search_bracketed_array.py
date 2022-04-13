@@ -1,19 +1,26 @@
 def example(Simulator):
     from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     import numpy as np
+    from csdl.examples.models.quadratic_function import QuadraticFunction
+    from csdl.examples.models.quadratic_function import QuadraticFunction
+    from csdl.examples.models.quadratic_wih_extra_term import QuadraticWithExtraTerm
+    from csdl.examples.models.simple_add import SimpleAdd
+    from csdl.examples.models.fixed_point import FixedPoint2
+    from csdl.examples.models.quadratic_wih_extra_term import QuadraticWithExtraTerm
+    from csdl.examples.models.simple_add import SimpleAdd
+    from csdl.examples.models.fixed_point import FixedPoint2
     
     
     class ExampleBracketedArray(Model):
         def define(self):
-            model = Model()
-            a = model.declare_variable('a', shape=(2, ))
-            b = model.declare_variable('b', shape=(2, ))
-            c = model.declare_variable('c', shape=(2, ))
-            x = model.declare_variable('x', shape=(2, ))
-            y = a * x**2 + b * x + c
-            model.register_output('y', y)
-    
-            solve_quadratic = self.create_implicit_operation(model)
+            # NOTE: Importing definitions within a method is bad practice.
+            # This is only done here to automate example/test case
+            # generation more easily.
+            # When defining CSDL models, please put the import statements at
+            # the top of your Python file(s).
+            from csdl.examples.models.quadratic_function import QuadraticFunction
+            solve_quadratic = self.create_implicit_operation(
+                QuadraticFunction(shape=(2, )))
             solve_quadratic.declare_state('x',
                                           residual='y',
                                           bracket=(
@@ -21,9 +28,9 @@ def example(Simulator):
                                               np.array([2, np.pi], ),
                                           ))
     
-            a = model.declare_variable('a', val=[1, -1])
-            b = model.declare_variable('b', val=[-4, 4])
-            c = model.declare_variable('c', val=[3, -3])
+            a = self.declare_variable('a', val=[1, -1])
+            b = self.declare_variable('b', val=[-4, 4])
+            c = self.declare_variable('c', val=[3, -3])
             x = solve_quadratic(a, b, c)
     
     

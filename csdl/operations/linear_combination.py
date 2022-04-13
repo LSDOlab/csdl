@@ -6,6 +6,7 @@ from csdl.utils.gen_hex_name import gen_hex_name
 
 
 class linear_combination(StandardOperation):
+
     def __init__(self, *args, constant, coeffs, **kwargs):
         self.nouts = 1
         self.nargs = None
@@ -16,7 +17,6 @@ class linear_combination(StandardOperation):
                 raise ValueError(
                     "Shapes of inputs to linear_combination do not match"
                 )
-        self.properties['iterative'] = False
         self.properties['elementwise'] = True
 
         self.literals['constant'] = constant
