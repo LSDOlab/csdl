@@ -1,28 +1,27 @@
 def example(Simulator):
     from csdl import Model
-    import numpy as np
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.connect_within import ConnectWithin
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.subtraction import SubtractionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionVectorFunction
-    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.subtraction import SubtractionVectorFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.concatenate import ConcatenateFunction
-    from csdl.examples.models.concatenate import ConcatenateFunction
-    from csdl.examples.models.addition import ParallelAdditionFunction
+    from csdl.examples.models.subtraction import SubtractionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     
     
-    class ExampleValueOverwriteConnection(Model):
-        # Connection should overwrite values
-        # return sim['y'] = 3
+    class ErrorWrongShapeTwoModels(Model):
+        # Promotions should not be made if two variables with different shapes
+        # return error
     
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
@@ -31,21 +30,25 @@ def example(Simulator):
             # When defining CSDL models, please put the import statements at
             # the top of your Python file(s).
             from csdl.examples.models.addition import AdditionFunction
+            from csdl.examples.models.subtraction import SubtractionVectorFunction
     
-            a = self.create_input('a')
+            a = self.create_input('a', val=3.0)
     
-            self.add(AdditionFunction(), name='A')
+            input_dict = {}
+            input_dict['name'] = 'a'
+            # add two models where the second has the wrong shape
+            self.add(AdditionFunction(),
+                     name='model',
+                     promotes=['a', 'b', 'f'])
     
-            f1 = self.declare_variable('f1', val=10)
-            self.register_output('y', a + f1)
+            self.add(SubtractionVectorFunction(),
+                     name='model2',
+                     promotes=['f', 'c', 'd'])  # promoting f will throw an error for shape mismatch
     
-            self.connect('f', 'f1')  # connect to 'f' to 'f1', value of 10 should be overwritten.
+            d = self.declare_variable('d')
+            self.register_output('y', d+a)
     
     
-    sim = Simulator(ExampleValueOverwriteConnection())
+    sim = Simulator(ErrorWrongShapeTwoModels())
     sim.run()
     
-    print('y', sim['y'].shape)
-    print(sim['y'])
-    
-    return sim

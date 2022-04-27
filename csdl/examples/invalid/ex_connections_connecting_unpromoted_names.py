@@ -20,9 +20,9 @@ def example(Simulator):
     from csdl.examples.models.addition import AdditionFunction
     
     
-    class ExampleConnectCreateOutputs(Model):
-        # Connections should work for concatenations
-        # return sim['y'] = np.array([[11.], [6.]])
+    class ErrorConnectingUnpromotedNames(Model):
+        # Cannot make connections using unpromoted names
+        # return error
     
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
@@ -30,24 +30,15 @@ def example(Simulator):
             # generation more easily.
             # When defining CSDL models, please put the import statements at
             # the top of your Python file(s).
-            from csdl.examples.models.concatenate import ConcatenateFunction
+            from csdl.examples.models.addition import AdditionFunction
     
-            a = self.create_input('a', val=5)
+            c = self.create_input('c', val=3)
     
-            self.add(ConcatenateFunction())
+            self.add(AdditionFunction(), name='m')
     
-            d = self.declare_variable('d', shape=(2,))
-            self.register_output('y', d + np.ones((2,)))
-    
-            self.connect('a', 'b')
-            self.connect('a', 'e')
-            self.connect('c', 'd')  # We can issue connections from concatenations
+            self.connect('c', 'm.b')  # should be self.connect('c', 'b')
     
     
-    sim = Simulator(ExampleConnectCreateOutputs())
+    sim = Simulator(ErrorConnectingUnpromotedNames())
     sim.run()
     
-    print('y', sim['y'].shape)
-    print(sim['y'])
-    
-    return sim

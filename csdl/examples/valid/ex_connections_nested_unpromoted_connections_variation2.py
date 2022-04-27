@@ -1,18 +1,35 @@
 def example(Simulator):
     from csdl import Model
-    import csdl
     import numpy as np
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.connect_within import ConnectWithin
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionVectorFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.concatenate import ConcatenateFunction
+    from csdl.examples.models.concatenate import ConcatenateFunction
+    from csdl.examples.models.addition import ParallelAdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
     
     
     class ExampleNestedUnpromotedConnectionsVariation2(Model):
         # Connecting unpromoted variables. 2 Models promoted.
         # Note: cannot connect variables in same model
-        # sim['f'] = 8
+        # sim['y'] = 8
     
         def define(self):
     
             a = self.create_input('a')
     
+            # Create 4 models each with 1 input and 1 output
             m1 = Model()
             a1 = m1.create_input('a1')
     
@@ -25,6 +42,7 @@ def example(Simulator):
             m4 = Model()
             a4 = m4.create_input('a4')
     
+            # Add the 4 models nested within eachother.
             m4.register_output('b4', a4 + 3)
     
             m3.add(m4, name='m4', promotes=[])
@@ -42,13 +60,19 @@ def example(Simulator):
             self.add(m1, name='m1')
             b1 = self.declare_variable('b1_connect')
     
+            # Issue connections between variables in each model from the parent model.
+            # Be careful to use the correct unpromoted/promoted names.
+            # Variable b3 is automatically promoted and connected.
             self.connect('b1', 'b1_connect')
             self.connect('m2.b2', 'b2_connect')
             self.connect('m2.m4.b4', 'm2.b4_connect')
-            self.register_output('f', a + b1)
+            self.register_output('y', a + b1)
     
     
     sim = Simulator(ExampleNestedUnpromotedConnectionsVariation2())
     sim.run()
+    
+    print('y', sim['y'].shape)
+    print(sim['y'])
     
     return sim

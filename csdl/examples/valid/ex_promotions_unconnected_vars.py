@@ -1,28 +1,27 @@
 def example(Simulator):
     from csdl import Model
-    import numpy as np
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.connect_within import ConnectWithin
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.subtraction import SubtractionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionVectorFunction
-    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.subtraction import SubtractionVectorFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.concatenate import ConcatenateFunction
-    from csdl.examples.models.concatenate import ConcatenateFunction
-    from csdl.examples.models.addition import ParallelAdditionFunction
+    from csdl.examples.models.subtraction import SubtractionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     
     
-    class ExampleConnectCreateOutputs(Model):
-        # Connections should work for concatenations
-        # return sim['y'] = np.array([[11.], [6.]])
+    class ExampleUnconnectedVars(Model):
+        # Declared variable with same local name should not be connected if unpromoted
+        # sim['y'] should be = 2
     
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
@@ -30,21 +29,19 @@ def example(Simulator):
             # generation more easily.
             # When defining CSDL models, please put the import statements at
             # the top of your Python file(s).
-            from csdl.examples.models.concatenate import ConcatenateFunction
+            from csdl.examples.models.addition import AdditionFunction
     
-            a = self.create_input('a', val=5)
+            self.add(
+                AdditionFunction(),
+                promotes=[],
+                name='model')
     
-            self.add(ConcatenateFunction())
+            f = self.declare_variable('f')
     
-            d = self.declare_variable('d', shape=(2,))
-            self.register_output('y', d + np.ones((2,)))
-    
-            self.connect('a', 'b')
-            self.connect('a', 'e')
-            self.connect('c', 'd')  # We can issue connections from concatenations
+            self.register_output('y', f+1.0)
     
     
-    sim = Simulator(ExampleConnectCreateOutputs())
+    sim = Simulator(ExampleUnconnectedVars())
     sim.run()
     
     print('y', sim['y'].shape)

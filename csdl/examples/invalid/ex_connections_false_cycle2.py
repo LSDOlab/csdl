@@ -20,9 +20,10 @@ def example(Simulator):
     from csdl.examples.models.addition import AdditionFunction
     
     
-    class ExampleConnectCreateOutputs(Model):
-        # Connections should work for concatenations
-        # return sim['y'] = np.array([[11.], [6.]])
+    class ErrorFalseCycle2(Model):
+        # Adding variables and connecting them in a certain way may create false cycles
+        # ***NOT SURE IF ERROR OR NOT?***
+        # return error
     
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
@@ -30,24 +31,16 @@ def example(Simulator):
             # generation more easily.
             # When defining CSDL models, please put the import statements at
             # the top of your Python file(s).
-            from csdl.examples.models.concatenate import ConcatenateFunction
+            from csdl.examples.models.addition import AdditionFunction
     
-            a = self.create_input('a', val=5)
+            self.add(AdditionFunction(), name='model1', promotes=[])
+            self.add(AdditionFunction(), name='model2', promotes=[])
     
-            self.add(ConcatenateFunction())
-    
-            d = self.declare_variable('d', shape=(2,))
-            self.register_output('y', d + np.ones((2,)))
-    
-            self.connect('a', 'b')
-            self.connect('a', 'e')
-            self.connect('c', 'd')  # We can issue connections from concatenations
+            # This looks like a cycle because 'model2.f' is registered as an output after 'model1.f'.
+            # However, these calculations can be done explicitly
+            self.connect('model2.f', 'model1.a')
     
     
-    sim = Simulator(ExampleConnectCreateOutputs())
+    sim = Simulator(ErrorFalseCycle2())
     sim.run()
     
-    print('y', sim['y'].shape)
-    print(sim['y'])
-    
-    return sim

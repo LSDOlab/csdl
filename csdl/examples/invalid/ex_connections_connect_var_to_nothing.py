@@ -20,9 +20,9 @@ def example(Simulator):
     from csdl.examples.models.addition import AdditionFunction
     
     
-    class ExampleConnectCreateOutputs(Model):
-        # Connections should work for concatenations
-        # return sim['y'] = np.array([[11.], [6.]])
+    class ErrorConnectVarToNothing(Model):
+        # Connections can't be made between variables not existing
+        # return error
     
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
@@ -30,24 +30,19 @@ def example(Simulator):
             # generation more easily.
             # When defining CSDL models, please put the import statements at
             # the top of your Python file(s).
-            from csdl.examples.models.concatenate import ConcatenateFunction
+            from csdl.examples.models.addition import AdditionFunction
     
-            a = self.create_input('a', val=5)
+            a = self.create_input('a')
     
-            self.add(ConcatenateFunction())
+            self.add(AdditionFunction(), name='A')
     
-            d = self.declare_variable('d', shape=(2,))
-            self.register_output('y', d + np.ones((2,)))
+            f1 = self.declare_variable('f1')
+            self.register_output('y', a + f1)
+            # Here we are connecting output f from model A to f1
+            # f1 will have a value of 2.
+            self.connect('f', 'f2')  # Connecting non-existing variables will result in an error.
     
-            self.connect('a', 'b')
-            self.connect('a', 'e')
-            self.connect('c', 'd')  # We can issue connections from concatenations
     
-    
-    sim = Simulator(ExampleConnectCreateOutputs())
+    sim = Simulator(ErrorConnectVarToNothing())
     sim.run()
     
-    print('y', sim['y'].shape)
-    print(sim['y'])
-    
-    return sim

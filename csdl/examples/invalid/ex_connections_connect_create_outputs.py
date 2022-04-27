@@ -20,46 +20,30 @@ def example(Simulator):
     from csdl.examples.models.addition import AdditionFunction
     
     
-    class ExampleConnectingVarsAcrossModels(Model):
-        # Connecting variables accross multiple models
-        # return sim['y'] = 16
+    class ErrorConnectCreateOutputs(Model):
+        # Connections should not work for concatenations if wrong shape
+        # return error
     
         def define(self):
+            # NOTE: Importing definitions within a method is bad practice.
+            # This is only done here to automate example/test case
+            # generation more easily.
+            # When defining CSDL models, please put the import statements at
+            # the top of your Python file(s).
+            from csdl.examples.models.concatenate import ConcatenateFunction
     
-            a = self.create_input('a', val=3)
+            a = self.create_input('a', val=5)
     
-            # Add three models sequentially
-            m1 = Model()
-            a1 = m1.declare_variable('a1')  # connect to a
-            m1.register_output('b1', a1+3.0)
-            self.add(m1)
+            self.add(ConcatenateFunction())
     
-            m2 = Model()
-            a2 = m2.declare_variable('a2')  # connect to b1
-            m2.register_output('b2', a2+3.0)
-            self.add(m2)
+            d = self.declare_variable('d')
+            self.register_output('f', d + np.ones((2,)))
     
-            m3 = Model()
-            a3 = m3.declare_variable('a3')  # connect to b1
-            a4 = m3.declare_variable('a4')  # connect to b2
-            m3.register_output('b3', a3+a4)
-            self.add(m3)
-    
-            b4 = self.declare_variable('b4')  # connect to b3
-            self.register_output('y', b4+1)
-    
-            # We can connect variables between models sequentially
-            self.connect('a', 'a1')
-            self.connect('b1', 'a2')
-            self.connect('b1', 'a3')
-            self.connect('b2', 'a4')
-            self.connect('b3', 'b4')
+            self.connect('a', 'b')
+            self.connect('a', 'e')
+            self.connect('c', 'd')  # We cannot issue connections from concatenations to a variable with the wrong shape
     
     
-    sim = Simulator(ExampleConnectingVarsAcrossModels())
+    sim = Simulator(ErrorConnectCreateOutputs())
     sim.run()
     
-    print('y', sim['y'].shape)
-    print(sim['y'])
-    
-    return sim

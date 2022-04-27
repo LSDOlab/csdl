@@ -20,46 +20,28 @@ def example(Simulator):
     from csdl.examples.models.addition import AdditionFunction
     
     
-    class ExampleConnectingVarsAcrossModels(Model):
-        # Connecting variables accross multiple models
-        # return sim['y'] = 16
+    class ErrorConnectingCyclicalVars(Model):
+        # Cannot make connections that make cycles
+        # return error
     
         def define(self):
+            # NOTE: Importing definitions within a method is bad practice.
+            # This is only done here to automate example/test case
+            # generation more easily.
+            # When defining CSDL models, please put the import statements at
+            # the top of your Python file(s).
+            from csdl.examples.models.addition import AdditionFunction
     
-            a = self.create_input('a', val=3)
+            a = self.create_input('a')
     
-            # Add three models sequentially
-            m1 = Model()
-            a1 = m1.declare_variable('a1')  # connect to a
-            m1.register_output('b1', a1+3.0)
-            self.add(m1)
+            self.add(AdditionFunction(), name='A')
     
-            m2 = Model()
-            a2 = m2.declare_variable('a2')  # connect to b1
-            m2.register_output('b2', a2+3.0)
-            self.add(m2)
+            f = self.declare_variable('f')
+            self.register_output('y', a + f)  # connect to b
     
-            m3 = Model()
-            a3 = m3.declare_variable('a3')  # connect to b1
-            a4 = m3.declare_variable('a4')  # connect to b2
-            m3.register_output('b3', a3+a4)
-            self.add(m3)
-    
-            b4 = self.declare_variable('b4')  # connect to b3
-            self.register_output('y', b4+1)
-    
-            # We can connect variables between models sequentially
-            self.connect('a', 'a1')
-            self.connect('b1', 'a2')
-            self.connect('b1', 'a3')
-            self.connect('b2', 'a4')
-            self.connect('b3', 'b4')
+            self.connect('y', 'b')  # connections creating a cycle will return an error
     
     
-    sim = Simulator(ExampleConnectingVarsAcrossModels())
+    sim = Simulator(ErrorConnectingCyclicalVars())
     sim.run()
     
-    print('y', sim['y'].shape)
-    print(sim['y'])
-    
-    return sim
