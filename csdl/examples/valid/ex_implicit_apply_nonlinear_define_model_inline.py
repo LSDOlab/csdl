@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl import Model, GraphRepresentation, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     import numpy as np
     from csdl.examples.models.quadratic_function import QuadraticFunction
     from csdl.examples.models.fixed_point import FixedPoint1, FixedPoint2, FixedPoint3
@@ -30,7 +30,8 @@ def example(Simulator):
             x = solve_quadratic(a, b, c)
     
     
-    sim = Simulator(ExampleApplyNonlinearDefineModelInline())
+    rep = GraphRepresentation(ExampleApplyNonlinearDefineModelInline())
+    sim = Simulator(rep)
     sim.run()
     
-    return sim
+    return sim, rep

@@ -5,7 +5,7 @@ import pytest
 def test_vector_vector_inner(backend):
     from csdl.examples.valid.ex_inner_vector_vector import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 3
 
@@ -30,7 +30,7 @@ def test_vector_vector_inner(backend):
 def test_tensor_vector_inner(backend):
     from csdl.examples.valid.ex_inner_tensor_vector import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 3
     n = 4
@@ -66,7 +66,7 @@ def test_tensor_vector_inner(backend):
 def test_tensor_tensor_inner(backend):
     from csdl.examples.valid.ex_inner_tensor_tensor import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 3
     n = 4

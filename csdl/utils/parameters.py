@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 """Define the OptionsDictionary class."""
 
 _UNDEFINED = object()
@@ -404,7 +406,7 @@ class Parameters(object):
         if name in self._dict:
             del self._dict[name]
 
-    def update(self, in_dict):
+    def update(self, in_dict: Dict[str, Any]):
         """
         Update the internal dictionary with the given one.
 

@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -15,7 +15,8 @@ def example(Simulator):
                                                              axis='x'))
     
     
-    sim = Simulator(ExampleScalarRotX())
+    rep = GraphRepresentation(ExampleScalarRotX())
+    sim = Simulator(rep)
     sim.run()
     
     print('scalar', sim['scalar'].shape)
@@ -23,4 +24,4 @@ def example(Simulator):
     print('scalar_Rot_x', sim['scalar_Rot_x'].shape)
     print(sim['scalar_Rot_x'])
     
-    return sim
+    return sim, rep

@@ -1,4 +1,4 @@
-from csdl import Model
+from csdl import Model, GraphRepresentation
 import csdl
 import numpy as np
 

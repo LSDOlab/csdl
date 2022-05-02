@@ -1,6 +1,6 @@
 def example(Simulator):
     import numpy as np
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     
     
@@ -25,7 +25,8 @@ def example(Simulator):
                 ))
     
     
-    sim = Simulator(ExampleOuterTensorVector())
+    rep = GraphRepresentation(ExampleOuterTensorVector())
+    sim = Simulator(rep)
     sim.run()
     
     print('a', sim['a'].shape)
@@ -35,4 +36,4 @@ def example(Simulator):
     print('einsum_outer2', sim['einsum_outer2'].shape)
     print(sim['einsum_outer2'])
     
-    return sim
+    return sim, rep

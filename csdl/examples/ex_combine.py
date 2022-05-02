@@ -1,4 +1,4 @@
-from csdl import Model
+from csdl import Model, GraphRepresentation
 import csdl
 import numpy as np
 
@@ -8,8 +8,8 @@ class ExampleSimple(Model):
     :param var: quarter_chord
     :param var: widths
     """
-    def define(self):
 
+    def define(self):
         # add_input
         nx = 3
         ny = 4

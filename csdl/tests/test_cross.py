@@ -5,7 +5,7 @@ import pytest
 def test_vector_vector_cross(backend):
     from csdl.examples.valid.ex_cross_vector_vector import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     vec1 = np.arange(3)
     vec2 = np.arange(3) + 1
@@ -23,7 +23,7 @@ def test_vector_vector_cross(backend):
 def test_cross(backend):
     from csdl.examples.valid.ex_cross_tensor_tensor import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     shape = (2, 5, 4, 3)
     num_elements = np.prod(shape)
@@ -45,11 +45,11 @@ def test_cross_different_shapes(backend):
     from csdl.examples.invalid.ex_cross_different_shapes import example
     exec('from {} import Simulator'.format(backend))
     with pytest.raises(ValueError):
-        sim = example(eval('Simulator'))
+        sim, rep = example(eval('Simulator'))
 
 
 def test_cross_incorrect_axis_index(backend):
     from csdl.examples.invalid.ex_cross_incorrect_axis_index import example
     exec('from {} import Simulator'.format(backend))
     with pytest.raises(ValueError):
-        sim = example(eval('Simulator'))
+        sim, rep = example(eval('Simulator'))

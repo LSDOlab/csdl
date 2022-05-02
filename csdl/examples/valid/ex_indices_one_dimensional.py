@@ -1,7 +1,7 @@
 def example(Simulator):
     import numpy as np
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ExampleOneDimensional(Model):
@@ -32,7 +32,8 @@ def example(Simulator):
             self.register_output('x_last', x[-1])
     
     
-    sim = Simulator(ExampleOneDimensional())
+    rep = GraphRepresentation(ExampleOneDimensional())
+    sim = Simulator(rep)
     sim.run()
     
     print('x', sim['x'].shape)
@@ -48,4 +49,4 @@ def example(Simulator):
     print('x2_4', sim['x2_4'].shape)
     print(sim['x2_4'])
     
-    return sim
+    return sim, rep

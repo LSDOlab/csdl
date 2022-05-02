@@ -1,7 +1,8 @@
 def example(Simulator):
-    from csdl import Model, NonlinearBlockGS
+    from csdl import Model, GraphRepresentation, NonlinearBlockGS
     import csdl
     import numpy as np
+    from csdl.examples.models.product import Product
     
     
     class ExampleUnary(Model):
@@ -28,7 +29,8 @@ def example(Simulator):
             self.register_output('tanh', csdl.tanh(x))
     
     
-    sim = Simulator(ExampleUnary())
+    rep = GraphRepresentation(ExampleUnary())
+    sim = Simulator(rep)
     sim.run()
     
-    return sim
+    return sim, rep

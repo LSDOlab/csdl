@@ -1,5 +1,5 @@
 import imp
-from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+from csdl import Model, GraphRepresentation, ScipyKrylov, NewtonSolver, NonlinearBlockGS
 from csdl.examples.models.fixed_point import FixedPoint2Expose
 import numpy as np
 

@@ -30,8 +30,8 @@ def __init__(parent, model)
 ### declare\_state
 
 ```python
-def declare_state(state: str, bracket: Tuple[Union[int, float, np.ndarray],
-                       Union[int, float, np.ndarray]] = None, *, residual: str)
+def declare_state(state: str, bracket: Tuple[int | float | np.ndarray,
+                       int | float | np.ndarray] = None, *, residual: str)
 ```
 
 <a id="csdl.core.model.ImplicitOperationFactory.__call__"></a>
@@ -39,7 +39,7 @@ def declare_state(state: str, bracket: Tuple[Union[int, float, np.ndarray],
 ### \_\_call\_\_
 
 ```python
-def __call__(*arguments: Variable, *, expose: List[str] = [], defaults: Dict[str, Union[int, float, np.ndarray]] = dict())
+def __call__(*arguments: Variable, *, expose: List[str] = [], defaults: Dict[str, int | float | np.ndarray] = dict())
 ```
 
 <a id="csdl.core.model.build_symbol_table"></a>
@@ -413,8 +413,8 @@ System
 ### \_bracketed\_search
 
 ```python
-def _bracketed_search(*arguments: Variable, *, states: List[str], residuals: List[str], model, brackets: Dict[str, Tuple[Union[int, float, np.ndarray],
-                                  Union[int, float, np.ndarray]]], expose: List[str] = [], maxiter: int = 100)
+def _bracketed_search(*arguments: Variable, *, states: List[str], residuals: List[str], model, brackets: Dict[str, Tuple[int | float | np.ndarray,
+                                  int | float | np.ndarray]]] | expose: List[str] = [, maxiter: int = 100)
 ```
 
 Create an implicit operation whose residuals are defined by a
@@ -535,7 +535,7 @@ updating $y$ until $r$ converges to zero.
 ### \_implicit\_operation
 
 ```python
-def _implicit_operation(*arguments: Variable, *, states: List[str], residuals: List[str], model, nonlinear_solver: NonlinearSolver, linear_solver: LinearSolver = None, expose: List[str] = [], defaults: Dict[str, Union[int, float, np.ndarray]] = dict())
+def _implicit_operation(*arguments: Variable, *, states: List[str], residuals: List[str], model, nonlinear_solver: NonlinearSolver, linear_solver: LinearSolver = None, expose: List[str] = [], defaults: Dict[str, int | float | np.ndarray] = dict())
 ```
 
 Create an implicit operation whose residuals are defined by a
@@ -1503,7 +1503,7 @@ execution order for expressions.
 ### get\_dependency\_index
 
 ```python
-def get_dependency_index(candidate) -> Optional[int]
+def get_dependency_index(candidate) -> int | None
 ```
 
 Get index of dependency in ``self.dependencies``. Used for
@@ -1518,7 +1518,7 @@ candidate: Variable
 
 **Returns**
 
-Optional[int]
+int | None
     If ``dependency`` is a dependency of ``self``, then the index of
     ``dependency`` in ``self.dependencies`` is returned. Otherwise,
     ``None`` is returned.
@@ -1563,7 +1563,7 @@ candidate: Variable
 ### get\_dependent\_index
 
 ```python
-def get_dependent_index(candidate) -> Optional[int]
+def get_dependent_index(candidate) -> int | None
 ```
 
 Get index of dependency in ``self.dependencies``. Used for
@@ -1578,7 +1578,7 @@ candidate: Variable
 
 **Returns**
 
-Optional[int]
+int | None
     If ``dependency`` is a dependency of ``self``, then the index of
     ``dependency`` in ``self.dependencies`` is returned. Otherwise,
     ``None`` is returned.
@@ -1770,7 +1770,7 @@ def __rtruediv__(other)
 ### \_\_getitem\_\_
 
 ```python
-def __getitem__(key: Union[int, slice, Tuple[slice]])
+def __getitem__(key: int | slice | Tuple[slice])
 ```
 
 <a id="csdl.core.variable.Variable.add_dependency_node"></a>
@@ -1847,7 +1847,7 @@ val: Number or ndarray
 ### \_\_setitem\_\_
 
 ```python
-def __setitem__(key: Union[int, slice, Tuple[slice]], var: Variable)
+def __setitem__(key: int | slice | Tuple[slice], var: Variable)
 ```
 
 
@@ -2158,4 +2158,3 @@ def __init__(name: str, submodel, *args, *, promotes=None, promotes_inputs=None,
 ```python
 def add_dependency_node(dependency)
 ```
-

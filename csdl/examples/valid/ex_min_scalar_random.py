@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -30,7 +30,8 @@ def example(Simulator):
             assert ma.shape == (1, ), ma.shape
     
     
-    sim = Simulator(ExampleScalarRandom())
+    rep = GraphRepresentation(ExampleScalarRandom())
+    sim = Simulator(rep)
     sim.run()
     
     print('tensor', sim['tensor'].shape)
@@ -38,4 +39,4 @@ def example(Simulator):
     print('ScalarMin', sim['ScalarMin'].shape)
     print(sim['ScalarMin'])
     
-    return sim
+    return sim, rep

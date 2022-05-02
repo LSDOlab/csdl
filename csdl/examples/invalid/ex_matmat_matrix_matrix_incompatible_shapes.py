@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -28,6 +28,7 @@ def example(Simulator):
             self.register_output('MatMat', csdl.matmat(mat1, mat2))
     
     
-    sim = Simulator(ErrorMatrixMatrixIncompatibleShapes())
+    rep = GraphRepresentation(ErrorMatrixMatrixIncompatibleShapes())
+    sim = Simulator(rep)
     sim.run()
     

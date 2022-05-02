@@ -5,7 +5,7 @@ import pytest
 def test_average_single_vector(backend):
     from csdl.examples.valid.ex_average_single_vector import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     n = 3
 
@@ -30,7 +30,7 @@ def test_average_single_vector(backend):
 def test_average_single_matrix(backend):
     from csdl.examples.valid.ex_average_single_matrix import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     n = 3
     m = 6
@@ -55,7 +55,7 @@ def test_average_single_matrix(backend):
 def test_average_single_tensor(backend):
     from csdl.examples.valid.ex_average_single_tensor import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     n = 3
     m = 6
@@ -82,7 +82,7 @@ def test_average_single_tensor(backend):
 def test_average_multiple_vector(backend):
     from csdl.examples.valid.ex_average_multiple_vector import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     n = 3
 
@@ -107,7 +107,7 @@ def test_average_multiple_vector(backend):
 def test_average_multiple_matrix(backend):
     from csdl.examples.valid.ex_average_multiple_matrix import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     n = 3
     m = 6
@@ -133,7 +133,7 @@ def test_average_multiple_matrix(backend):
 def test_average_multiple_tensor(backend):
     from csdl.examples.valid.ex_average_multiple_tensor import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     n = 3
     m = 6
@@ -161,7 +161,7 @@ def test_average_multiple_tensor(backend):
 def test_single_matrix_along0(backend):
     from csdl.examples.valid.ex_average_single_matrix_along0 import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     n = 3
     m = 6
@@ -186,7 +186,7 @@ def test_single_matrix_along0(backend):
 def test_single_matrix_along1(backend):
     from csdl.examples.valid.ex_average_single_matrix_along1 import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     n = 3
     m = 6
 
@@ -210,7 +210,7 @@ def test_single_matrix_along1(backend):
 def test_average_multiple_matrix_along0(backend):
     from csdl.examples.valid.ex_average_multiple_matrix_along0 import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     n = 3
     m = 6
@@ -236,7 +236,7 @@ def test_average_multiple_matrix_along0(backend):
 def test_average_multiple_matrix_along1(backend):
     from csdl.examples.valid.ex_average_multiple_matrix_along1 import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     n = 3
     m = 6

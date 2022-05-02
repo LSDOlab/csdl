@@ -1,7 +1,7 @@
 def example(Simulator):
     import numpy as np
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ErrorOneDimensionalReuse(Model):
@@ -15,6 +15,7 @@ def example(Simulator):
             v[4:] = u[:4]
     
     
-    sim = Simulator(ErrorOneDimensionalReuse())
+    rep = GraphRepresentation(ErrorOneDimensionalReuse())
+    sim = Simulator(rep)
     sim.run()
     

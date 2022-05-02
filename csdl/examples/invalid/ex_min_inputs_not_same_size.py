@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -20,6 +20,7 @@ def example(Simulator):
                                  csdl.min(tensor1, tensor2))
     
     
-    sim = Simulator(ErrorInputsNotSameSize())
+    rep = GraphRepresentation(ErrorInputsNotSameSize())
+    sim = Simulator(rep)
     sim.run()
     

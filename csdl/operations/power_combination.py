@@ -1,8 +1,8 @@
-from csdl.core.standard_operation import StandardOperation
+from csdl.lang.standard_operation import StandardOperation
 from numbers import Number
 import numpy as np
-from csdl.core.node import Node
-from csdl.core.output import Output
+from csdl.lang.node import Node
+from csdl.lang.output import Output
 from csdl.utils.gen_hex_name import gen_hex_name
 
 

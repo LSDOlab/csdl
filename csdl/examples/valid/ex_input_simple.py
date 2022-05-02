@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import numpy as np
     
     
@@ -8,10 +8,11 @@ def example(Simulator):
             z = self.create_input('z', val=10)
     
     
-    sim = Simulator(ExampleSimple())
+    rep = GraphRepresentation(ExampleSimple())
+    sim = Simulator(rep)
     sim.run()
     
     print('z', sim['z'].shape)
     print(sim['z'])
     
-    return sim
+    return sim, rep

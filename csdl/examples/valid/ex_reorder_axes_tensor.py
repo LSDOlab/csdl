@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -19,7 +19,8 @@ def example(Simulator):
                                  csdl.reorder_axes(tens, 'ijkl->ljki'))
     
     
-    sim = Simulator(ExampleTensor())
+    rep = GraphRepresentation(ExampleTensor())
+    sim = Simulator(rep)
     sim.run()
     
     print('T1', sim['T1'].shape)
@@ -27,4 +28,4 @@ def example(Simulator):
     print('axes_reordered_tensor', sim['axes_reordered_tensor'].shape)
     print(sim['axes_reordered_tensor'])
     
-    return sim
+    return sim, rep

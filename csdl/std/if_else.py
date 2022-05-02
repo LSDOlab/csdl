@@ -1,4 +1,4 @@
-# from csdl.core.variable import Variable
+# from csdl.lang.variable import Variable
 # # from csdl.comps.conditional_component import ConditionalComponent
 # from openmdao.api import ExplicitComponent
 # import numpy as np

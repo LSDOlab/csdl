@@ -1,7 +1,7 @@
 from csdl.std import sin as s
 from csdl.std import cos as c
-from csdl.core.concatenation import Concatenation
-from csdl.core.variable import Variable
+from csdl.lang.concatenation import Concatenation
+from csdl.lang.variable import Variable
 from typing import Tuple
 
 

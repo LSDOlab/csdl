@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -28,7 +28,8 @@ def example(Simulator):
             self.register_output('MatMat', csdl.matmat(mat1, mat2))
     
     
-    sim = Simulator(ExampleMatMatProduct())
+    rep = GraphRepresentation(ExampleMatMatProduct())
+    sim = Simulator(rep)
     sim.run()
     
     print('mat1', sim['mat1'].shape)
@@ -38,4 +39,4 @@ def example(Simulator):
     print('MatMat', sim['MatMat'].shape)
     print(sim['MatMat'])
     
-    return sim
+    return sim, rep

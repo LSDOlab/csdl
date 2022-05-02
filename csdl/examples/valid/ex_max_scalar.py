@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -28,7 +28,8 @@ def example(Simulator):
             assert ma.shape == (1, ), ma.shape
     
     
-    sim = Simulator(ExampleScalar())
+    rep = GraphRepresentation(ExampleScalar())
+    sim = Simulator(rep)
     sim.run()
     
     print('tensor', sim['tensor'].shape)
@@ -36,4 +37,4 @@ def example(Simulator):
     print('ScalarMax', sim['ScalarMax'].shape)
     print(sim['ScalarMax'])
     
-    return sim
+    return sim, rep

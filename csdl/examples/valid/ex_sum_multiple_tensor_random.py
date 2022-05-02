@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -27,7 +27,8 @@ def example(Simulator):
             self.register_output('multiple_tensor_sum', csdl.sum(T1, T2))
     
     
-    sim = Simulator(ExampleMultipleTensorRandom())
+    rep = GraphRepresentation(ExampleMultipleTensorRandom())
+    sim = Simulator(rep)
     sim.run()
     
     print('T1', sim['T1'].shape)
@@ -37,4 +38,4 @@ def example(Simulator):
     print('multiple_tensor_sum', sim['multiple_tensor_sum'].shape)
     print(sim['multiple_tensor_sum'])
     
-    return sim
+    return sim, rep

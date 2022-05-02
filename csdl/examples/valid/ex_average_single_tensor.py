@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -24,7 +24,8 @@ def example(Simulator):
             )
     
     
-    sim = Simulator(ExampleSingleTensor())
+    rep = GraphRepresentation(ExampleSingleTensor())
+    sim = Simulator(rep)
     sim.run()
     
     print('T1', sim['T1'].shape)
@@ -32,4 +33,4 @@ def example(Simulator):
     print('single_tensor_average', sim['single_tensor_average'].shape)
     print(sim['single_tensor_average'])
     
-    return sim
+    return sim, rep

@@ -1,6 +1,6 @@
 def example(Simulator):
     import numpy as np
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     
     
@@ -20,7 +20,8 @@ def example(Simulator):
                                     partial_format='sparse'))
     
     
-    sim = Simulator(ExampleTensorSummationSparse())
+    rep = GraphRepresentation(ExampleTensorSummationSparse())
+    sim = Simulator(rep)
     sim.run()
     
     print('c', sim['c'].shape)
@@ -28,4 +29,4 @@ def example(Simulator):
     print('einsum_summ2_sparse_derivs', sim['einsum_summ2_sparse_derivs'].shape)
     print(sim['einsum_summ2_sparse_derivs'])
     
-    return sim
+    return sim, rep

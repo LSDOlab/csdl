@@ -1,4 +1,4 @@
-from csdl.core.standard_operation import StandardOperation
+from csdl.lang.standard_operation import StandardOperation
 
 
 class arctanh(StandardOperation):

@@ -1,12 +1,12 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
     
     class ExampleSimple(Model):
-        def define(self):
     
+        def define(self):
             # add_input
             nx = 3
             ny = 4
@@ -36,7 +36,8 @@ def example(Simulator):
             self.register_output('widths', widths)
     
     
-    sim = Simulator(ExampleSimple())
+    rep = GraphRepresentation(ExampleSimple())
+    sim = Simulator(rep)
     sim.run()
     
     print('quarter_chord', sim['quarter_chord'].shape)
@@ -44,4 +45,4 @@ def example(Simulator):
     print('widths', sim['widths'].shape)
     print(sim['widths'])
     
-    return sim
+    return sim, rep

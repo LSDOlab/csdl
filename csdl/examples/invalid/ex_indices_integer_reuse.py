@@ -1,7 +1,7 @@
 def example(Simulator):
     import numpy as np
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ErrorIntegerReuse(Model):
@@ -16,6 +16,7 @@ def example(Simulator):
             y[1] = x[0]
     
     
-    sim = Simulator(ErrorIntegerReuse())
+    rep = GraphRepresentation(ErrorIntegerReuse())
+    sim = Simulator(rep)
     sim.run()
     

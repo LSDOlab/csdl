@@ -1,6 +1,6 @@
 def example(Simulator):
     import numpy as np
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     
     
@@ -23,7 +23,8 @@ def example(Simulator):
                 ))
     
     
-    sim = Simulator(ExampleReorderTensor())
+    rep = GraphRepresentation(ExampleReorderTensor())
+    sim = Simulator(rep)
     sim.run()
     
     print('c', sim['c'].shape)
@@ -31,4 +32,4 @@ def example(Simulator):
     print('einsum_reorder2', sim['einsum_reorder2'].shape)
     print(sim['einsum_reorder2'])
     
-    return sim
+    return sim, rep

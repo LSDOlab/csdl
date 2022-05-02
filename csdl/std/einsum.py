@@ -1,6 +1,6 @@
 import csdl.operations as ops
-from csdl.core.variable import Variable
-from csdl.core.output import Output
+from csdl.lang.variable import Variable
+from csdl.lang.output import Output
 from csdl.utils.einsum_utils import compute_einsum_shape, einsum_subscripts_tolist
 from typing import List
 

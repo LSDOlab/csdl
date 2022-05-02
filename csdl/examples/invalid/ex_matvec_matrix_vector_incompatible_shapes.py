@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     from scipy.sparse import csc_matrix
@@ -28,6 +28,7 @@ def example(Simulator):
             self.register_output('MatVec', csdl.matvec(mat1, vec1))
     
     
-    sim = Simulator(ErrorMatrixVectorIncompatibleShapes())
+    rep = GraphRepresentation(ErrorMatrixVectorIncompatibleShapes())
+    sim = Simulator(rep)
     sim.run()
     

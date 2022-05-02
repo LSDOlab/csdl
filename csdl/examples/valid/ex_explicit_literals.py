@@ -1,7 +1,8 @@
 def example(Simulator):
-    from csdl import Model, NonlinearBlockGS
+    from csdl import Model, GraphRepresentation, NonlinearBlockGS
     import csdl
     import numpy as np
+    from csdl.examples.models.product import Product
     
     
     class ExampleLiterals(Model):
@@ -11,10 +12,11 @@ def example(Simulator):
             self.register_output('y', y)
     
     
-    sim = Simulator(ExampleLiterals())
+    rep = GraphRepresentation(ExampleLiterals())
+    sim = Simulator(rep)
     sim.run()
     
     print('y', sim['y'].shape)
     print(sim['y'])
     
-    return sim
+    return sim, rep

@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ErrorRegisterInput(Model):
@@ -9,6 +9,7 @@ def example(Simulator):
             self.register_output('a', a)
     
     
-    sim = Simulator(ErrorRegisterInput())
+    rep = GraphRepresentation(ErrorRegisterInput())
+    sim = Simulator(rep)
     sim.run()
     

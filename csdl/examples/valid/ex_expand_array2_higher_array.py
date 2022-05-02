@@ -1,6 +1,6 @@
 def example(Simulator):
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import numpy as np
     
     
@@ -16,7 +16,8 @@ def example(Simulator):
             self.register_output('expanded_array', expanded_array)
     
     
-    sim = Simulator(ExampleArray2HigherArray())
+    rep = GraphRepresentation(ExampleArray2HigherArray())
+    sim = Simulator(rep)
     sim.run()
     
     print('array', sim['array'].shape)
@@ -24,4 +25,4 @@ def example(Simulator):
     print('expanded_array', sim['expanded_array'].shape)
     print(sim['expanded_array'])
     
-    return sim
+    return sim, rep

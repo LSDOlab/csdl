@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     from csdl.examples.operations.solve_quadratic import SolveQuadratic
     from csdl.examples.operations.solve_quadratic import SolveQuadratic
@@ -20,10 +20,11 @@ def example(Simulator):
             self.register_output('x', x)
     
     
-    sim = Simulator(ExampleQuadraticEquationImplicitScalar())
+    rep = GraphRepresentation(ExampleQuadraticEquationImplicitScalar())
+    sim = Simulator(rep)
     sim.run()
     
     print('x', sim['x'].shape)
     print(sim['x'])
     
-    return sim
+    return sim, rep

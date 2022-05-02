@@ -1,6 +1,6 @@
 def example(Simulator):
     import numpy as np
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     
     
@@ -17,7 +17,8 @@ def example(Simulator):
                                  csdl.einsum(vec, vec, subscripts='i,j->j'))
     
     
-    sim = Simulator(ExampleMultiplicationSum())
+    rep = GraphRepresentation(ExampleMultiplicationSum())
+    sim = Simulator(rep)
     sim.run()
     
     print('a', sim['a'].shape)
@@ -25,4 +26,4 @@ def example(Simulator):
     print('einsum_special1', sim['einsum_special1'].shape)
     print(sim['einsum_special1'])
     
-    return sim
+    return sim, rep

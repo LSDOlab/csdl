@@ -1,6 +1,6 @@
 def example(Simulator):
     import numpy as np
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     
     
@@ -20,7 +20,8 @@ def example(Simulator):
                 ))
     
     
-    sim = Simulator(ExampleReorderMatrixSparse())
+    rep = GraphRepresentation(ExampleReorderMatrixSparse())
+    sim = Simulator(rep)
     sim.run()
     
     print('b', sim['b'].shape)
@@ -28,4 +29,4 @@ def example(Simulator):
     print('einsum_reorder1_sparse_derivs', sim['einsum_reorder1_sparse_derivs'].shape)
     print(sim['einsum_reorder1_sparse_derivs'])
     
-    return sim
+    return sim, rep

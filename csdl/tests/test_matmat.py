@@ -5,7 +5,7 @@ import pytest
 def test_matrix_matrix_multiplication_matmat(backend):
     from csdl.examples.valid.ex_matmat_mat_mat_product import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 3
     n = 2
@@ -38,7 +38,7 @@ def test_matrix_matrix_multiplication_matmat(backend):
 # def test_matrix_vector_multiplication_matmat(backend):
 #     from csdl.examples.valid.ex_matmat_mat_vec_product import example
 #     exec('from {} import Simulator'.format(backend))
-#     sim = example(eval('Simulator'))
+#     sim, rep = example(eval('Simulator'))
 
 #     m = 3
 #     n = 2

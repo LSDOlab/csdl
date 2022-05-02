@@ -1,11 +1,11 @@
-from typing import Tuple
+from typing import Tuple, List
 import numpy as np
 
 
 def get_shape_val(
     shape: int | Tuple[int],
-    val: int | float | np.ndarray,
-) -> Tuple[Tuple[int], np.ndarray]:
+    val: int | float | np.ndarray | List[int] | List[float],
+) -> Tuple[Tuple[int, ...], np.ndarray]:
     """
     Get shape from shape or value if shape is unspecified
 

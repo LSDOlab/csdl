@@ -9,8 +9,6 @@ import csdl
 
 lang_pkg = csdl
 
-# choose package that implements CSDL
-import csdl_om
 
 # set paths
 lang_example_class_definition_directory = inspect.getfile(
@@ -31,13 +29,14 @@ def camel_to_snake(name):
 
 def write_run_phase(example_script_string, obj, options):
     # create simulator from model
-    example_script_string += 'sim = Simulator(' + obj.__name__ + '('
+    example_script_string += 'rep = GraphRepresentation(' + obj.__name__ + '('
 
     if len(options) > 0:
         example_script_string += '\n'
     for opt in options:
         example_script_string += '    ' + opt + ',\n'
     example_script_string += '))\n'
+    example_script_string += 'sim = Simulator(rep)\n'
 
     # run simulation
     example_script_string += 'sim.run()\n'
@@ -81,6 +80,7 @@ def export_examples(
             import_statements = []
             with open(example_classes_file_path, 'r') as f:
                 import_statements = []
+
                 for line in f:
                     line_text = line.lstrip()
                     if re.match('import', line_text) or re.match(
@@ -90,7 +90,7 @@ def export_examples(
             # Python 3.9: use removesuffix
             lang_examples_module = importlib.import_module(
                 example_class_definition_module + '.' +
-                examples_file[:-len(suffix)])
+                examples_file.removesuffix(suffix))
             members = inspect.getmembers(lang_examples_module)
             for obj in dict(members).values():
                 if inspect.isclass(obj):
@@ -153,7 +153,9 @@ def export_examples(
                         ] + [('    ' + line) for line in
                              example_script_string.split('\n')]
                         if prefix == 'example_':
-                            example_script_lines += ['    return sim']
+                            example_script_lines += [
+                                '    return sim, rep'
+                            ]
                         with open(example_run_file_path, 'w') as f:
                             print('writing to file',
                                   example_run_file_path)

@@ -1,6 +1,6 @@
-from csdl.core.variable import Variable
-from csdl.core.standard_operation import StandardOperation
-from csdl.core.variable import Variable
+from csdl.lang.variable import Variable
+from csdl.lang.standard_operation import StandardOperation
+from csdl.lang.variable import Variable
 from scipy.sparse import spmatrix
 
 

@@ -1,5 +1,5 @@
 import csdl
-from csdl import Model
+from csdl import Model, GraphRepresentation
 import numpy as np
 
 

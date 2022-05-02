@@ -1,5 +1,5 @@
-from csdl.core.standard_operation import StandardOperation
-from csdl.core.node import Node
+from csdl.lang.standard_operation import StandardOperation
+from csdl.lang.node import Node
 
 
 class print_var(StandardOperation):

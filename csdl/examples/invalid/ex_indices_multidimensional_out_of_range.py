@@ -1,7 +1,7 @@
 def example(Simulator):
     import numpy as np
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ErrorMultidimensionalOutOfRange(Model):
@@ -14,6 +14,7 @@ def example(Simulator):
             x[0:3, 0:3] = z
     
     
-    sim = Simulator(ErrorMultidimensionalOutOfRange())
+    rep = GraphRepresentation(ErrorMultidimensionalOutOfRange())
+    sim = Simulator(rep)
     sim.run()
     

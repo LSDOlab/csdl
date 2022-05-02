@@ -1,6 +1,6 @@
 def example(Simulator):
     import imp
-    from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl import Model, GraphRepresentation, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     from csdl.examples.models.fixed_point import FixedPoint2Expose
     import numpy as np
     from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
@@ -47,7 +47,8 @@ def example(Simulator):
             y, t3, t4 = solve_quadratic(a, b, c, r, expose=['t3', 't4'])
     
     
-    sim = Simulator(ExampleWithSubsystemsWithExposeDefineModelInline())
+    rep = GraphRepresentation(ExampleWithSubsystemsWithExposeDefineModelInline())
+    sim = Simulator(rep)
     sim.run()
     
-    return sim
+    return sim, rep

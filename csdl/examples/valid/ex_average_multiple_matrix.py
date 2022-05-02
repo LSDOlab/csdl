@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -28,7 +28,8 @@ def example(Simulator):
             )
     
     
-    sim = Simulator(ExampleMultipleMatrix())
+    rep = GraphRepresentation(ExampleMultipleMatrix())
+    sim = Simulator(rep)
     sim.run()
     
     print('M1', sim['M1'].shape)
@@ -38,4 +39,4 @@ def example(Simulator):
     print('multiple_matrix_average', sim['multiple_matrix_average'].shape)
     print(sim['multiple_matrix_average'])
     
-    return sim
+    return sim, rep

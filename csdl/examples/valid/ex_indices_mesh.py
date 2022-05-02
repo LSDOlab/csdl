@@ -1,7 +1,7 @@
 def example(Simulator):
     import numpy as np
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ExampleMesh(Model):
@@ -17,7 +17,8 @@ def example(Simulator):
             self.register_output('b_pts', b_pts)
     
     
-    sim = Simulator(ExampleMesh())
+    rep = GraphRepresentation(ExampleMesh())
+    sim = Simulator(rep)
     sim.run()
     
     print('def_mesh', sim['def_mesh'].shape)
@@ -25,4 +26,4 @@ def example(Simulator):
     print('b_pts', sim['b_pts'].shape)
     print(sim['b_pts'])
     
-    return sim
+    return sim, rep

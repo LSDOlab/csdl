@@ -5,7 +5,7 @@ import pytest
 def test_matrix_vector_multiplication(backend):
     from csdl.examples.valid.ex_matvec_mat_vec_product import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 3
     n = 4

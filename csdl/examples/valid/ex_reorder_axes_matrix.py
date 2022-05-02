@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -18,7 +18,8 @@ def example(Simulator):
                                  csdl.reorder_axes(mat, 'ij->ji'))
     
     
-    sim = Simulator(ExampleMatrix())
+    rep = GraphRepresentation(ExampleMatrix())
+    sim = Simulator(rep)
     sim.run()
     
     print('M1', sim['M1'].shape)
@@ -26,4 +27,4 @@ def example(Simulator):
     print('axes_reordered_matrix', sim['axes_reordered_matrix'].shape)
     print(sim['axes_reordered_matrix'])
     
-    return sim
+    return sim, rep

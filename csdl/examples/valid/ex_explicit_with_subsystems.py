@@ -1,7 +1,8 @@
 def example(Simulator):
-    from csdl import Model, NonlinearBlockGS
+    from csdl import Model, GraphRepresentation, NonlinearBlockGS
     import csdl
     import numpy as np
+    from csdl.examples.models.product import Product
     
     
     class ExampleWithSubsystems(Model):
@@ -46,7 +47,8 @@ def example(Simulator):
             self.register_output('y4', y4)
     
     
-    sim = Simulator(ExampleWithSubsystems())
+    rep = GraphRepresentation(ExampleWithSubsystems())
+    sim = Simulator(rep)
     sim.run()
     
     print('prod', sim['prod'].shape)
@@ -64,4 +66,4 @@ def example(Simulator):
     print('y6', sim['y6'].shape)
     print(sim['y6'])
     
-    return sim
+    return sim, rep

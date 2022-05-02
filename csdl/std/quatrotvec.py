@@ -1,5 +1,5 @@
-from csdl.core.variable import Variable
-from csdl.core.output import Output
+from csdl.lang.variable import Variable
+from csdl.lang.output import Output
 import csdl.operations as ops
 from typing import List
 import numpy as np
@@ -7,7 +7,7 @@ import numpy as np
 
 def quatrotvec(quat, vec):
     '''
-    This function can compute a quaternion-vector multiplication, that results in a 
+    This function can compute a quaternion-vector multiplication, that results in a
     rotated vector.
 
     **Parameters**
@@ -31,7 +31,7 @@ def quatrotvec(quat, vec):
                 vec.name,
                 vec.shape,
             ))
-            
+
     op = ops.quatrotvec(quat, vec)
     op.outs = [
         Output(

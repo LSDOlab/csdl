@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -30,6 +30,7 @@ def example(Simulator):
             self.register_output('TenTenDotFirst', csdl.dot(ten1, ten2, axis=0))
     
     
-    sim = Simulator(ErrorTenDifferentShapes())
+    rep = GraphRepresentation(ErrorTenDifferentShapes())
+    sim = Simulator(rep)
     sim.run()
     

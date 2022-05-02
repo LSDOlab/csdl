@@ -5,7 +5,7 @@ import pytest
 def test_max_scalar(backend):
     from csdl.examples.valid.ex_max_scalar import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 2
     n = 3
@@ -32,7 +32,7 @@ def test_max_scalar(backend):
 def test_max_axiswise(backend):
     from csdl.examples.valid.ex_max_axiswise import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 2
     n = 3
@@ -60,7 +60,7 @@ def test_max_axiswise(backend):
 def test_max_elementwise(backend):
     from csdl.examples.valid.ex_max_elementwise import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     tensor1 = np.array([[1, 5, -8], [10, -3, -5]])
     tensor2 = np.array([[2, 6, 9], [-1, 2, 4]])
@@ -96,7 +96,7 @@ def test_max_inputs_not_same_size(backend):
 def test_max_scalar_random(backend):
     from csdl.examples.valid.ex_max_scalar_random import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 2
     n = 3
@@ -124,7 +124,7 @@ def test_max_scalar_random(backend):
 def test_max_axiswise_random(backend):
     from csdl.examples.valid.ex_max_axiswise_random import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 2
     n = 3

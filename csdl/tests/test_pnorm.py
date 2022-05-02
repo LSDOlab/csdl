@@ -5,7 +5,7 @@ import pytest
 def test_pnorm_axisfree_norm(backend):
     from csdl.examples.valid.ex_pnorm_axis_free import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     i = 2
     j = 3
@@ -29,7 +29,7 @@ def test_pnorm_axisfree_norm(backend):
 def test_pnorm_axiswise(backend):
     from csdl.examples.valid.ex_pnorm_axis_wise import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     i = 2
     j = 3
