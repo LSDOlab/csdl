@@ -13,8 +13,43 @@ from csdl.utils.typehints import Shape
 from csdl.utils.check_duplicate_keys import check_duplicate_keys
 from csdl.utils.find_names_with_matching_shapes import find_names_with_matching_shapes
 from networkx import DiGraph, topological_sort, simple_cycles
-from typing import List, Tuple, Dict, Set, Final
+from typing import List, Tuple, Dict, Set, Final, Literal
 from copy import copy, deepcopy
+
+
+def check_for_cycles(
+    model: 'Model',
+    model_path: str,
+    mode: Literal['promotions', 'connections'],
+):
+    # build a graph of the model at this level to detect cycles created
+    # between models by promoting variables; note: this does not
+    # necessarily mean thet there is a cyclic relationship between
+    # variables at different levels in the model hierarchy or across
+    # model boundaries at the same level of the model hierarchy; these
+    # cycles may be due to unnecessary feedbacks across model boundaries
+    graph = construct_unflat_graph(
+        model.inputs,
+        model.registered_outputs,
+        model.subgraphs,
+        recursive=False,
+    )
+
+    try:
+        _ = topological_sort(graph)
+    except:
+        model.model_cycles = [
+            x.name for x in list(simple_cycles(graph))
+        ]
+        if mode == 'promotions':
+            raise Warning(
+                "User specified promotions created the following cycles within model named {} of type {}: {}. If using a CSDL back end/code generator that uses the flattened graph representation of a model and no errors are raised, you may safely disregard this message. Otherwise, these cycles introduce unnecessary feedback in your model and will affect performance."
+                .format(model_path,
+                        type(model).__name__),
+                model.model_cycles,
+            )
+        elif mode == 'connections':
+            pass
 
 
 def split_promoting_not_promoting(
@@ -212,6 +247,17 @@ def resolve_promotions(
     model.promoted_to_unpromoted = promoted_to_unpromoted
     print('model.promoted_to_unpromoted', model.promoted_to_unpromoted)
 
+    # # store promoted sources and targets separately to look up when
+    # # issuing connections
+    # model.promoted_sources.update(
+    #     set(promoted_sources_from_children_shapes.keys()))
+    # model.promoted_sources.update(
+    #     set(locally_defined_source_shapes.keys()))
+    # model.promoted_targets.update(
+    #     set(promoted_targets_from_children_shapes.keys()))
+    # model.promoted_targets.update(
+    #     set(locally_defined_target_shapes.keys()))
+
     # collect name-shape pairs for all variables that are available for
     # user to promote to parent model
     user_promotable_sources_shapes = local_namespace_source_shapes if promotes is None else dict(
@@ -256,35 +302,7 @@ def resolve_promotions(
                     s.add_dependency_node(tgt)
                     tgt.add_dependent_node(s)
 
-    # build a graph of the model at this level to detect cycles created
-    # between models by promoting variables; note: this does not
-    # necessarily mean thet there is a cyclic relationship between
-    # variables at different levels in the model hierarchy or across
-    # model boundaries at the same level of the model hierarchy; these
-    # cycles may be due to unnecessary feedbacks across model boundaries
-    graph = construct_unflat_graph(
-        model.inputs,
-        model.registered_outputs,
-        model.subgraphs,
-        recursive=False,
-    )
-    from networkx import draw, draw_networkx
-    import matplotlib.pyplot as plt
-    draw_networkx(graph, labels={x: x.name for x in graph.nodes()})
-    plt.show()
-
-    try:
-        _ = topological_sort(graph)
-    except:
-        model.model_cycles = [
-            x.name for x in list(simple_cycles(graph))
-        ]
-        raise Warning(
-            "User specified promotions created the following cycles within model named {} of type {}: {}. If using a CSDL back end/code generator that uses the flattened graph representation of a model and no errors are raised, you may safely disregard this message. Otherwise, these cycles introduce unnecessary feedback in your model and will affect performance."
-            .format(model_path,
-                    type(model).__name__),
-            model.model_cycles,
-        )
+    check_for_cycles(model, model_path, 'promotions')
 
     # collect Variable objects for parent model to establish dependency
     # relationships between Variable objects and Model objects

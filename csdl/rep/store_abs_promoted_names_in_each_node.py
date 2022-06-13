@@ -15,6 +15,6 @@ def store_abs_promoted_names_in_each_node(
     for v in vars:
         if v.var.abs_name is not None:
             v.var.abs_prom_name = unpromoted_to_promoted[v.var.abs_name]
-    for op in ops:
-        if op.op.abs_name is not None:
-            op.op.abs_prom_name = unpromoted_to_promoted[op.op.abs_name]
+    # for op in ops:
+    #     if op.op.abs_name is not None:
+    #         op.op.abs_prom_name = unpromoted_to_promoted[op.op.abs_name]

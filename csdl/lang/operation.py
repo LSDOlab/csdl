@@ -52,11 +52,11 @@ class Operation(Node):
                 "Dependency of an Operation object must be a Variable object"
             )
 
-        # self.dependencies.append(dependency)
+        self.dependencies.append(dependency)
 
-        # Add dependency
-        if dependency not in self.dependencies:
-            self.dependencies.append(dependency)
-        else:
-            # raise ValueError(dependency.name, 'is duplicate')
-            print(dependency.name, 'is duplicate')
+        # # Add dependency
+        # if dependency not in self.dependencies:
+        #     self.dependencies.append(dependency)
+        # else:
+        #     # raise ValueError(dependency.name, 'is duplicate')
+        #     print(dependency.name, 'is duplicate')

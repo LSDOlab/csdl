@@ -82,6 +82,7 @@ class Model:
         """
         self.promoted_to_unpromoted: Dict[str, Set[str]] = dict()
         self.unpromoted_to_promoted: Dict[str, str] = dict()
+        self.model_cycles: list[list[str]] =[]
 
     def initialize(self):
         """

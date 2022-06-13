@@ -26,17 +26,15 @@ def merge_promoted_nodes(graph: DiGraph):
                     if isinstance(a.var,
                                   (Input, Output)) and isinstance(
                                       b.var, DeclaredVariable):
-                        edges = []
-                        for s in graph.successors(b):
-                            edges.append((a, s))
-                        graph.add_edges_from(edges)
+                        graph.add_edges_from([
+                            (a, s) for s in graph.successors(b)
+                        ])
                         remove_nodes.append(b)
                     elif isinstance(b.var,
                                     (Input, Output)) and isinstance(
                                         a.var, DeclaredVariable):
-                        edges = []
-                        for s in graph.successors(a):
-                            edges.append((b, s))
-                        graph.add_edges_from(edges)
+                        graph.add_edges_from([
+                            (b, s) for s in graph.successors(a)
+                        ])
                         remove_nodes.append(b)
     graph.remove_nodes_from(remove_nodes)

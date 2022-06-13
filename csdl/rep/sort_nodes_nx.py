@@ -63,7 +63,7 @@ def sort_nodes_nx(
     Jacobian structure
     """
     input_nodes: List[VariableNode] = get_inputs_from_graph(graph)
-    print([(x.name, y.name) for (x, y) in graph.edges()])
+    print('edges:', [(x.name, y.name) for (x, y) in graph.edges()])
     sorted_nodes: List[IRNode] = list(topological_sort(graph))
     sorted_nodes = list(set(input_nodes) -
                         set(sorted_nodes)) + sorted_nodes

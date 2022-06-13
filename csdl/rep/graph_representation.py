@@ -2,6 +2,7 @@ try:
     from csdl.lang.model import Model
 except ImportError:
     pass
+from cProfile import label
 from networkx import DiGraph, adjacency_matrix, dag_longest_path_length
 from typing import List, Dict, Literal, Tuple, Any
 from csdl.lang.input import Input
@@ -14,28 +15,32 @@ import matplotlib.pyplot as plt
 from networkx import DiGraph
 from csdl.rep.ir_node import IRNode
 from csdl.rep.operation_node import OperationNode
+from csdl.rep.model_node import ModelNode
 from csdl.rep.construct_unflat_graph import construct_unflat_graph
 from csdl.rep.construct_flat_graph import construct_flat_graph
 from csdl.rep.variable_node import VariableNode
 from typing import List, Tuple, Dict, Set, Iterable
 from csdl.lang.concatenation import Concatenation
-from csdl.rep.collect_promoted_variable_names import collect_promoted_variable_names
-from csdl.rep.check_for_promotion_induced_cycles import check_for_promotion_induced_cycles
 from csdl.rep.issue_user_specified_connections import issue_user_specified_connections
 from csdl.rep.issue_user_specified_connections import issue_user_specified_connections
-from csdl.rep.collect_connections import collect_connections
 from csdl.rep.detect_cycles_in_connections import detect_cycles_in_connections
-from csdl.rep.add_model_var_dependencies import add_model_var_dependencies_due_to_promotions, add_model_var_dependencies_due_to_connections
+from csdl.rep.add_model_var_dependencies import add_model_var_dependencies_due_to_connections
 from csdl.rep.ir_node import IRNode
 from csdl.rep.sort_nodes_nx import sort_nodes_nx
 from csdl.rep.get_registered_outputs_from_graph import get_registered_outputs_from_graph
-from networkx import DiGraph, ancestors
+from csdl.rep.resolve_promotions import resolve_promotions
+from csdl.rep.collect_connections2 import collect_connections
+from csdl.rep.add_dependencies_due_to_connections import add_dependencies_due_to_connections
+from csdl.rep.store_abs_unpromoted_names_in_each_node import store_abs_unpromoted_names_in_each_node 
+from networkx import DiGraph, ancestors, simple_cycles
 try:
     from csdl.rep.apply_fn_to_implicit_operation_nodes import apply_fn_to_implicit_operation_nodes
 except ImportError:
     pass
-from csdl.lang.define_recursively import define_recursively
+from csdl.lang.define_models_recursively import define_models_recursively
 import numpy as np
+import matplotlib.pyplot as plt
+from networkx import draw_networkx
 
 
 def nargs(
@@ -69,13 +74,41 @@ def _var_sizes(variable_nodes: list[VariableNode], ) -> list[int]:
     return var_sizes
 
 
-def _visualize(rep: 'GraphRepresentation'):
+def _visualize(graph: DiGraph, markersize: float):
     """
     Visualize the flattened graph for the main model containing
     variable/operation nodes and edges
     """
-    plt.spy(adjacency_matrix(rep.flat_graph), markersize=1)
+    plt.spy(adjacency_matrix(graph), markersize=markersize)
     plt.show()
+
+def _visualize_unflat(graph: DiGraph):
+    """
+    Visualize the unflattened graph for the main model containing
+    variable/operation nodes and edges; will generate visualization for
+    each model in the hierarchy
+    """
+    model_nodes: list[ModelNode] = list(
+        filter(lambda x: x is ModelNode, graph.nodes()))
+    for mn in model_nodes:
+        _visualize_unflat(mn.graph)
+    draw_networkx(graph, labels={n: n.name for n in graph.nodes()})
+    plt.show()
+
+def create_reverse_map(d: Dict[str, Set[str]]) -> Dict[str, str]:
+    d2: Dict[str, str] = dict()
+    for k, v in d.items():
+        for kk in v:
+            d2[kk] = k
+    return d2
+
+
+def generate_unpromoted_promoted_maps(model: 'Model') -> Dict[str, str]:
+    for s in model.subgraphs:
+        s.submodel.unpromoted_to_promoted = generate_unpromoted_promoted_maps(
+            s.submodel)
+    model.unpromoted_to_promoted = create_reverse_map(
+        model.promoted_to_unpromoted)
 
 
 class GraphRepresentation:
@@ -89,38 +122,33 @@ class GraphRepresentation:
     """
 
     def __init__(self, model: 'Model'):
-        if model.defined is False:
-            _ = define_recursively(model)
-
-        # PROMOTIONS
-        _, _, _ = collect_promoted_variable_names(model)
-        check_for_promotion_induced_cycles(model)
-        add_model_var_dependencies_due_to_promotions(model)
-
-        # CONNECTIONS
-        for promoted_name, unpromoted_set in model.promoted_to_unpromoted:
-            for unpromoted_name in unpromoted_set:
-                model.unpromoted_to_promoted[
-                    unpromoted_name] = promoted_name
-        issue_user_specified_connections(model)
-        self.connections: list[Tuple[str,
-                                     str]] = collect_connections(model)
+        define_models_recursively(model)
+        _, _, _, _ = resolve_promotions(model)
+        generate_unpromoted_promoted_maps(model)
+        model.connections = collect_connections(
+            model,
+            model.unpromoted_to_promoted,
+        )
+        print('model.connections', model.connections)
         """
         Connections issued to models across model hierarchy branches,
         for use by back ends that use `unflat_graph` only
         """
-        detect_cycles_in_connections(self.connections)
-        # TODO: implement add_model_var_dependencies_due_to_connections
-        # check for cycles the same way as in add_model_var_dependencies_due_to_promotions
-        add_model_var_dependencies_due_to_connections(model)
-
+        self.connections: list[Tuple[str, str]] = model.connections
+        # add_dependencies_due_to_connections(model)
+        # TODO: break and store cycles, emit warning for users using a
+        # code generator that uses unflat graph
         self.unflat_graph: DiGraph = construct_unflat_graph(
             model.inputs,
             model.registered_outputs,
             model.subgraphs,
         )
+        # absolute unpromoted names cannot be assigned after merge_graphs
+        # runs, but are necessary for storing absolute promoted names in
+        # each node
+        store_abs_unpromoted_names_in_each_node(self.unflat_graph)
         """
-        Directed acyclic graph representing model.
+        Directed graph representing model.
         Each model in the model hierarchy will contain an instance of
         `IntermediateRepresentation` with `unflat_graph: DiGraph`.
         """
@@ -141,10 +169,22 @@ class GraphRepresentation:
         `IntermediateRepresentation` with `flat_graph: DiGraph`.
         All submodels in the hierarchy will contain `flat_graph = None`.
         """
-        self.flat_sorted_nodes: list[IRNode] = sort_nodes_nx(
-            self.flat_graph,
-            flat=True,
-        )
+        try:
+            self.flat_sorted_nodes: list[IRNode] = sort_nodes_nx(
+                self.flat_graph,
+                flat=True,
+            )
+        except:
+            cycles = list(simple_cycles(self.flat_graph))
+            # TODO: show secondary names of connected variables
+            # TODO: multiline error messages
+            raise KeyError(
+                "Promotions or connections are present that define cyclic relationships between variables. Cycles present are as follows:\n{}\nCycles are shown as lists of unique variable names that form a cycle. To represent cyclic relationships in CSDL, define an implicit operation. See documentation for more details on how to define implicit operations."
+                .format([[
+                    x.name for x in list(
+                        filter(lambda v: isinstance(v, VariableNode),
+                               cycle))
+                ] for cycle in cycles]))
         """
         Nodes sorted in order of execution, using the flattened graph
         """
@@ -512,16 +552,28 @@ class GraphRepresentation:
 
         return optypes
 
-    def visualize(self, implicit_models: bool = False):
+    def visualize_adjacency_mtx(
+        self,
+        implicit_models: bool = False,
+        markersize: float = 1.0,
+    ):
         """
         Visualize the flattened graph containing variable/operation
         nodes and edges; setting `implicit_models` flag to `True` will
         also visulaize the flattened graph for each model defining an
         implicit operation
         """
-        _visualize(self)
+        _visualize(self.flat_graph, markersize)
         if implicit_models is True:
             apply_fn_to_implicit_operation_nodes(self, _visualize)
+
+    def visualize_graph(self):
+
+        draw_networkx(
+            self.flat_graph,
+            labels={n: n.name
+                    for n in self.flat_graph.nodes()})
+        plt.show()
 
     def _operation_nodes(
         self,
@@ -551,3 +603,9 @@ class GraphRepresentation:
             lambda x: isinstance(x, VariableNode),
             self.flat_graph.nodes())
         return variable_nodes
+
+    # TODO: add implicit models option
+    def visualize_unflat(self):
+        _visualize_unflat(self.unflat_graph)
+
+
