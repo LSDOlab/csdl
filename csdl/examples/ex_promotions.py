@@ -1,5 +1,7 @@
 import csdl
 from csdl import Model, GraphRepresentation
+from csdl_om import Simulator
+
 
 # TESTS:
 # - Different shapes throw error:
@@ -40,13 +42,28 @@ class ExampleManualPromotion(Model):
         # the top of your Python file(s).
         from csdl.examples.models.addition import AdditionFunction
 
-        a = self.create_input('a', val=3.0)
+        # a = self.create_input('a', val=3.0)
+        a = self.declare_variable('a', val=3.0)
 
-        # Promoting f will raise an error
-        self.add(AdditionFunction(), promotes=['a', 'f'], name='model')
+        self.add(
+            AdditionFunction(),
+            promotes=['a', 'f'],
+            name='addition',
+        )
 
         f = self.declare_variable('f')
-        self.register_output('f', f + a)
+        self.register_output('b', f + a)
+
+from csdl.examples.models.addition import AdditionFunction
+rep = GraphRepresentation(ExampleManualPromotion())
+# rep = GraphRepresentation(AdditionFunction())
+rep.visualize_graph()
+rep.visualize_unflat()
+sim = Simulator(rep)
+sim.run()
+print(sim['f'])
+exit()
+
 
 
 class ExampleAbsoluteRelativeName(Model):
@@ -292,6 +309,16 @@ class ExampleSameIOUnpromoted(Model):
             name='model')
 
         self.register_output('f', a * 1.0)
+from csdl.examples.models.addition import AdditionFunction
+rep = GraphRepresentation(ExampleSameIOUnpromoted())
+# rep = GraphRepresentation(AdditionFunction())
+rep.visualize_graph()
+rep.visualize_unflat()
+sim = Simulator(rep)
+sim.run()
+print(sim['f'])
+exit()
+
 
 
 class ErrorTwoModelsPromoted(Model):
