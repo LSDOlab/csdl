@@ -20,6 +20,7 @@ class BracketedSearchOperation(Operation):
         brackets: Dict[str, Tuple[np.ndarray | Variable, np.ndarray | Variable]],
         expose: List[str] = [],
         maxiter: int = 100,
+        tol: float = 1e-6,
         *args,
         **kwargs,
     ):
@@ -37,6 +38,7 @@ class BracketedSearchOperation(Operation):
                                        np.ndarray | Variable]] = brackets
         self.expose: List[str] = expose
         self.maxiter: int = maxiter
+        self.tol: float = tol
         for v in self.brackets.values():
             if isinstance(v, Variable):
                 self.add_dependency_node(v)
