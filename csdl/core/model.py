@@ -41,20 +41,19 @@ class ImplicitOperationFactory(object):
     def __init__(self, parent, model):
         self.parent = parent
         self.model = model
-        self.states: List(str) = []
-        self.residuals: List(str) = []
+        self.states: list[str] = []
+        self.residuals: list[str] = []
         self.nonlinear_solver = None
         self.linear_solver = None
-        self.brackets: Dict[str, Tuple[Union[int, float, np.ndarray],
-                                       Union[int, float,
-                                             np.ndarray]]] = dict()
+        self.brackets: Dict[str, Tuple[int | float | np.ndarray | Variable,
+                                       int | float | np.ndarray | Variable]] = dict()
         self.implicit_metadata: Dict[str, dict] = dict()
 
     def declare_state(
         self,
         state: str,
-        bracket: Tuple[Union[int, float, np.ndarray],
-                       Union[int, float, np.ndarray]] = None,
+        bracket: Tuple[int | float | np.ndarray | Variable,
+                       int | float | np.ndarray | Variable] | None= None,
         val=1.0,
         units=None,
         desc='',
