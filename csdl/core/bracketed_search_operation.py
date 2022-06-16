@@ -11,16 +11,18 @@ class BracketedSearchOperation(Operation):
     """
     Class for solving implicit functions using a bracketed search
     """
+
     def __init__(
         self,
         model,
         out_res_map: Dict[str, Output],
         res_out_map: Dict[str, DeclaredVariable],
         out_in_map: Dict[str, List[DeclaredVariable]],
-        brackets: Dict[str, Tuple[np.ndarray | Variable, np.ndarray | Variable]],
+        brackets: Dict[str, Tuple[np.ndarray | Variable,
+                                  np.ndarray | Variable]],
         expose: List[str] = [],
         maxiter: int = 100,
-        tol: float = 1e-6,
+        tol: float = 1e-7,
         *args,
         **kwargs,
     ):
@@ -34,11 +36,9 @@ class BracketedSearchOperation(Operation):
         self.res_out_map: Dict[str, DeclaredVariable] = res_out_map
         self.out_res_map: Dict[str, Output] = out_res_map
         self.out_in_map: Dict[str, List[DeclaredVariable]] = out_in_map
-        self.brackets: Dict[str, Tuple[np.ndarray | Variable,
-                                       np.ndarray | Variable]] = brackets
+        self.brackets: Dict[str,
+                            Tuple[np.ndarray | Variable,
+                                  np.ndarray | Variable]] = brackets
         self.expose: List[str] = expose
         self.maxiter: int = maxiter
         self.tol: float = tol
-        for v in self.brackets.values():
-            if isinstance(v, Variable):
-                self.add_dependency_node(v)
