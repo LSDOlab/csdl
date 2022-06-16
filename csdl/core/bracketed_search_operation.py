@@ -42,3 +42,6 @@ class BracketedSearchOperation(Operation):
         self.expose: List[str] = expose
         self.maxiter: int = maxiter
         self.tol: float = tol
+        for v in self.brackets.values():
+            if isinstance(v, Variable):
+                self.add_dependency_node(v)
