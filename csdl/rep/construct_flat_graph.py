@@ -28,7 +28,7 @@ def copy_unflat_graph(graph: DiGraph) -> DiGraph:
 
 def construct_flat_graph(
     model: 'Model',
-    unflat_graph: DiGraph,
+    first_graph: DiGraph,
 ) -> DiGraph:
     """
     Create a graph representing the model that contains only Variable
@@ -39,7 +39,7 @@ def construct_flat_graph(
     `graph` is a shappw copy, but not a view of the unflat graph; nodes
     are not copied, but edges and references to nodes are copied
     """
-    graph: DiGraph = copy_unflat_graph(unflat_graph)
+    graph: DiGraph = copy_unflat_graph(first_graph)
     # gather graphs from submodels and copy them in the main model
     merge_graphs(graph)
     # using unpromoted names, find promoted name for each variable and

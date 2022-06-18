@@ -18,7 +18,7 @@ def issue_user_specified_connections(model: 'Model'):
         issue_user_specified_connections(m)
         promoted_user_declared_connections: List[Tuple[str, str]] = []
         for (a, b) in m.user_declared_connections:
-            if a in m.promoted_to_unpromoted.keys():
+            if a in m.promoted_names_to_unpromoted_names.keys():
                 promoted_a = a
             elif a in m.unpromoted_to_promoted.keys():
                 promoted_a = m.unpromoted_to_promoted[a]
@@ -26,7 +26,7 @@ def issue_user_specified_connections(model: 'Model'):
                 raise KeyError(
                     "Variable {} is not a valid source (input or output) for conenction."
                     .format(a))
-            if b in m.promoted_to_unpromoted.keys():
+            if b in m.promoted_names_to_unpromoted_names.keys():
                 promoted_b = b
             elif b in m.unpromoted_to_promoted.keys():
                 promoted_b = m.unpromoted_to_promoted[b]

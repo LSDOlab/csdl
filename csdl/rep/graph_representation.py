@@ -16,7 +16,7 @@ from networkx import DiGraph
 from csdl.rep.ir_node import IRNode
 from csdl.rep.operation_node import OperationNode
 from csdl.rep.model_node import ModelNode
-from csdl.rep.construct_unflat_graph import construct_unflat_graph
+from csdl.rep.construct_unflat_graph import construct_unflat_graph, construct_graphs_all_models
 from csdl.rep.construct_flat_graph import construct_flat_graph
 from csdl.rep.variable_node import VariableNode
 from typing import List, Tuple, Dict, Set, Iterable
@@ -31,7 +31,7 @@ from csdl.rep.get_registered_outputs_from_graph import get_registered_outputs_fr
 from csdl.rep.resolve_promotions import resolve_promotions
 from csdl.rep.collect_connections2 import collect_connections
 from csdl.rep.add_dependencies_due_to_connections import add_dependencies_due_to_connections
-from csdl.rep.store_abs_unpromoted_names_in_each_node import store_abs_unpromoted_names_in_each_node 
+from csdl.rep.store_abs_unpromoted_names_in_each_node import store_abs_unpromoted_names_in_each_node
 from networkx import DiGraph, ancestors, simple_cycles
 try:
     from csdl.rep.apply_fn_to_implicit_operation_nodes import apply_fn_to_implicit_operation_nodes
@@ -82,6 +82,7 @@ def _visualize(graph: DiGraph, markersize: float):
     plt.spy(adjacency_matrix(graph), markersize=markersize)
     plt.show()
 
+
 def _visualize_unflat(graph: DiGraph):
     """
     Visualize the unflattened graph for the main model containing
@@ -94,6 +95,7 @@ def _visualize_unflat(graph: DiGraph):
         _visualize_unflat(mn.graph)
     draw_networkx(graph, labels={n: n.name for n in graph.nodes()})
     plt.show()
+
 
 def create_reverse_map(d: Dict[str, Set[str]]) -> Dict[str, str]:
     d2: Dict[str, str] = dict()
@@ -108,8 +110,11 @@ def generate_unpromoted_promoted_maps(model: 'Model') -> Dict[str, str]:
         s.submodel.unpromoted_to_promoted = generate_unpromoted_promoted_maps(
             s.submodel)
     model.unpromoted_to_promoted = create_reverse_map(
-        model.promoted_to_unpromoted)
+        model.promoted_names_to_unpromoted_names)
 
+def construct_graphs_all_levels(model: 'Model'):
+    ...
+    # for s in model.subgraphs:
 
 class GraphRepresentation:
     """
@@ -125,20 +130,20 @@ class GraphRepresentation:
         define_models_recursively(model)
         _, _, _, _ = resolve_promotions(model)
         generate_unpromoted_promoted_maps(model)
-        model.connections = collect_connections(
+        self.connections: list[Tuple[str, str]] = collect_connections(
             model,
+            model.promoted_names_to_unpromoted_names,
             model.unpromoted_to_promoted,
         )
-        print('model.connections', model.connections)
+        # TODO: check that there are never multiple sources connected to
+        # a single target
         """
         Connections issued to models across model hierarchy branches,
         for use by back ends that use `unflat_graph` only
         """
-        self.connections: list[Tuple[str, str]] = model.connections
-        # add_dependencies_due_to_connections(model)
-        # TODO: break and store cycles, emit warning for users using a
-        # code generator that uses unflat graph
-        self.unflat_graph: DiGraph = construct_unflat_graph(
+        # build a graph for each model without child models; this will
+        # be used to generate a flat graph and an unflat graph
+        first_graph: DiGraph = construct_graphs_all_models(
             model.inputs,
             model.registered_outputs,
             model.subgraphs,
@@ -146,19 +151,8 @@ class GraphRepresentation:
         # absolute unpromoted names cannot be assigned after merge_graphs
         # runs, but are necessary for storing absolute promoted names in
         # each node
-        store_abs_unpromoted_names_in_each_node(self.unflat_graph)
-        """
-        Directed graph representing model.
-        Each model in the model hierarchy will contain an instance of
-        `IntermediateRepresentation` with `unflat_graph: DiGraph`.
-        """
-        self.unflat_sorted_nodes: list[IRNode] = sort_nodes_nx(
-            self.unflat_graph,
-            flat=False,
-        )
-        """
-        Nodes sorted in order of execution, using the unflattened graph
-        """
+        # store_abs_unpromoted_names_in_each_node(self.unflat_graph)
+        # TODO: build flat graph
         self.flat_graph: DiGraph = construct_flat_graph(
             model,
             self.unflat_graph,
@@ -187,6 +181,29 @@ class GraphRepresentation:
                 ] for cycle in cycles]))
         """
         Nodes sorted in order of execution, using the flattened graph
+        """
+        # build unflat graph (will need to add dependencies between
+        # models)
+        add_dependencies_due_to_connections(model)
+        # TODO: break and store cycles, emit warning for users using a
+        # code generator that uses unflat graph
+        self.unflat_graph: DiGraph = construct_unflat_graph(
+            model.inputs,
+            model.registered_outputs,
+            model.subgraphs,
+        )
+
+        """
+        Directed graph representing model.
+        Each model in the model hierarchy will contain an instance of
+        `IntermediateRepresentation` with `unflat_graph: DiGraph`.
+        """
+        self.unflat_sorted_nodes: list[IRNode] = sort_nodes_nx(
+            self.unflat_graph,
+            flat=False,
+        )
+        """
+        Nodes sorted in order of execution, using the unflattened graph
         """
         # TODO: collect_design_variables
         self.design_variables: Dict[str, Dict[str, Any]] = dict()
@@ -607,5 +624,3 @@ class GraphRepresentation:
     # TODO: add implicit models option
     def visualize_unflat(self):
         _visualize_unflat(self.unflat_graph)
-
-

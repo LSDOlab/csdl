@@ -31,7 +31,7 @@ def check_for_promotion_induced_cycles(model: 'Model'):
     Check that connections formed by promotions do not create cycles
     between submodels
     """
-    for k1, s1 in model.promoted_to_unpromoted.items():
-        for k2, s2 in model.promoted_to_unpromoted.items():
+    for k1, s1 in model.promoted_names_to_unpromoted_names.items():
+        for k2, s2 in model.promoted_names_to_unpromoted_names.items():
             if k1 != k2:
                 share_namespace(s1, s2)

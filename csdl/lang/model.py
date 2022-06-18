@@ -65,11 +65,10 @@ class Model:
         self.initialize()
         self.parameters.update(kwargs)
         self._optimize_ir = False
-        self.promoted_sources: Dict[str, Shape] = dict()
-        self.promoted_sinks: Dict[str, Shape] = dict()
+        self.promoted_source_shapes: Dict[str, Shape] = dict()
+        self.promoted_target_shapes: Dict[str, Shape] = dict()
         self.sources_to_promote_to_parent: Dict[str, Shape] = dict()
         self.sinks_to_promote_to_parent: Dict[str, Shape] = dict()
-        self.promoted_sinks: Dict[str, Shape] = dict()
         self.sources_promoted_from_submodels: Dict[str, Shape] = dict()
         """
         Map from name to shape for sources (inputs and outputs)
@@ -80,9 +79,10 @@ class Model:
         Map from name to shape for sinks (declared variables)
         promoted from submodels
         """
-        self.promoted_to_unpromoted: Dict[str, Set[str]] = dict()
+        self.promoted_names_to_unpromoted_names: Dict[
+            str, Set[str]] = dict()
         self.unpromoted_to_promoted: Dict[str, str] = dict()
-        self.model_cycles: list[list[str]] =[]
+        self.model_cycles: list[list[str]] = []
 
     def initialize(self):
         """

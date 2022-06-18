@@ -22,8 +22,8 @@ def detect_cycle(
     n: Node,
     namespace: str | None = None,
 ):
-    for prev in n.dependencies:
-        if n is start:
+    for prev in start.dependencies:
+        if prev is start:
             raise RecursionError(
                 "Cycle detected due to model {} of type {}".format(
                     start.name if namespace is None else namespace +
@@ -42,18 +42,17 @@ def add_model_var_dependencies_due_to_promotions(
     models and variables.
     """
     for s in model.subgraphs:
-        add_model_var_dependencies_due_to_promotions(s.submodel)
+        m = s.submodel
+        add_model_var_dependencies_due_to_promotions(m)
         promoted_sources: Dict[
-            str, Shape] = s.submodel.sources_to_promote_to_parent
+            str, Shape] = m.sources_to_promote_to_parent
         promoted_sinks: Dict[
-            str, Shape] = s.submodel.sinks_to_promote_to_parent
+            str, Shape] = m.sinks_to_promote_to_parent
 
         # make each declared variable that is connected to submodel
         # source depend on model in graph
         for var in model.declared_variables:
-            print('promoted_sources', promoted_sources.keys())
             if var.name in promoted_sources.keys():
-                print(var.name, promoted_sources[var.name])
                 if var.shape == promoted_sources[var.name]:
                     var.add_dependency_node(s)
                     s.add_dependent_node(var)
@@ -69,10 +68,14 @@ def add_model_var_dependencies_due_to_promotions(
         io.extend(model.registered_outputs)
         io.extend(model.inputs)
 
+        print('sources', [x.name for x in io])
+        print('promoted_sinks', promoted_sinks.keys())
+
         # make each declared variable in submodel that is connected to
         # model source depend on source in graph
         for var in io:
-            if var.shape == promoted_sinks[var.name]:
+            if var.name in promoted_sinks.keys(
+            ) and var.shape == promoted_sinks[var.name]:
                 s.add_dependency_node(var)
                 var.add_dependent_node(s)
                 for d in s.dependencies:

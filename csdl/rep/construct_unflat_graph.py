@@ -1,3 +1,4 @@
+from lib2to3.pgen2.driver import load_grammar
 from networkx import DiGraph
 
 from csdl.lang.output import Output
@@ -11,6 +12,78 @@ from csdl.rep.operation_node import OperationNode
 from csdl.rep.model_node import ModelNode
 from typing import List, Dict, Set, Tuple
 from copy import copy
+try:
+    from csdl.lang.model import Model
+except ImportError:
+    pass
+
+
+def add_dependencies_for_models(model: 'Model'):
+    # TODO: check dependencies
+
+    # add dependency relationship representing data flowing from local
+    # source to child model
+    for s in model.subgraphs:
+        for local_name, unpromoted_names in model.promoted_names_to_unpromoted_names.items(
+        ):
+            io: list[Input | Output] = []
+            io.extend(model.inputs)
+            io.extend(model.registered_outputs)
+            src = list(filter(lambda x: x.name == local_name, io))
+            if len(src) > 0:
+                for unpromoted_name in unpromoted_names:
+                    # TODO: rsplit unpromoted_name
+                    if unpromoted_name in s.submodel.promoted_names_to_unpromoted_names.keys(
+                    ):
+                        s.add_dependency_node(src[0])
+                        src[0].add_dependent_node(s)
+
+    # add dependency relationship representing data flowing from child
+    # model to local target
+    for s in model.subgraphs:
+        for local_name, unpromoted_names in model.promoted_names_to_unpromoted_names.items(
+        ):
+            tgt = list(
+                filter(lambda x: x.name == local_name,
+                       model.registered_outputs))
+            if len(tgt) > 0:
+                for unpromoted_name in unpromoted_names:
+                    a = unpromoted_name.rsplit('.')
+                    if len(a) > 1:
+                        if a[1:] in s.submodel.promoted_names_to_unpromoted_names.keys(
+                        ):
+                            tgt[0].add_dependency_node(s)
+                            s.add_dependent_node(tgt[0])
+
+    # add dependency relationship representing data flowing from local
+    # target to target with same name and shape in child model that has
+    # been promoted to this model
+    for s in model.subgraphs:
+        for local_name, tgt in locally_defined_targets.items():
+            for lower_level_name in promoted_targets_from_children.keys(
+            ):
+                if local_name == lower_level_name:
+                    s.add_dependency_node(tgt)
+                    tgt.add_dependent_node(s)
+
+    # add dependency relationship representing data flowing between
+    # child models
+    for a in model.subgraphs:
+        for b in model.subgraphs:
+            if a is not b:
+                for name in a.submodel.promoted_source_shapes.keys():
+                    if name in b.submodel.promoted_target_shapes.keys():
+                        b.add_dependency_node(a)
+                        a.add_dependent_node(b)
+
+    # TODO: make sure users can't form cycles by defining terms in
+    # between concatenation assignments; e.g.
+    # a[1] = b
+    # c = 2*a[1]
+    # a[2] = c
+    # then insert condition so that this only runs for models containing
+    # models
+    check_for_cycles(model, namespace, 'promotions')
 
 
 def in_cycles(cycles: list[Set[str]], name: str):
@@ -34,7 +107,6 @@ def _construct_graph_this_level(
     the model to the inputs and declared variables in the model in order
     to build the graph.
     """
-    # TODO: break cycles
     if isinstance(node, Variable):
         if node.name not in nodes.keys():
             nodes[node.name] = VariableNode(node)
@@ -43,69 +115,52 @@ def _construct_graph_this_level(
             nodes[node.name] = OperationNode(node)
     for predecessor in node.dependencies:
         _construct_graph_this_level(graph, nodes, predecessor)
-        try:
-            a = nodes[predecessor.name]
-        except:
-            print('nodes', nodes.keys())
-            print('PROBLEM', predecessor.name)
-            exit()
-        b = nodes[node.name]
-        graph.add_edge(a, b)
+        # adding redundant edge will not affect graph structure
+        graph.add_edge(nodes[predecessor.name], nodes[node.name])
 
 
-def build_dag(
-    dag: DiGraph,
-    nodes: Dict[str, Node],
-    edges: Dict[str, list[str]],
-    node: Node,
-    path: list[str] = [],
-    cycles: list[Set[str]] = [],
-) -> Tuple[list[Set[str]], Set[str], str | None]:
-    culprit: str | None = None
-    current_cycle = set()
-    for predecessor in node.dependencies:
-        if predecessor.name in path:
-            return cycles, set(predecessor.name), predecessor.name
+def construct_graphs_all_models(
+    inputs: List[Input],
+    registered_outputs: List[Output],
+    subgraphs: List[Subgraph],
+) -> DiGraph:
+    """
+    Construct the intermediate representation as a graph with nodes
+    represented by `VariableNode`, `OperationNode`, and `ModelNode`
+    objects.
+    `ModelNode` objects contain a graph for a submodel.
+    The intermediate representation graph and all graphs contained in a
+    `ModelNode` are implemented as a networkx `DiGraph`.
+    """
+    nodes: Dict[str, VariableNode | OperationNode | ModelNode] = dict()
+    graph = DiGraph()
 
-        # check if this node is on a cycle and skip searching its
-        # children if it is
-        if in_cycles(cycles, predecessor.name):
-            # TODO: what to do here?
-            long_cycle = set()
-            for cycle in cycles:
-                if predecessor.name in cycle:
-                    long_cycle.update(cycle)
-            cycles.append(long_cycle)
-            continue
-        else:
-            # continue search according to DFS strategy, keep track of
-            # path traversed
-            path.append(predecessor.name)
-            dag.add_edge(predecessor, node)
-            # explore branches from this node
-            cycles, current_cycle, culprit = build_dag(
-                dag,
-                nodes,
-                edges,
-                predecessor,
-                path=path,
-                cycles=cycles,
+    # add models to graph for this model
+    for s in subgraphs:
+        if s.name not in nodes.keys():
+            mn = ModelNode(s.name, s.submodel, s.promotes)
+            nodes[s.name] = mn
+            graph.add_node(mn)
+            mn.graph = construct_graphs_all_models(
+                s.submodel.inputs,
+                s.submodel.registered_outputs,
+                s.submodel.subgraphs,
             )
 
-            if culprit is not None:
-                # cycle detected downstream
-                if culprit != predecessor.name:
-                    # build cycle
-                    current_cycle.add(predecessor.name)
-                else:
-                    # end of cycle
-                    # no culprit to indicate a cycle
-                    culprit = None
-                    # update record of cycles
-                    cycles.append(copy(current_cycle))
-                    current_cycle = set()
-            path.pop()
-    return cycles, current_cycle, culprit
+    # add variables and operations to the graph for this model
+
+    # add inputs to the graph for this model
+    for inp in inputs:
+        if inp.name not in nodes.keys():
+            nodes[inp.name] = VariableNode(inp)
+        if nodes[inp.name] not in graph.nodes():
+            graph.add_node(nodes[inp.name])
+
+    # add nodes that outputs depend on for this model
+    for r in registered_outputs:
+        _construct_graph_this_level(graph, nodes, r)
+
+    return graph
 
 
 def construct_unflat_graph(
@@ -150,6 +205,5 @@ def construct_unflat_graph(
             graph.add_node(nodes[inp.name])
     for r in registered_outputs:
         _construct_graph_this_level(graph, nodes, r)
-
 
     return graph
