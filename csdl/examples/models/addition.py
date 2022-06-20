@@ -6,7 +6,8 @@ class AdditionFunction(Model):
 
     def define(self):
 
-        a = self.declare_variable('a')
+        a = self.declare_variable('a', val=3.0)
+        # a = self.create_input('a', val=3.0)
         b = self.declare_variable('b')
 
         f = a + b

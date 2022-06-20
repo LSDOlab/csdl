@@ -2,7 +2,6 @@ import csdl
 from csdl import Model, GraphRepresentation
 from csdl_om import Simulator
 
-
 # TESTS:
 # - Different shapes throw error:
 # --- ErrorPromotionShapeMismatch
@@ -54,16 +53,17 @@ class ExampleManualPromotion(Model):
         f = self.declare_variable('f')
         self.register_output('b', f + a)
 
+
 from csdl.examples.models.addition import AdditionFunction
-rep = GraphRepresentation(ExampleManualPromotion())
+
+rep = GraphRepresentation(ExampleManualPromotion())  # front end
 # rep = GraphRepresentation(AdditionFunction())
 rep.visualize_graph()
-rep.visualize_unflat()
-sim = Simulator(rep)
-sim.run()
-print(sim['f'])
+# rep.visualize_unflat()
+# sim = Simulator(rep)  # back end
+# sim.run()
+# print(sim['f'])
 exit()
-
 
 
 class ExampleAbsoluteRelativeName(Model):
@@ -309,7 +309,10 @@ class ExampleSameIOUnpromoted(Model):
             name='model')
 
         self.register_output('f', a * 1.0)
+
+
 from csdl.examples.models.addition import AdditionFunction
+
 rep = GraphRepresentation(ExampleSameIOUnpromoted())
 # rep = GraphRepresentation(AdditionFunction())
 rep.visualize_graph()
@@ -318,7 +321,6 @@ sim = Simulator(rep)
 sim.run()
 print(sim['f'])
 exit()
-
 
 
 class ErrorTwoModelsPromoted(Model):

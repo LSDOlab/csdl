@@ -57,31 +57,29 @@ def isolate_unique_targets(
     # TODO: what type?
     fwd_edges = []
     for k, tgts, in grouped_tgts.items():
-        # remove edges containing redundant target nodes
+        # select one target node to keep in graph;
+        unique_targets[k] = list(tgts)[0]
+
+        # gather out edges from target nodes with same promoted name
         for tgt in tgts:
             fwd_edges.extend(graph.out_edges(tgt))
-        graph.remove_edges_from(fwd_edges)
-
-        # select one target node to keep in graph;
-        # use a loop since we can't use a zero index in a set and
-        # because all redundant target nodes are identical
-        for tgt in tgts:
-            unique_targets[k] = tgt
-            break
 
         # remove reduntant target nodes
-        graph.remove_nodes_from([a for a, _ in fwd_edges])
+        for a, _ in fwd_edges:
+            if a not in unique_targets.values():
+                graph.remove_node(a)
 
         # replace edges (u,v) where u is a redundant target node with
         # edges (w,v) where w is target node chosen to be kept in graph
         for _, b in fwd_edges:
             graph.add_edge(unique_targets[k], b)
+        graph.add_node(unique_targets[k])
 
     return unique_targets
 
 
-def gather_sources_by_promoted_name(
-    srcs: Dict[str, VariableNode],
+def gather_variables_by_promoted_name(
+    vars: Dict[str, VariableNode],
     promotes: Set[str] | None,
     namespace: str,
 ) -> Dict[str, VariableNode]:
@@ -89,15 +87,15 @@ def gather_sources_by_promoted_name(
     Create key value pairs of unique source name to corresponding source
     node
     """
-    unique_sources: Dict[str, VariableNode] = dict()
-    for k, v in srcs.items():
+    unique_variables: Dict[str, VariableNode] = dict()
+    for k, v in vars.items():
         if promotes is None or k in promotes:
-            unique_sources[k] = v
+            unique_variables[k] = v
         else:
             v.namespace = namespace
             name = prepend_namespace(namespace, k)
-            unique_sources[name] = v
-    return unique_sources
+            unique_variables[name] = v
+    return unique_variables
 
 
 def combine_sources_targets(
@@ -110,13 +108,12 @@ def combine_sources_targets(
     """
     print('sources', sources.keys(), 'targets', targets.keys())
     for k, s in sources.items():
-        # TODO: type?
+        print(k, prepend_namespace(s.namespace, s.name))
         if k in targets.keys():
-            out_edges = list(graph.out_edges(targets[k]))
-            # TODO: how to iterate over edges?
+            out_edges = graph.out_edges(targets[k])
             for _, b in out_edges:
                 graph.add_edge(s, b)
-            graph.remove_node(targets[k])
+            # graph.remove_node(targets[k])
 
 
 def combine_connected_nodes(
@@ -147,8 +144,33 @@ def merge_graphs_based_on_promotions(
     child_model_nodes: list[ModelNode] = list(
         filter(lambda x: isinstance(x, ModelNode), graph.nodes()))
 
-    unique_sources: Dict[str, VariableNode] = dict()
-    unique_targets: Dict[str, VariableNode] = dict()
+    vars: list[VariableNode] = list(
+            filter(lambda x: isinstance(x, VariableNode),
+                   graph.nodes()))
+    srcs: Dict[str, VariableNode] = {
+            x.name: x
+            for x in list(
+                filter(lambda x: isinstance(x.var, (Input, Output)),
+                       vars))
+        }
+    tgts: Dict[str, VariableNode] = {
+            x.name: x
+            for x in list(
+                filter(lambda x: isinstance(x.var, DeclaredVariable),
+                       vars))
+        }
+    unique_sources: Dict[str, VariableNode] = gather_variables_by_promoted_name(
+            srcs,
+            None,
+            '',
+        )
+
+    unique_targets: Dict[str, VariableNode] = gather_variables_by_promoted_name(
+            tgts,
+            None,
+            '',
+        )
+
     # create a flattened copy of the graph for each model node
     for mn in child_model_nodes:
         child_graph_copy = DiGraph(mn.graph)
@@ -190,13 +212,12 @@ def merge_graphs_based_on_promotions(
                 filter(lambda x: isinstance(x.var, (Input, Output)),
                        child_vars))
         }
-        # FIXME: not finding sources in current level
-        unique_sources.update(gather_sources_by_promoted_name(
+        unique_sources.update(gather_variables_by_promoted_name(
             child_srcs,
             None if mn.promotes is None else set(mn.promotes),
             prepend_namespace(namespace, mn.name),
         ))
-        # FIXME: not combining targets
+        # FIXME: not finding all targets in child_graph_copy
         combine_sources_targets(
             child_graph_copy,
             unique_sources,
