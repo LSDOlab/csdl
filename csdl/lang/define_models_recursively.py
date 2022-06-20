@@ -9,8 +9,8 @@ from typing import Set
 
 def define_models_recursively(model: 'Model'):
     """
-    Construct intermediate representation for each model in the
-    hierarchy from the top down
+    Define each model by running user-defined `Model.define` method in
+    the hierarchy from the top down
     """
     if model.defined is False:
         # this does nothing if user defines model inline; whether or not

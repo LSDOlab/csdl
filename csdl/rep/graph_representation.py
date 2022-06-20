@@ -32,6 +32,7 @@ from csdl.rep.resolve_promotions import resolve_promotions
 from csdl.rep.collect_connections2 import collect_connections
 from csdl.rep.add_dependencies_due_to_connections import add_dependencies_due_to_connections
 from csdl.rep.store_abs_unpromoted_names_in_each_node import store_abs_unpromoted_names_in_each_node
+from csdl.utils.prepend_namespace import prepend_namespace
 from networkx import DiGraph, ancestors, simple_cycles
 try:
     from csdl.rep.apply_fn_to_implicit_operation_nodes import apply_fn_to_implicit_operation_nodes
@@ -152,10 +153,11 @@ class GraphRepresentation:
         # runs, but are necessary for storing absolute promoted names in
         # each node
         # store_abs_unpromoted_names_in_each_node(self.unflat_graph)
-        # TODO: build flat graph
         self.flat_graph: DiGraph = construct_flat_graph(
-            model,
-            self.unflat_graph,
+            first_graph,
+            self.connections,
+            set(model.promoted_source_shapes.keys()),
+            set(model.promoted_target_shapes.keys()),
         )
         """
         Flattened directed acyclic graph representing main model.
@@ -588,7 +590,7 @@ class GraphRepresentation:
 
         draw_networkx(
             self.flat_graph,
-            labels={n: n.name
+            labels={n: prepend_namespace(n.namespace, n.name)
                     for n in self.flat_graph.nodes()})
         plt.show()
 
