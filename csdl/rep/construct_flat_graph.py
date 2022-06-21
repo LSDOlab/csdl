@@ -171,7 +171,7 @@ def merge_graphs(
     return graph
 
 
-def merge_nodes_based_on_promotions(graph: DiGraph, ):
+def merge_automatically_connected_nodes(graph: DiGraph):
     # graph contains all variables in the model hierarchy and no
     # submodels; some target variables are redundant; no variables are
     # merged yet as a result of promotions or connections
@@ -264,27 +264,23 @@ def merge_nodes_based_on_promotions(graph: DiGraph, ):
 ## CONNECTIONS
 
 
-def issue_connections_flat_graph(
+def merge_user_connected_nodes(
     graph: DiGraph,
     connections: list[Tuple[str, str]],
-    promoted_source_names: Set[str],
-    promoted_target_names: Set[str],
 ):
     # list of all variables in graph
     vars: list[VariableNode] = list(
         filter(lambda x: isinstance(x, VariableNode), graph.nodes()))
+    print('vars',
+          [prepend_namespace(x.namespace, x.name) for x in vars])
 
     # list of all source variables in graph
     src_nodes: list[VariableNode] = list(
-        filter(
-            lambda x: prepend_namespace(x.namespace, x.name) in
-            promoted_source_names, vars))
+        filter(lambda x: isinstance(x.var, (Input, Output)), vars))
 
     # list of all target variables in graph
     tgt_nodes: list[VariableNode] = list(
-        filter(
-            lambda x: prepend_namespace(x.namespace, x.name) in
-            promoted_target_names, vars))
+        filter(lambda x: isinstance(x.var, DeclaredVariable), vars))
 
     # map of sources
     src_nodes_map: Dict[str, VariableNode] = {
@@ -296,6 +292,8 @@ def issue_connections_flat_graph(
         for x in tgt_nodes
     }
     for a, b in connections:
+        src_nodes_map[a].tgt_namespace = tgt_nodes_map[b].namespace
+        src_nodes_map[a].tgt_name = tgt_nodes_map[b].name
         contracted_nodes(
             graph,
             src_nodes_map[a],
@@ -308,16 +306,12 @@ def issue_connections_flat_graph(
 def construct_flat_graph(
     graph: DiGraph,
     connections: list[Tuple[str, str]],
-    promoted_source_names: Set[str],
-    promoted_target_names: Set[str],
 ) -> DiGraph:
     graph = merge_graphs(graph)
-    merge_nodes_based_on_promotions(graph)
-    # issue_connections_flat_graph(
-    #     graph,
-    #     connections,
-    #     promoted_source_names,
-    #     promoted_target_names,
-    # )
+    merge_automatically_connected_nodes(graph)
+    merge_user_connected_nodes(
+        graph,
+        connections,
+    )
 
     return graph

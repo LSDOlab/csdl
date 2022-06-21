@@ -22,7 +22,7 @@ from csdl.rep.ir_node import IRNode
 from csdl.rep.sort_nodes_nx import sort_nodes_nx
 from csdl.rep.get_registered_outputs_from_graph import get_registered_outputs_from_graph
 from csdl.rep.resolve_promotions import resolve_promotions
-from csdl.rep.collect_connections2 import collect_connections
+from csdl.rep.collect_connections2 import collect_connections, collect_promoted_source_names_lower_levels, collect_promoted_target_names_lower_levels
 from csdl.rep.add_dependencies_due_to_connections import add_dependencies_due_to_connections
 from csdl.utils.prepend_namespace import prepend_namespace
 from networkx import DiGraph, ancestors, simple_cycles
@@ -148,15 +148,9 @@ class GraphRepresentation:
             model.registered_outputs,
             model.subgraphs,
         )
-        # absolute unpromoted names cannot be assigned after merge_graphs
-        # runs, but are necessary for storing absolute promoted names in
-        # each node
-        # store_abs_unpromoted_names_in_each_node(self.unflat_graph)
         self.flat_graph: DiGraph = construct_flat_graph(
             first_graph,
             self.connections,
-            set(model.promoted_source_shapes.keys()),
-            set(model.promoted_target_shapes.keys()),
         )
         """
         Flattened directed acyclic graph representing main model.
