@@ -10,7 +10,6 @@ from csdl.utils.prepend_namespace import prepend_namespace
 from typing import Set, Dict, Tuple
 
 
-
 def find_longest_varpath_in_set(s: Set[str]) -> list[str]:
     varpaths = [st.rsplit('.') for st in s]
     return max(varpaths, key=len)
@@ -31,44 +30,69 @@ def find_unique_name(
     if full_name in main_mup.keys():
         return main_mup[full_name]
     raise KeyError(
-            "{} is not a user defined variable name in the model".
-            format(name))
+        "{} is not a user defined variable name in the model".format(
+            name))
 
 
-
-def check_source_name(model: 'Model', name):
+def check_source_name(model: 'Model', name: str, promoted_source_names: Set[str]):
     # name is promoted name
     if name in model.promoted_names_to_unpromoted_names.keys():
         # name is promoted name of source, not target
-        if name in model.promoted_source_shapes.keys():
+        if name in promoted_source_names:
             return
     # name is unpromoted name
     if name in model.unpromoted_to_promoted.keys():
         # name is promoted name of source, not target
-        if model.unpromoted_to_promoted[
-                name] in model.promoted_source_shapes.keys():
+        if model.unpromoted_to_promoted[name] in promoted_source_names:
             return
     raise KeyError(
-        "{} is not a valid source variable name for connection. Source variable must be an Input or an Output."
-    )
+        "\'{}\' is not a valid source variable name for connection. Source variable must be an Input or an Output of the model or promoted from its submodels."
+        .format(name))
 
 
-def check_target_name(model: 'Model', name):
+def collect_promoted_source_names_lower_levels(
+        model: 'Model') -> Set[str]:
+    promoted_names = collect_promoted_source_names_lower_levels(model)
+    for s in model.subgraphs:
+        m = s.submodel
+        collect_promoted_source_names_lower_levels(m)
+        promoted_names.update([
+            name if s.promotes is None or name in s.promotes else
+            prepend_namespace(s.name, name)
+            for name in m.promoted_source_shapes.keys()
+        ])
+    return promoted_names
+
+
+def collect_promoted_target_names_lower_levels(
+        model: 'Model') -> Set[str]:
+    promoted_names = collect_promoted_target_names_lower_levels(model)
+    for s in model.subgraphs:
+        m = s.submodel
+        collect_promoted_target_names_lower_levels(m)
+        promoted_names.update([
+            name if s.promotes is None or name in s.promotes else
+            prepend_namespace(s.name, name)
+            for name in m.promoted_target_shapes.keys()
+        ])
+    return promoted_names
+
+
+def check_target_name(model: 'Model', name: str, promoted_target_names: Set[str]):
     # name is promoted name
     if name in model.promoted_names_to_unpromoted_names.keys():
         # name is promoted name of target, not target
-        if name in model.promoted_target_shapes.keys():
+        if name in promoted_target_names:
             return
     # name is unpromoted name
     if name in model.unpromoted_to_promoted.keys():
         # name is promoted name of target, not source
         if model.unpromoted_to_promoted[
-                name] in model.promoted_target_shapes.keys():
+                name] in promoted_target_names:
             return
     raise KeyError(
-        "{} is not a valid target variable name for connection. Target variable must be a DeclaredVariable."
-    )
-
+        "\'{}\' is not a valid target variable name for connection. Target variable must be a DeclaredVariable of the model or promoted from its submodels."
+        .format(name))
 
 
 def collect_connections(
@@ -83,17 +107,33 @@ def collect_connections(
     Unique names are promoted variable names relative to main model.
     """
     connections: list[Tuple[str, str]] = []
+    promoted_source_names: Set[str] = set(model.promoted_source_shapes.keys())
+    promoted_target_names: Set[str] = set(model.promoted_target_shapes.keys())
     for s in model.subgraphs:
+        m = s.submodel
         c = collect_connections(
-            s.submodel,
+            m,
             main_promoted_to_unpromoted,
             main_unpromoted_to_promoted,
             prepend_namespace(namespace, s.name),
         )
         connections.extend(c)
+        promoted_source_names.update([
+            name if s.promotes is not None and name in s.promotes else prepend_namespace(s.name, name)
+            for name in m.promoted_source_shapes.keys()
+        ])
+        promoted_target_names.update([
+            name if s.promotes is not None and name in s.promotes else prepend_namespace(s.name, name)
+            for name in m.promoted_target_shapes.keys()
+        ])
+    connections.extend(model.user_declared_connections)
+    print('namespace:', namespace)
+    print('promoted_source_names',promoted_source_names)
+    print('promoted_target_names',promoted_target_names)
     for a, b in model.user_declared_connections:
-        check_source_name(model, a)
-        check_target_name(model, b)
+        print('verifying connection ({}, {})'.format(a, b))
+        check_source_name(model, a, promoted_source_names)
+        check_target_name(model, b, promoted_target_names)
         src = find_unique_name(
             a,
             main_promoted_to_unpromoted,

@@ -2,13 +2,10 @@ try:
     from csdl.lang.model import Model
 except ImportError:
     pass
-from cProfile import label
 from networkx import DiGraph, adjacency_matrix, dag_longest_path_length
 from typing import List, Dict, Literal, Tuple, Any
 from csdl.lang.input import Input
 from csdl.lang.output import Output
-from csdl.lang.operation import Operation
-from csdl.lang.variable import Variable
 from csdl.lang.custom_explicit_operation import CustomExplicitOperation
 from csdl.lang.custom_implicit_operation import CustomImplicitOperation
 import matplotlib.pyplot as plt
@@ -20,18 +17,13 @@ from csdl.rep.construct_unflat_graph import construct_unflat_graph, construct_gr
 from csdl.rep.construct_flat_graph import construct_flat_graph
 from csdl.rep.variable_node import VariableNode
 from typing import List, Tuple, Dict, Set, Iterable
-from csdl.lang.concatenation import Concatenation
 from csdl.rep.issue_user_specified_connections import issue_user_specified_connections
-from csdl.rep.issue_user_specified_connections import issue_user_specified_connections
-from csdl.rep.detect_cycles_in_connections import detect_cycles_in_connections
-from csdl.rep.add_model_var_dependencies import add_model_var_dependencies_due_to_connections
 from csdl.rep.ir_node import IRNode
 from csdl.rep.sort_nodes_nx import sort_nodes_nx
 from csdl.rep.get_registered_outputs_from_graph import get_registered_outputs_from_graph
 from csdl.rep.resolve_promotions import resolve_promotions
 from csdl.rep.collect_connections2 import collect_connections
 from csdl.rep.add_dependencies_due_to_connections import add_dependencies_due_to_connections
-from csdl.rep.store_abs_unpromoted_names_in_each_node import store_abs_unpromoted_names_in_each_node
 from csdl.utils.prepend_namespace import prepend_namespace
 from networkx import DiGraph, ancestors, simple_cycles
 try:
@@ -112,6 +104,7 @@ def generate_unpromoted_promoted_maps(model: 'Model') -> Dict[str, str]:
             s.submodel)
     model.unpromoted_to_promoted = create_reverse_map(
         model.promoted_names_to_unpromoted_names)
+    return model.unpromoted_to_promoted
 
 
 def construct_graphs_all_levels(model: 'Model'):
