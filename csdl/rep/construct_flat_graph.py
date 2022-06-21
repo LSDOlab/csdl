@@ -3,7 +3,6 @@ try:
 except ImportError:
     pass
 
-from networkx import DiGraph
 from csdl.rep.model_node import ModelNode
 from csdl.rep.variable_node import VariableNode
 from csdl.rep.operation_node import OperationNode
@@ -16,9 +15,10 @@ from csdl.rep.variable_node import VariableNode
 from csdl.rep.operation_node import OperationNode
 from csdl.utils.prepend_namespace import prepend_namespace
 from typing import Tuple, Set
-from networkx import DiGraph
+from networkx import DiGraph, compose, contracted_nodes
 
 from csdl.rep.variable_node import VariableNode
+from copy import copy
 from typing import Dict
 
 
@@ -79,38 +79,39 @@ def isolate_unique_targets(
 
 
 def gather_variables_by_promoted_name(
-    vars: Dict[str, VariableNode],
-    promotes: Set[str] | None,
-    namespace: str,
-) -> Dict[str, VariableNode]:
+    vars: Dict[str, VariableNode], ) -> Dict[str, VariableNode]:
     """
     Create key value pairs of unique source name to corresponding source
     node
     """
     unique_variables: Dict[str, VariableNode] = dict()
     for k, v in vars.items():
-        if promotes is None or k in promotes:
+        if k not in unique_variables.keys():
             unique_variables[k] = v
-        else:
-            v.namespace = namespace
-            name = prepend_namespace(namespace, k)
-            unique_variables[name] = v
     return unique_variables
 
 
-def combine_sources_targets(
+def combine_sources_and_targets(
     graph: DiGraph,
-    sources: Dict[str, VariableNode],
-    targets: Dict[str, VariableNode],
+    unique_sources: Dict[str, VariableNode],
+    unique_targets: Dict[str, VariableNode],
 ):
     """
     Combine source and target nodes with same promoted names
     """
-    print('sources', sources.keys(), 'targets', targets.keys())
-    for k, s in sources.items():
-        print(k, prepend_namespace(s.namespace, s.name))
-        if k in targets.keys():
-            out_edges = graph.out_edges(targets[k])
+    nodes = {
+        prepend_namespace(s.namespace, s.name): s
+        for s in graph.nodes()
+    }
+    print('sources', unique_sources.keys(), 'targets',
+          unique_targets.keys())
+    for k, s in unique_sources.items():
+        print('names should match:', k,
+              prepend_namespace(s.namespace, s.name))
+        if k in unique_targets.keys():
+            print('should be equal', id(nodes[k]),
+                  id(unique_targets[k]))
+            out_edges = graph.out_edges(unique_targets[k])
             for _, b in out_edges:
                 graph.add_edge(s, b)
             # graph.remove_node(targets[k])
@@ -132,7 +133,7 @@ def combine_connected_nodes(
     graph.remove_node(tgt)
 
 
-def merge_graphs_based_on_promotions(
+def merge_graphs(
     graph: DiGraph,
     namespace: str = '',
 ):
@@ -144,86 +145,100 @@ def merge_graphs_based_on_promotions(
     child_model_nodes: list[ModelNode] = list(
         filter(lambda x: isinstance(x, ModelNode), graph.nodes()))
 
-    vars: list[VariableNode] = list(
-            filter(lambda x: isinstance(x, VariableNode),
-                   graph.nodes()))
-    srcs: Dict[str, VariableNode] = {
-            x.name: x
-            for x in list(
-                filter(lambda x: isinstance(x.var, (Input, Output)),
-                       vars))
-        }
-    tgts: Dict[str, VariableNode] = {
-            x.name: x
-            for x in list(
-                filter(lambda x: isinstance(x.var, DeclaredVariable),
-                       vars))
-        }
-    unique_sources: Dict[str, VariableNode] = gather_variables_by_promoted_name(
-            srcs,
-            None,
-            '',
-        )
-
-    unique_targets: Dict[str, VariableNode] = gather_variables_by_promoted_name(
-            tgts,
-            None,
-            '',
-        )
-
     # create a flattened copy of the graph for each model node
-    for mn in child_model_nodes:
-        child_graph_copy = DiGraph(mn.graph)
-        merge_graphs_based_on_promotions(
-            child_graph_copy,
+    for mn in copy(child_model_nodes):
+        # child_graph_copy = DiGraph()
+        # child_graph_copy.add_edges_from(mn.graph.edges())
+        # # also copy ModelNode nodes, which do not have edges
+        # child_graph_copy.add_nodes_from(mn.graph.nodes())
+        graph = compose(graph, mn.graph)
+        graph.remove_node(mn)
+        graph = merge_graphs(
+            graph,
             namespace=prepend_namespace(namespace, mn.name),
         )
-        graph.add_edges_from(child_graph_copy.edges())
 
-        # merge nodes corresponding to locally defined and promoted
-        # nodes so that each variable is represented by exactly one
-        # node; merge nodes only as a result of promotions, not user
-        # declared connections
+        # all variables in child graph
         child_vars: list[VariableNode] = list(
             filter(lambda x: isinstance(x, VariableNode),
-                   child_graph_copy.nodes()))
+                   mn.graph.nodes()))
 
-        # merge targets from child into unique targets
-        child_ungrouped_tgts: Dict[str, VariableNode] = {
-            x.name: x
-            for x in list(
-                filter(lambda x: isinstance(x.var, DeclaredVariable),
-                       child_vars))
-        }
-        child_grouped_tgts = gather_targets_by_promoted_name(
-            child_ungrouped_tgts,
-            None if mn.promotes is None else set(mn.promotes),
-            prepend_namespace(namespace, mn.name),
-        )
-        unique_targets.update(isolate_unique_targets(
-            child_graph_copy,
-            child_grouped_tgts,
-        ))
+        # assign namespace to each variable node
+        for v in child_vars:
+            if not (mn.promotes is None or v.name in mn.promotes):
+                v.namespace = prepend_namespace(
+                    namespace, prepend_namespace(v.namespace, mn.name))
 
-        # find sources by promoted (unique) name
-        child_srcs: Dict[str, VariableNode] = {
-            x.name: x
-            for x in list(
-                filter(lambda x: isinstance(x.var, (Input, Output)),
-                       child_vars))
-        }
-        unique_sources.update(gather_variables_by_promoted_name(
-            child_srcs,
-            None if mn.promotes is None else set(mn.promotes),
-            prepend_namespace(namespace, mn.name),
-        ))
-        # FIXME: not finding all targets in child_graph_copy
-        combine_sources_targets(
-            child_graph_copy,
-            unique_sources,
-            unique_targets,
-        )
-    graph.remove_nodes_from(child_model_nodes)
+    return graph
+
+
+def merge_nodes_based_on_promotions(graph: DiGraph, ):
+    # graph contains all variables in the model hierarchy and no
+    # submodels; some target variables are redundant; no variables are
+    # merged yet as a result of promotions or connections
+
+    # list of all variables in graph
+    vars: list[VariableNode] = list(
+        filter(lambda x: isinstance(x, VariableNode), graph.nodes()))
+
+    # map of source promoted names to source node object
+    sources: Dict[str, VariableNode] = {
+        prepend_namespace(x.namespace, x.name): x
+        for x in list(
+            filter(lambda x: isinstance(x.var, (Input, Output)), vars))
+    }
+
+    # List of all target nodes in graph
+    targets: list[VariableNode] = [
+        x for x in list(
+            filter(lambda x: isinstance(x.var, DeclaredVariable), vars))
+    ]
+    # Set of all unique target names in graph
+    target_names: Set[str] = set(
+        [prepend_namespace(x.namespace, x.name) for x in targets])
+    print(target_names)
+
+    # gather VariableNode objects with unique and nonunique promoted
+    # names in order to merge nodes into one VariableNode object
+    unique_targets: Dict[str, VariableNode] = dict()
+    nonunique_targets: Dict[str, Set[VariableNode]] = dict()
+    for name in target_names:
+        for target in targets:
+            if name in unique_targets.keys():
+                try:
+                    nonunique_targets[name].add(target)
+                except:
+                    nonunique_targets[name] = {target}
+            else:
+                unique_targets[name] = target
+
+    # merge nodes corresponding to locally defined and promoted nodes so
+    # that each variable is represented by exactly one node; merge only
+    # declared variables; merge nodes only as a result of promotions,
+    # not user declared connections
+    for k, tgts in nonunique_targets.items():
+        for tgt in tgts:
+            print(tgt not in graph.nodes)
+            print(unique_targets[k] in graph.nodes, unique_targets[k] is not tgt)
+            contracted_nodes(
+                graph,
+                unique_targets[k],
+                tgt,
+                self_loops=False,
+                copy=False,
+                )
+
+    # # merge nodes from unique sources to unique targets; these are
+    # # connections formed automatically by promotions
+    # for k, src in sources.items():
+    #     if k in unique_targets.keys():
+    #         contracted_nodes(
+    #             graph,
+    #             src,
+    #             unique_targets[k],
+    #             self_loops=False,
+    #             copy=False,
+    #         )
 
 
 ## CONNECTIONS
@@ -268,12 +283,17 @@ def construct_flat_graph(
     promoted_source_names: Set[str],
     promoted_target_names: Set[str],
 ) -> DiGraph:
-    graph_copy = DiGraph(graph)
-    merge_graphs_based_on_promotions(graph_copy)
+    graph = merge_graphs(graph)
+    merge_nodes_based_on_promotions(graph)
+
+    # issue connections between nodes due to connections
+
     # issue_connections_flat_graph(
     #     graph_copy,
     #     connections,
     #     promoted_source_names,
     #     promoted_target_names,
     # )
-    return graph_copy
+    print([prepend_namespace(n.namespace, n.name) for n in graph.nodes])
+
+    return graph

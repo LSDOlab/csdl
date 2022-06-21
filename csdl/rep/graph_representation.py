@@ -159,6 +159,8 @@ class GraphRepresentation:
             set(model.promoted_source_shapes.keys()),
             set(model.promoted_target_shapes.keys()),
         )
+
+        
         """
         Flattened directed acyclic graph representing main model.
         Only the main model will contain an instance of
