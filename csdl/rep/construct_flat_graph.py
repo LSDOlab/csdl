@@ -5,7 +5,6 @@ except ImportError:
 
 from csdl.rep.model_node import ModelNode
 from csdl.rep.variable_node import VariableNode
-from csdl.rep.operation_node import OperationNode
 
 from csdl.lang.declared_variable import DeclaredVariable
 from csdl.lang.input import Input
@@ -198,47 +197,68 @@ def merge_nodes_based_on_promotions(graph: DiGraph, ):
         [prepend_namespace(x.namespace, x.name) for x in targets])
     print(target_names)
 
-    # gather VariableNode objects with unique and nonunique promoted
-    # names in order to merge nodes into one VariableNode object
     unique_targets: Dict[str, VariableNode] = dict()
-    nonunique_targets: Dict[str, Set[VariableNode]] = dict()
     for name in target_names:
         for target in targets:
-            if name in unique_targets.keys():
-                try:
-                    nonunique_targets[name].add(target)
-                except:
-                    nonunique_targets[name] = {target}
-            else:
-                unique_targets[name] = target
+            if name not in unique_targets.keys():
+                if prepend_namespace(target.namespace,
+                                     target.name) == name:
+                    unique_targets[name] = target
+    print('unique_targets', unique_targets.keys())
+    print(unique_targets)
+    print('targets',
+          [prepend_namespace(x.namespace, x.name) for x in targets])
+
+    # gather all targets and then remove unique targets
+    for tgt in unique_targets.values():
+        targets.remove(tgt)
+    print('targets',
+          [prepend_namespace(x.namespace, x.name) for x in targets])
+
+    redundant_targets: Dict[str, Set[VariableNode]] = dict()
+    for tgt in targets:
+        name = prepend_namespace(tgt.namespace, tgt.name)
+        try:
+            redundant_targets[name].add(tgt)
+        except:
+            redundant_targets[name] = {tgt}
+    print('redundant_targets', redundant_targets)
 
     # merge nodes corresponding to locally defined and promoted nodes so
     # that each variable is represented by exactly one node; merge only
     # declared variables; merge nodes only as a result of promotions,
     # not user declared connections
-    for k, tgts in nonunique_targets.items():
+    # for k, tgts in redundant_targets.items():
+    #     fwd_edges = []
+    #     for tgt in tgts:
+    #         print(k, prepend_namespace(tgt.namespace, tgt.name), tgt
+    #               in graph.nodes)
+    #         fwd_edges.extend(graph.out_edges(tgt))
+    #     graph.remove_edges_from(fwd_edges)
+    #     for _, op in fwd_edges:
+    #         graph.add_edge(unique_targets[k], op)
+    for k, tgts in redundant_targets.items():
         for tgt in tgts:
-            print(tgt not in graph.nodes)
-            print(unique_targets[k] in graph.nodes, unique_targets[k] is not tgt)
-            contracted_nodes(
-                graph,
-                unique_targets[k],
-                tgt,
-                self_loops=False,
-                copy=False,
+            if k in unique_targets.keys():
+                contracted_nodes(
+                    graph,
+                    unique_targets[k],
+                    tgt,
+                    self_loops=False,
+                    copy=False,
                 )
 
     # # merge nodes from unique sources to unique targets; these are
     # # connections formed automatically by promotions
-    # for k, src in sources.items():
-    #     if k in unique_targets.keys():
-    #         contracted_nodes(
-    #             graph,
-    #             src,
-    #             unique_targets[k],
-    #             self_loops=False,
-    #             copy=False,
-    #         )
+    for k, src in sources.items():
+        if k in unique_targets.keys():
+            contracted_nodes(
+                graph,
+                src,
+                unique_targets[k],
+                self_loops=False,
+                copy=False,
+            )
 
 
 ## CONNECTIONS
