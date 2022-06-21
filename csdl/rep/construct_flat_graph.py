@@ -265,22 +265,28 @@ def merge_nodes_based_on_promotions(graph: DiGraph, ):
 
 
 def issue_connections_flat_graph(
-    flat_graph: DiGraph,
+    graph: DiGraph,
     connections: list[Tuple[str, str]],
     promoted_source_names: Set[str],
     promoted_target_names: Set[str],
 ):
+    # list of all variables in graph
     vars: list[VariableNode] = list(
-        filter(lambda x: isinstance(x, VariableNode),
-               flat_graph.nodes()))
+        filter(lambda x: isinstance(x, VariableNode), graph.nodes()))
+
+    # list of all source variables in graph
     src_nodes: list[VariableNode] = list(
         filter(
             lambda x: prepend_namespace(x.namespace, x.name) in
             promoted_source_names, vars))
+
+    # list of all target variables in graph
     tgt_nodes: list[VariableNode] = list(
         filter(
             lambda x: prepend_namespace(x.namespace, x.name) in
             promoted_target_names, vars))
+
+    # map of sources
     src_nodes_map: Dict[str, VariableNode] = {
         prepend_namespace(x.namespace, x.name): x
         for x in src_nodes
@@ -290,10 +296,12 @@ def issue_connections_flat_graph(
         for x in tgt_nodes
     }
     for a, b in connections:
-        combine_connected_nodes(
-            flat_graph,
+        contracted_nodes(
+            graph,
             src_nodes_map[a],
             tgt_nodes_map[b],
+            self_loops=False,
+            copy=False,
         )
 
 
@@ -305,15 +313,11 @@ def construct_flat_graph(
 ) -> DiGraph:
     graph = merge_graphs(graph)
     merge_nodes_based_on_promotions(graph)
-
-    # issue connections between nodes due to connections
-
     # issue_connections_flat_graph(
-    #     graph_copy,
+    #     graph,
     #     connections,
     #     promoted_source_names,
     #     promoted_target_names,
     # )
-    print([prepend_namespace(n.namespace, n.name) for n in graph.nodes])
 
     return graph

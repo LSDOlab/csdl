@@ -113,9 +113,11 @@ def generate_unpromoted_promoted_maps(model: 'Model') -> Dict[str, str]:
     model.unpromoted_to_promoted = create_reverse_map(
         model.promoted_names_to_unpromoted_names)
 
+
 def construct_graphs_all_levels(model: 'Model'):
     ...
     # for s in model.subgraphs:
+
 
 class GraphRepresentation:
     """
@@ -136,6 +138,10 @@ class GraphRepresentation:
             model.promoted_names_to_unpromoted_names,
             model.unpromoted_to_promoted,
         )
+        self.unpromoted_to_promoted: Dict[
+            str, str] = model.unpromoted_to_promoted
+        self.promoted_to_unpromoted: Dict[
+            str, Set[str]] = model.promoted_names_to_unpromoted_names
         # TODO: check that there are never multiple sources connected to
         # a single target
         """
@@ -159,8 +165,6 @@ class GraphRepresentation:
             set(model.promoted_source_shapes.keys()),
             set(model.promoted_target_shapes.keys()),
         )
-
-        
         """
         Flattened directed acyclic graph representing main model.
         Only the main model will contain an instance of
@@ -196,7 +200,6 @@ class GraphRepresentation:
             model.registered_outputs,
             model.subgraphs,
         )
-
         """
         Directed graph representing model.
         Each model in the model hierarchy will contain an instance of
@@ -590,10 +593,11 @@ class GraphRepresentation:
 
     def visualize_graph(self):
 
-        draw_networkx(
-            self.flat_graph,
-            labels={n: prepend_namespace(n.namespace, n.name)
-                    for n in self.flat_graph.nodes()})
+        draw_networkx(self.flat_graph,
+                      labels={
+                          n: prepend_namespace(n.namespace, n.name)
+                          for n in self.flat_graph.nodes()
+                      })
         plt.show()
 
     def _operation_nodes(
