@@ -145,13 +145,13 @@ def merge_graphs(
         filter(lambda x: isinstance(x, ModelNode), graph.nodes()))
 
     # create a flattened copy of the graph for each model node
+    graph.remove_nodes_from(child_model_nodes)
     for mn in copy(child_model_nodes):
         # child_graph_copy = DiGraph()
         # child_graph_copy.add_edges_from(mn.graph.edges())
         # # also copy ModelNode nodes, which do not have edges
         # child_graph_copy.add_nodes_from(mn.graph.nodes())
         graph = compose(graph, mn.graph)
-        graph.remove_node(mn)
         graph = merge_graphs(
             graph,
             namespace=prepend_namespace(namespace, mn.name),
