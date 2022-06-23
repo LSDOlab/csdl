@@ -177,15 +177,8 @@ class GraphRepresentation:
         """
         Nodes sorted in order of execution, using the flattened graph
         """
-        # build unflat graph (will need to add dependencies between
-        # models)
-        add_dependencies_due_to_connections(model)
-        # TODO: break and store cycles, emit warning for users using a
-        # code generator that uses unflat graph
         self.unflat_graph: DiGraph = construct_unflat_graph(
-            model.inputs,
-            model.registered_outputs,
-            model.subgraphs,
+            first_graph,
         )
         """
         Directed graph representing model.
