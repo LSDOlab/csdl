@@ -25,9 +25,9 @@ def example(Simulator):
     from csdl.examples.models.addition import AdditionFunction
     
     
-    class ErrorTwoModelsPromoted(Model):
-        # Can't have two models with same variable names if both promoted
-        # return error
+    class ErrorPromoteNonexistant(Model):
+        # Try to promote a variable that does no exist
+        # return keyerror
     
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
@@ -37,17 +37,20 @@ def example(Simulator):
             # the top of your Python file(s).
             from csdl.examples.models.addition import AdditionFunction
     
-            self.add(AdditionFunction(), promotes=['a', 'f'], name='model')
+            # a = self.create_input('a', val=3.0)
+            a = self.declare_variable('a', val=3.0)
     
             self.add(
                 AdditionFunction(),
-                promotes=[
-                    'b', 'f'
-                ],  # can't promote model2.f as we promoted model.f
-                name='model2')
+                promotes=['a', 'f', 'c'],
+                name='addition',
+            )
+    
+            f = self.declare_variable('f')
+            self.register_output('b', f + a)
     
     
-    rep = GraphRepresentation(ErrorTwoModelsPromoted())
+    rep = GraphRepresentation(ErrorPromoteNonexistant())
     sim = Simulator(rep)
     sim.run()
     

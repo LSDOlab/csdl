@@ -9,11 +9,16 @@ def example(Simulator):
     from csdl.examples.models.subtraction import SubtractionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.subtraction import SubtractionFunction
+    from csdl.examples.models.hierarchical import Hierarchical
+    from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.subtraction import SubtractionVectorFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
@@ -32,13 +37,17 @@ def example(Simulator):
             # the top of your Python file(s).
             from csdl.examples.models.addition import AdditionFunction
     
-            a = self.create_input('a', val=3.0)
+            # a = self.create_input('a', val=3.0)
+            a = self.declare_variable('a', val=3.0)
     
-            # Promoting f will raise an error
-            self.add(AdditionFunction(), promotes=['a', 'f'], name='model')
+            self.add(
+                AdditionFunction(),
+                promotes=['a', 'f'],
+                name='addition',
+            )
     
             f = self.declare_variable('f')
-            self.register_output('f', f + a)
+            self.register_output('b', f + a)
     
     
     rep = GraphRepresentation(ExampleManualPromotion())

@@ -1,6 +1,5 @@
 import csdl
 from csdl import Model, GraphRepresentation
-from csdl_om import Simulator
 
 # TESTS:
 # - Different shapes throw error:
@@ -28,6 +27,7 @@ from csdl_om import Simulator
 # --- ExampleUnconnectedVars
 # --- ExampleStackedModels
 
+# --- ExampleComplex
 
 class ExampleManualPromotion(Model):
     # Promoting a variable to a model will automatically connect them
@@ -52,18 +52,6 @@ class ExampleManualPromotion(Model):
 
         f = self.declare_variable('f')
         self.register_output('b', f + a)
-
-
-from csdl.examples.models.addition import AdditionFunction
-
-rep = GraphRepresentation(ExampleManualPromotion())  # front end
-# rep = GraphRepresentation(AdditionFunction())
-rep.visualize_graph()
-# rep.visualize_unflat()
-# sim = Simulator(rep)  # back end
-# sim.run()
-# print(sim['f'])
-exit()
 
 
 class ExampleAbsoluteRelativeName(Model):
@@ -178,6 +166,81 @@ class ErrorPartialPromotion(Model):
         self.add(AdditionFunction(),
                  promotes=['a', 'b', 'f'],
                  name='model')
+class ErrorCycleTwoModels(Model):
+    # Promotions cannot be made if connections cause cycles
+    # return error
+
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.addition import AdditionFunction
+        from csdl.examples.models.subtraction import SubtractionFunction
+
+        self.add(AdditionFunction(),
+                 promotes=['b', 'a', 'f'],
+                 name='model')
+
+        self.add(SubtractionFunction(),
+                 promotes=['c', 'd', 'f'],
+                 name='model2')
+
+        d = self.declare_variable('d')
+        self.register_output(
+            'b', d + 1.0)  # b is an input to 'model', creating a cycle
+
+
+class ExampleStackedModels(Model):
+    # Autopromotions should work for models within models
+    # return sim['b'] = 11
+
+    def define(self):
+
+        a = self.create_input('a', val=3.0)
+
+        m = Model()
+        am = m.create_input('am', val=2.0)
+        mm = Model()
+        amm = mm.declare_variable(
+            'a', val=1.0
+        )  # 'model1.model2.a' should automatically promote and connect to 'a'
+        mm.register_output('bmm', amm * 2.0)
+        m.add(mm, name='model2')
+        bmm = m.declare_variable('bmm')
+        m.register_output('bm', bmm + am)
+        self.add(m, name='model1')
+
+        bm = self.declare_variable('bm')
+        self.register_output('b', bm + a)
+
+class ExampleComplex(Model):
+    # Use a complex hierarchical model
+    # return sim['x3_out'] = 1.0
+    # return sim['x4_out'] = 10.0
+    # return sim['hierarchical.ModelB.x2'] = 6.141
+    # return sim['hierarchical.ModelB.ModelC.x1'] = 5.0
+    # return sim['hierarchical.ModelB.ModelC.x2'] = 9.0
+    # return sim['hierarchical.ModelF.x3_out'] = 0.01
+
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.hierarchical import Hierarchical
+
+        self.add(
+            Hierarchical(),
+            name='hierarchical',
+        )
+
+        # f = self.declare_variable('f')
+        # self.register_output('b', f + a)
+
+
 
 
 class ErrorPromotionShapeMismatch(Model):
@@ -260,32 +323,6 @@ class ErrorCycle(Model):
         self.register_output('y', g + b)
 
 
-class ErrorCycleTwoModels(Model):
-    # Promotions cannot be made if connections cause cycles
-    # return error
-
-    def define(self):
-        # NOTE: Importing definitions within a method is bad practice.
-        # This is only done here to automate example/test case
-        # generation more easily.
-        # When defining CSDL models, please put the import statements at
-        # the top of your Python file(s).
-        from csdl.examples.models.addition import AdditionFunction
-        from csdl.examples.models.subtraction import SubtractionFunction
-
-        self.add(AdditionFunction(),
-                 promotes=['b', 'a', 'f'],
-                 name='model')
-
-        self.add(SubtractionFunction(),
-                 promotes=['c', 'd', 'f'],
-                 name='model2')
-
-        d = self.declare_variable('d')
-        self.register_output(
-            'b', d + 1.0)  # b is an input to 'model', creating a cycle
-
-
 # OTHERS:
 class ExampleSameIOUnpromoted(Model):
     # Can create two outputs in two models with same names if unpromoted
@@ -309,18 +346,6 @@ class ExampleSameIOUnpromoted(Model):
             name='model')
 
         self.register_output('f', a * 1.0)
-
-
-from csdl.examples.models.addition import AdditionFunction
-
-rep = GraphRepresentation(ExampleSameIOUnpromoted())
-# rep = GraphRepresentation(AdditionFunction())
-rep.visualize_graph()
-rep.visualize_unflat()
-sim = Simulator(rep)
-sim.run()
-print(sim['f'])
-exit()
 
 
 class ErrorTwoModelsPromoted(Model):
@@ -359,7 +384,7 @@ class ExampleTwoModelsUnpromoted(Model):
 
         self.create_input('a', val=2.0)
         self.add(AdditionFunction(),
-                 promotes=['a', 'b'
+                 promotes=['a', 'b',
                            'f'],
                  name='model')
 
@@ -388,9 +413,10 @@ class ExampleUnconnectedVars(Model):
         self.register_output('y', f + 1.0)
 
 
-class ExampleStackedModels(Model):
-    # Autopromotions should work for models within models
-    # return sim['b'] = 11
+
+class ExampleJumpedPromotion(Model):
+    # Promote a variable that has not been explicitly declared in that model but in the model above
+    # return sim['f'] = 5
 
     def define(self):
 
@@ -398,21 +424,168 @@ class ExampleStackedModels(Model):
 
         m = Model()
         am = m.create_input('am', val=2.0)
+        m.register_output('bm', am*2.0)
+
         mm = Model()
-        amm = mm.declare_variable(
-            'a', val=1.0
-        )  # 'model1.model2.a' should automatically promote and connect to 'a'
-        mm.register_output('bmm', amm * 2.0)
-        m.add(mm, name='model2')
-        bmm = m.declare_variable('bmm')
-        m.register_output('bm', bmm + am)
-        self.add(m, name='model1')
+        mm.create_input(
+            'b', val=2.0
+        )
+        # promote b in m even though it hasn't been declared in m
+        m.add(mm, name='model2', promotes=['b'])
+        self.add(m, name='model1', promotes=['b'])
 
-        bm = self.declare_variable('bm')
-        self.register_output('b', bm + a)
+        bb = self.declare_variable('b')
+        self.register_output('f', bb + a)
 
 
-# sim = csdl_om.Simulator(ExampleStackedModels())
-# sim.visualize_implementation()
-# sim.run()
-# print(sim['f'])
+class ErrorPromoteUnpromoted(Model):
+    # Try to promote an unpromoted variable
+    # return keyerror
+
+    def define(self):
+
+        a = self.create_input('a', val=3.0)
+
+        m = Model()
+        am = m.create_input('am', val=2.0)
+        m.register_output('bm', am*2.0)
+
+        mm = Model()
+        mm.create_input(
+            'b', val=2.0
+        )
+        # Do no promote b
+        m.add(mm, name='model2', promotes=[])
+
+        # but promote model2.b
+        self.add(m, name='model1', promotes=['model2.b'])
+
+        bb = self.declare_variable('b')
+        self.register_output('f', bb + a)
+
+
+class ErrorPromoteNonexistant(Model):
+    # Try to promote a variable that does no exist
+    # return keyerror
+
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.addition import AdditionFunction
+
+        # a = self.create_input('a', val=3.0)
+        a = self.declare_variable('a', val=3.0)
+
+        self.add(
+            AdditionFunction(),
+            promotes=['a', 'f', 'c'],
+            name='addition',
+        )
+
+        f = self.declare_variable('f')
+        self.register_output('b', f + a)
+
+
+class ErrorPromoteAbsoluteName(Model):
+    # Try to promote a variable using absolute name
+    # return error
+
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.addition import AdditionFunction
+
+        # a = self.create_input('a', val=3.0)
+        a = self.declare_variable('a', val=3.0)
+
+        self.add(
+            AdditionFunction(),
+            promotes=['addition.a', 'f'],
+            name='addition',
+        )
+
+        f = self.declare_variable('f')
+        self.register_output('b', f + a)
+
+
+
+class ExampleParallelTargets(Model):
+    # Use 1 input for several declared variables of the same instance
+    # return sim[f_out] = 15
+
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.addition import AdditionFunction
+
+        self.create_input('a', val=2.0)
+        self.create_input('b', val=3.0)
+
+        self.add(
+            AdditionFunction(),
+            name='addition1',
+            promotes=['a', 'b'],
+        )
+
+        self.add(
+            AdditionFunction(),
+            name='addition2',
+            promotes=['a', 'b'],
+        )
+
+        self.add(
+            AdditionFunction(),
+            name='addition3',
+            promotes=['a', 'b'],
+        )
+
+        f1 = self.declare_variable('addition1.f')
+        f2 = self.declare_variable('addition2.f')
+        f3 = self.declare_variable('addition3.f')
+
+        self.register_output('f_out', f1 + f2 + f3)
+
+
+class ExampleSameIOUnpromoted(Model):
+    # Can create two outputs in two models with same names if unpromoted
+    # Return sim['f'] = 1, sim['model.f'] = 2
+
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.addition import AdditionFunction
+
+        a = self.create_input('a')
+
+        self.add(
+            AdditionFunction(),
+            promotes=[
+                'a', 'b'
+            ],  # Promoting only a and b allows two outputs: f and model.f
+            name='model')
+
+        self.register_output('f', a * 1.0)
+
+
+
+
+# rep = GraphRepresentation(ExampleComplex())  # front end
+# # rep = GraphRepresentation(AdditionFunction())
+# rep.visualize_graph()
+# # rep.visualize_unflat()
+# # sim = Simulator(rep)  # back end
+# # sim.run()
+# # print(sim['f'])
+# exit()

@@ -2,9 +2,6 @@ try:
     from csdl import Model
 except ImportError:
     pass
-from curses import KEY_MARK
-from tkinter.font import names
-from unicodedata import name
 from csdl.lang.input import Input
 from csdl.lang.output import Output
 from csdl.lang.declared_variable import DeclaredVariable
@@ -14,9 +11,8 @@ from csdl.utils.typehints import Shape
 from csdl.utils.check_duplicate_keys import check_duplicate_keys
 from csdl.utils.find_names_with_matching_shapes import find_names_with_matching_shapes
 from csdl.utils.prepend_namespace import prepend_namespace
-from networkx import DiGraph, topological_sort, simple_cycles
+from networkx import topological_sort, simple_cycles
 from typing import List, Tuple, Dict, Set, Final, Literal
-from copy import copy, deepcopy
 
 
 def check_for_cycles(
@@ -103,10 +99,8 @@ def resolve_promotions(
         str, Input | Output], Dict[str, DeclaredVariable]]:
     promoted_sources_from_children_shapes: Dict[str, Shape] = dict()
     promoted_targets_from_children_shapes: Dict[str, Shape] = dict()
-    promoted_sources_from_children: Dict[
-        str, Input | Output] = dict()
-    promoted_targets_from_children: Dict[
-        str, DeclaredVariable] = dict()
+    promoted_sources_from_children: Dict[str, Input | Output] = dict()
+    promoted_targets_from_children: Dict[str, DeclaredVariable] = dict()
     promoted_to_unpromoted_descendant_variables: Dict[
         str, Set[str]] = dict()
 
@@ -171,6 +165,12 @@ def resolve_promotions(
                         s.name + '.' + unpromoted_name
                         for unpromoted_name in unpromoted_names
                     }
+
+    print('promoted_sources_from_children_shapes',
+          promoted_sources_from_children_shapes)
+    print('promoted_targets_from_children_shapes',
+          promoted_targets_from_children_shapes)
+
     # locally defined variable information is necessary for checking
     # that the remaining rules for promotion are followed and to send
     # information about locally defined variables that are candidates
@@ -182,6 +182,7 @@ def resolve_promotions(
     a, b, c, d = collect_locally_defined_variables(model)
     locally_defined_source_shapes: Final[Dict[str, Shape]] = a
     locally_defined_target_shapes: Final[Dict[str, Shape]] = b
+
     # also store variable objects themselves to establish dependency
     # relationships between variables and models in parent model
     locally_defined_sources: Final[Dict[str, Input | Output]] = c
@@ -206,6 +207,17 @@ def resolve_promotions(
             promoted_targets_from_children_shapes,
             locally_defined_target_shapes,
         )
+
+    # Rule: if a source and a target with the same name must have the
+    # same shape in order to be promoted to the same model
+    _ = find_names_with_matching_shapes(
+        locally_defined_source_shapes,
+        promoted_targets_from_children_shapes,
+    )
+    _ = find_names_with_matching_shapes(
+        promoted_sources_from_children_shapes,
+        locally_defined_target_shapes,
+    )
 
     # these containers are used later for validating promotions and
     # informing parent model of which variables are valid options for
@@ -273,7 +285,8 @@ def resolve_promotions(
         for k, v in not_promoting_from_child.items():
             # update set of unpromoted names for each promoted name
             # prepending namespace to promoted names
-            promoted_names_to_unpromoted_names[prepend_namespace(s.name, k)] = v
+            promoted_names_to_unpromoted_names[prepend_namespace(
+                s.name, k)] = v
 
     model.promoted_names_to_unpromoted_names = promoted_names_to_unpromoted_names
     print('model.promoted_to_unpromoted',
@@ -300,7 +313,7 @@ def resolve_promotions(
             lambda kv: kv[0] in set(promotes),
             local_namespace_target_shapes.items(),
         ))
-        
+
     # collect Variable objects for parent model to establish dependency
     # relationships between Variable objects and Model objects
     sources = dict(locally_defined_sources,

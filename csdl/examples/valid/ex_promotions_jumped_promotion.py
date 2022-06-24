@@ -25,29 +25,32 @@ def example(Simulator):
     from csdl.examples.models.addition import AdditionFunction
     
     
-    class ErrorTwoModelsPromoted(Model):
-        # Can't have two models with same variable names if both promoted
-        # return error
+    class ExampleJumpedPromotion(Model):
+        # Promote a variable that has not been explicitly declared in that model but in the model above
+        # return sim['f'] = 5
     
         def define(self):
-            # NOTE: Importing definitions within a method is bad practice.
-            # This is only done here to automate example/test case
-            # generation more easily.
-            # When defining CSDL models, please put the import statements at
-            # the top of your Python file(s).
-            from csdl.examples.models.addition import AdditionFunction
     
-            self.add(AdditionFunction(), promotes=['a', 'f'], name='model')
+            a = self.create_input('a', val=3.0)
     
-            self.add(
-                AdditionFunction(),
-                promotes=[
-                    'b', 'f'
-                ],  # can't promote model2.f as we promoted model.f
-                name='model2')
+            m = Model()
+            am = m.create_input('am', val=2.0)
+            m.register_output('bm', am*2.0)
+    
+            mm = Model()
+            mm.create_input(
+                'b', val=2.0
+            )
+            # promote b in m even though it hasn't been declared in m
+            m.add(mm, name='model2', promotes=['b'])
+            self.add(m, name='model1', promotes=['b'])
+    
+            bb = self.declare_variable('b')
+            self.register_output('f', bb + a)
     
     
-    rep = GraphRepresentation(ErrorTwoModelsPromoted())
+    rep = GraphRepresentation(ExampleJumpedPromotion())
     sim = Simulator(rep)
     sim.run()
     
+    return sim, rep

@@ -9,11 +9,16 @@ def example(Simulator):
     from csdl.examples.models.subtraction import SubtractionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.subtraction import SubtractionFunction
+    from csdl.examples.models.hierarchical import Hierarchical
+    from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.subtraction import SubtractionVectorFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
+    from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
     from csdl.examples.models.addition import AdditionFunction
@@ -34,7 +39,7 @@ def example(Simulator):
     
             self.create_input('a', val=2.0)
             self.add(AdditionFunction(),
-                     promotes=['a', 'b'
+                     promotes=['a', 'b',
                                'f'],
                      name='model')
     

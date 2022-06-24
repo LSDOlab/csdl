@@ -7,7 +7,7 @@ U = TypeVar('U', bound=Any)
 def find_keys_with_matching_values(
     a: Dict[T, U],
     b: Dict[T, U],
-    error: Callable[[T, T, U, U], BaseException] | None = None,
+    error: Callable[[T, U, T, U], BaseException] | None = None,
 ) -> Set[T]:
     """
     Find keys common to two dictionaries with matching values. Keys must
@@ -30,7 +30,7 @@ def find_keys_with_matching_values(
         if v1 == v2:
             matching_keys.add(k1)
         elif error is not None:
-            raise error(k1, k2, v1, v2)
+            raise error(k1, v1, k2, v2)
         else:
             continue
     return matching_keys

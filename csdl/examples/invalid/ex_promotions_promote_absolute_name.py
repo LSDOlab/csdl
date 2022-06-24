@@ -25,8 +25,8 @@ def example(Simulator):
     from csdl.examples.models.addition import AdditionFunction
     
     
-    class ErrorTwoModelsPromoted(Model):
-        # Can't have two models with same variable names if both promoted
+    class ErrorPromoteAbsoluteName(Model):
+        # Try to promote a variable using absolute name
         # return error
     
         def define(self):
@@ -37,17 +37,20 @@ def example(Simulator):
             # the top of your Python file(s).
             from csdl.examples.models.addition import AdditionFunction
     
-            self.add(AdditionFunction(), promotes=['a', 'f'], name='model')
+            # a = self.create_input('a', val=3.0)
+            a = self.declare_variable('a', val=3.0)
     
             self.add(
                 AdditionFunction(),
-                promotes=[
-                    'b', 'f'
-                ],  # can't promote model2.f as we promoted model.f
-                name='model2')
+                promotes=['addition.a', 'f'],
+                name='addition',
+            )
+    
+            f = self.declare_variable('f')
+            self.register_output('b', f + a)
     
     
-    rep = GraphRepresentation(ErrorTwoModelsPromoted())
+    rep = GraphRepresentation(ErrorPromoteAbsoluteName())
     sim = Simulator(rep)
     sim.run()
     
