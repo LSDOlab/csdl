@@ -40,7 +40,7 @@ def check_source_name(
     promoted_source_names: Set[str],
 ):
     # name is promoted name
-    if name in model.promoted_names_to_unpromoted_names.keys():
+    if name in model.promoted_to_unpromoted.keys():
         # name is promoted name of source, not target
         if name in promoted_source_names:
             return
@@ -102,7 +102,7 @@ def check_target_name(
     promoted_target_names: Set[str],
 ):
     # name is promoted name
-    if name in model.promoted_names_to_unpromoted_names.keys():
+    if name in model.promoted_to_unpromoted.keys():
         # name is promoted name of target, not target
         if name in promoted_target_names:
             return

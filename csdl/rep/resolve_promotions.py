@@ -108,26 +108,33 @@ def resolve_promotions(
         m = s.submodel
         # promotions must be resolved from the bottom of the hierarchy
         # to the top, so start with recursion
-        a, b, c, d = resolve_promotions(
+        (
+            promoted_sources_from_child_shapes,
+            promoted_sources_from_child_shapes,
+            promoted_sources_from_child,
+            promoted_targets_from_child,
+        ) = resolve_promotions(
             m,
             s.promotes,
             namespace=prepend_namespace(namespace, s.name),
         )
 
         # Rule: each source (input or output) name promoted to this
-        # level must be unique; comparing variables between sibling
-        # models
+        # level must be unique; comparing variables promoted from child
+        # models, not yet comparing variables to locally defined
+        # variables
         check_duplicate_keys(
-            a,
+            promoted_sources_from_child_shapes,
             promoted_sources_from_children_shapes,
         )
 
         # Rule: all sinks (declared variable) with a common name
         # promoted to this level must have the same shape; comparing
-        # variables between sibling models
+        # variables promoted from child models, not yet comparing
+        # variables to locally defined variables
         # TODO: check that values are the same
         _ = find_names_with_matching_shapes(
-            b,
+            promoted_sources_from_child_shapes,
             promoted_targets_from_children_shapes,
         )
 
@@ -135,36 +142,38 @@ def resolve_promotions(
         # from children; if these variables are promoted to parent
         # model, the parent model will need this information to check
         # that the promotions are valid
-        promoted_sources_from_children_shapes.update(a)
-        promoted_targets_from_children_shapes.update(b)
+        promoted_sources_from_children_shapes.update(
+            promoted_sources_from_child_shapes)
+        promoted_targets_from_children_shapes.update(
+            promoted_sources_from_child_shapes)
 
         # checks pass, update name-Variable pairs for variables promoted
         # from children; we use these containers to establish
         # model-variable and variable-model dependency relationships;
         # dependency relationships determine execution order and must
         # not contain any cycles between variables
-        promoted_sources_from_children.update(c)
-        promoted_targets_from_children.update(d)
+        promoted_sources_from_children.update(
+            promoted_sources_from_child)
+        promoted_targets_from_children.update(
+            promoted_targets_from_child)
 
         # update map from promoted to unpromoted names; variables that
         # are not promoted to this level will have the corresponding
         # child model's name prepended to their promoted path later on;
         # variables that are not promoted from this model to parent will
         #  have name of current model prepended by parent
-        for promoted_name, unpromoted_names in m.promoted_names_to_unpromoted_names.items(
+        for promoted_name, unpromoted_names in m.promoted_to_unpromoted.items(
         ):
+            new_unpromoted_names = {
+                prepend_namespace(s.name, unpromoted_name)
+                for unpromoted_name in unpromoted_names
+            }
             try:
                 promoted_to_unpromoted_descendant_variables[
-                    promoted_name].update({
-                        s.name + '.' + unpromoted_name
-                        for unpromoted_name in unpromoted_names
-                    })
+                    promoted_name].update(new_unpromoted_names)
             except:
                 promoted_to_unpromoted_descendant_variables[
-                    promoted_name] = {
-                        s.name + '.' + unpromoted_name
-                        for unpromoted_name in unpromoted_names
-                    }
+                    promoted_name] = new_unpromoted_names
 
     print('promoted_sources_from_children_shapes',
           promoted_sources_from_children_shapes)
@@ -288,9 +297,9 @@ def resolve_promotions(
             promoted_names_to_unpromoted_names[prepend_namespace(
                 s.name, k)] = v
 
-    model.promoted_names_to_unpromoted_names = promoted_names_to_unpromoted_names
-    print('model.promoted_to_unpromoted',
-          model.promoted_names_to_unpromoted_names)
+    model.promoted_to_unpromoted = promoted_names_to_unpromoted_names
+    print('namespace', namespace)
+    print('model.promoted_to_unpromoted', model.promoted_to_unpromoted)
 
     # store promoted sources and targets separately to look up when
     # issuing connections

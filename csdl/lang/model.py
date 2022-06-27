@@ -79,8 +79,7 @@ class Model:
         Map from name to shape for sinks (declared variables)
         promoted from submodels
         """
-        self.promoted_names_to_unpromoted_names: Dict[
-            str, Set[str]] = dict()
+        self.promoted_to_unpromoted: Dict[str, Set[str]] = dict()
         self.unpromoted_to_promoted: Dict[str, str] = dict()
         self.model_cycles: list[list[str]] = []
 

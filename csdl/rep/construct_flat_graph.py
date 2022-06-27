@@ -11,7 +11,7 @@ from csdl.lang.input import Input
 from csdl.lang.output import Output
 from csdl.rep.model_node import ModelNode
 from csdl.rep.variable_node import VariableNode
-from csdl.rep.operation_node import OperationNode
+from csdl.rep.get_nodes import get_model_nodes, get_src_nodes, get_tgt_nodes, get_var_nodes
 from csdl.utils.prepend_namespace import prepend_namespace
 from typing import Tuple, Set
 from networkx import DiGraph, compose, contracted_nodes
@@ -90,47 +90,6 @@ def gather_variables_by_promoted_name(
     return unique_variables
 
 
-def combine_sources_and_targets(
-    graph: DiGraph,
-    unique_sources: Dict[str, VariableNode],
-    unique_targets: Dict[str, VariableNode],
-):
-    """
-    Combine source and target nodes with same promoted names
-    """
-    nodes = {
-        prepend_namespace(s.namespace, s.name): s
-        for s in graph.nodes()
-    }
-    print('sources', unique_sources.keys(), 'targets',
-          unique_targets.keys())
-    for k, s in unique_sources.items():
-        print('names should match:', k,
-              prepend_namespace(s.namespace, s.name))
-        if k in unique_targets.keys():
-            print('should be equal', id(nodes[k]),
-                  id(unique_targets[k]))
-            out_edges = graph.out_edges(unique_targets[k])
-            for _, b in out_edges:
-                graph.add_edge(s, b)
-            # graph.remove_node(targets[k])
-
-
-def combine_connected_nodes(
-    graph: DiGraph,
-    source: VariableNode,
-    tgt: VariableNode,
-):
-    """
-    Combine source and target nodes with same promoted names
-    """
-    # TODO: type?
-    out_edges = list(graph.out_edges(tgt))
-    # TODO: how to iterate over edges?
-    for q in out_edges:
-        graph.add_edge(source, b)
-    graph.remove_node(tgt)
-
 
 def merge_graphs(
     graph: DiGraph,
@@ -158,9 +117,7 @@ def merge_graphs(
         )
 
         # all variables in child graph
-        child_vars: list[VariableNode] = list(
-            filter(lambda x: isinstance(x, VariableNode),
-                   mn.graph.nodes()))
+        child_vars: list[VariableNode] = get_var_nodes(mn.graph)
 
         # assign namespace to each variable node
         for v in child_vars:
@@ -177,25 +134,20 @@ def merge_automatically_connected_nodes(graph: DiGraph):
     # merged yet as a result of promotions or connections
 
     # list of all variables in graph
-    vars: list[VariableNode] = list(
-        filter(lambda x: isinstance(x, VariableNode), graph.nodes()))
+    vars: list[VariableNode] = get_var_nodes(graph)
 
     # map of source promoted names to source node object
     sources: Dict[str, VariableNode] = {
         prepend_namespace(x.namespace, x.name): x
-        for x in list(
-            filter(lambda x: isinstance(x.var, (Input, Output)), vars))
+        for x in get_src_nodes(vars)
     }
 
     # List of all target nodes in graph
-    targets: list[VariableNode] = [
-        x for x in list(
-            filter(lambda x: isinstance(x.var, DeclaredVariable), vars))
-    ]
+    targets: list[VariableNode] = get_tgt_nodes(vars)
+
     # Set of all unique target names in graph
     target_names: Set[str] = set(
         [prepend_namespace(x.namespace, x.name) for x in targets])
-    print(target_names)
 
     unique_targets: Dict[str, VariableNode] = dict()
     for name in target_names:
@@ -204,16 +156,10 @@ def merge_automatically_connected_nodes(graph: DiGraph):
                 if prepend_namespace(target.namespace,
                                      target.name) == name:
                     unique_targets[name] = target
-    print('unique_targets', unique_targets.keys())
-    print(unique_targets)
-    print('targets',
-          [prepend_namespace(x.namespace, x.name) for x in targets])
 
     # gather all targets and then remove unique targets
     for tgt in unique_targets.values():
         targets.remove(tgt)
-    print('targets',
-          [prepend_namespace(x.namespace, x.name) for x in targets])
 
     redundant_targets: Dict[str, Set[VariableNode]] = dict()
     for tgt in targets:
@@ -222,7 +168,6 @@ def merge_automatically_connected_nodes(graph: DiGraph):
             redundant_targets[name].add(tgt)
         except:
             redundant_targets[name] = {tgt}
-    print('redundant_targets', redundant_targets)
 
     # merge nodes corresponding to locally defined and promoted nodes so
     # that each variable is represented by exactly one node; merge only
@@ -269,18 +214,13 @@ def merge_user_connected_nodes(
     connections: list[Tuple[str, str]],
 ):
     # list of all variables in graph
-    vars: list[VariableNode] = list(
-        filter(lambda x: isinstance(x, VariableNode), graph.nodes()))
-    print('vars',
-          [prepend_namespace(x.namespace, x.name) for x in vars])
+    vars = get_var_nodes(graph)
 
     # list of all source variables in graph
-    src_nodes: list[VariableNode] = list(
-        filter(lambda x: isinstance(x.var, (Input, Output)), vars))
+    src_nodes = get_src_nodes(vars)
 
     # list of all target variables in graph
-    tgt_nodes: list[VariableNode] = list(
-        filter(lambda x: isinstance(x.var, DeclaredVariable), vars))
+    tgt_nodes = get_tgt_nodes(vars)
 
     # map of sources
     src_nodes_map: Dict[str, VariableNode] = {

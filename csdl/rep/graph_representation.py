@@ -22,7 +22,7 @@ from csdl.rep.ir_node import IRNode
 from csdl.rep.sort_nodes_nx import sort_nodes_nx
 from csdl.rep.get_registered_outputs_from_graph import get_registered_outputs_from_graph
 from csdl.rep.resolve_promotions import resolve_promotions
-from csdl.rep.collect_connections2 import collect_connections, collect_promoted_source_names_lower_levels, collect_promoted_target_names_lower_levels
+from csdl.rep.collect_connections import collect_connections
 from csdl.rep.add_dependencies_due_to_connections import add_dependencies_due_to_connections
 from csdl.utils.prepend_namespace import prepend_namespace
 from networkx import DiGraph, ancestors, simple_cycles
@@ -34,6 +34,8 @@ from csdl.lang.define_models_recursively import define_models_recursively
 import numpy as np
 import matplotlib.pyplot as plt
 from networkx import draw_networkx
+
+from csdl.rep.get_nodes import get_var_nodes
 
 
 def nargs(
@@ -103,7 +105,7 @@ def generate_unpromoted_promoted_maps(model: 'Model') -> Dict[str, str]:
         s.submodel.unpromoted_to_promoted = generate_unpromoted_promoted_maps(
             s.submodel)
     model.unpromoted_to_promoted = create_reverse_map(
-        model.promoted_names_to_unpromoted_names)
+        model.promoted_to_unpromoted)
     return model.unpromoted_to_promoted
 
 
@@ -128,13 +130,13 @@ class GraphRepresentation:
         generate_unpromoted_promoted_maps(model)
         self.connections: list[Tuple[str, str]] = collect_connections(
             model,
-            model.promoted_names_to_unpromoted_names,
+            model.promoted_to_unpromoted,
             model.unpromoted_to_promoted,
         )
         self.unpromoted_to_promoted: Dict[
             str, str] = model.unpromoted_to_promoted
         self.promoted_to_unpromoted: Dict[
-            str, Set[str]] = model.promoted_names_to_unpromoted_names
+            str, Set[str]] = model.promoted_to_unpromoted
         # TODO: check that there are never multiple sources connected to
         # a single target
         """
@@ -177,9 +179,9 @@ class GraphRepresentation:
         """
         Nodes sorted in order of execution, using the flattened graph
         """
+
         self.unflat_graph: DiGraph = construct_unflat_graph(
-            first_graph,
-        )
+            first_graph, )
         """
         Directed graph representing model.
         Each model in the model hierarchy will contain an instance of

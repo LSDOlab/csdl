@@ -3,7 +3,6 @@ from networkx import DiGraph
 from csdl.lang.output import Output
 from csdl.lang.input import Input
 from csdl.lang.variable import Variable
-from csdl.lang.declared_variable import DeclaredVariable
 from csdl.lang.operation import Operation
 from csdl.lang.subgraph import Subgraph
 from csdl.lang.node import Node
@@ -11,6 +10,7 @@ from csdl.rep.ir_node import IRNode
 from csdl.rep.variable_node import VariableNode
 from csdl.rep.operation_node import OperationNode
 from csdl.rep.model_node import ModelNode
+from csdl.rep.get_nodes import get_model_nodes, get_src_nodes, get_tgt_nodes, get_var_nodes
 from csdl.utils.prepend_namespace import prepend_namespace
 from typing import List, Dict, Set
 from warnings import warn
@@ -69,11 +69,14 @@ def construct_graphs_all_models(
     # add variables and operations to the graph for this model
 
     # add inputs to the graph for this model
-    for inp in inputs:
-        if inp.name not in nodes.keys():
-            nodes[inp.name] = VariableNode(inp)
-        if nodes[inp.name] not in graph.nodes():
-            graph.add_node(nodes[inp.name])
+    input_nodes = {inp.name: VariableNode(inp) for inp in inputs}
+    nodes.update(input_nodes)
+    graph.add_nodes_from(input_nodes.values())
+    # for inp in inputs:
+    #     if inp.name not in nodes.keys():
+    #         nodes[inp.name] = VariableNode(inp)
+    #     if nodes[inp.name] not in graph.nodes():
+    #         graph.add_node(nodes[inp.name])
 
     # add nodes that outputs depend on for this model
     for r in registered_outputs:
@@ -81,26 +84,6 @@ def construct_graphs_all_models(
 
     return graph
 
-
-def get_var_nodes(graph: DiGraph) -> list[VariableNode]:
-    return list(
-        filter(lambda x: isinstance(x, VariableNode), graph.nodes()))
-
-
-def get_tgt_nodes(var_nodes: list[VariableNode]) -> list[VariableNode]:
-    return list(
-        filter(lambda x: isinstance(x.var, DeclaredVariable),
-               var_nodes))
-
-
-def get_src_nodes(var_nodes: list[VariableNode]) -> list[VariableNode]:
-    return list(
-        filter(lambda x: isinstance(x.var, (Input, Output)), var_nodes))
-
-
-def get_model_nodes(graph: DiGraph) -> list[ModelNode]:
-    return list(
-        filter(lambda x: isinstance(x, ModelNode), graph.nodes()))
 
 
 def find_cycles_among_models(
