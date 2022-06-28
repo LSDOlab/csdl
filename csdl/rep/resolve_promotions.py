@@ -110,7 +110,7 @@ def resolve_promotions(
         # to the top, so start with recursion
         (
             promoted_sources_from_child_shapes,
-            promoted_sources_from_child_shapes,
+            promoted_targets_from_child_shapes,
             promoted_sources_from_child,
             promoted_targets_from_child,
         ) = resolve_promotions(
@@ -134,7 +134,7 @@ def resolve_promotions(
         # variables to locally defined variables
         # TODO: check that values are the same
         _ = find_names_with_matching_shapes(
-            promoted_sources_from_child_shapes,
+            promoted_targets_from_child_shapes,
             promoted_targets_from_children_shapes,
         )
 
@@ -145,7 +145,7 @@ def resolve_promotions(
         promoted_sources_from_children_shapes.update(
             promoted_sources_from_child_shapes)
         promoted_targets_from_children_shapes.update(
-            promoted_sources_from_child_shapes)
+            promoted_targets_from_child_shapes)
 
         # checks pass, update name-Variable pairs for variables promoted
         # from children; we use these containers to establish
