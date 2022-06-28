@@ -232,8 +232,9 @@ def merge_user_connected_nodes(
         for x in tgt_nodes
     }
     for a, b in connections:
-        src_nodes_map[a].tgt_namespace = tgt_nodes_map[b].namespace
-        src_nodes_map[a].tgt_name = tgt_nodes_map[b].name
+        src_nodes_map[a].tgt_namespace.append(
+            tgt_nodes_map[b].namespace)
+        src_nodes_map[a].tgt_name.append(tgt_nodes_map[b].name)
         contracted_nodes(
             graph,
             src_nodes_map[a],

@@ -8,5 +8,5 @@ class VariableNode(IRNode):
         super().__init__()
         self.var: Variable = var
         self.name = var.name
-        self.tgt_namespace = ''
-        self.tgt_name = ''
+        self.tgt_namespace = []
+        self.tgt_name = []
