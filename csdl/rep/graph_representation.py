@@ -22,7 +22,8 @@ from csdl.rep.ir_node import IRNode
 from csdl.rep.sort_nodes_nx import sort_nodes_nx
 from csdl.rep.get_registered_outputs_from_graph import get_registered_outputs_from_graph
 from csdl.rep.resolve_promotions import resolve_promotions
-from csdl.rep.collect_connections import collect_user_declared_connections, map_promoted_to_declared_connections
+from csdl.rep.collect_connections import collect_connections
+from csdl.rep.merge_connections import merge_connections
 from csdl.rep.add_dependencies_due_to_connections import add_dependencies_due_to_connections
 from csdl.utils.prepend_namespace import prepend_namespace
 from networkx import DiGraph, ancestors, simple_cycles
@@ -128,13 +129,8 @@ class GraphRepresentation:
         define_models_recursively(model)
         _, _, _, _ = resolve_promotions(model)
         generate_unpromoted_promoted_maps(model)
-        promoted_to_declared_connections = map_promoted_to_declared_connections(
-            collect_user_declared_connections(model),
-            model.promoted_to_unpromoted,
-            model.unpromoted_to_promoted,
-        )
-        self.connections: list[Tuple[str, str]] = list(
-            promoted_to_declared_connections.keys())
+        self.connections: list[Tuple[str, str]] = collect_connections(
+            model,)
         self.unpromoted_to_promoted: Dict[
             str, str] = model.unpromoted_to_promoted
         self.promoted_to_unpromoted: Dict[
@@ -154,9 +150,18 @@ class GraphRepresentation:
         )
         self.flat_graph: DiGraph = construct_flat_graph(
             first_graph,
-            self.connections,
-            promoted_to_declared_connections,
         )
+
+        # merge connections within flat graph
+        merge_connections(
+            self.flat_graph,
+            self.connections,
+            self.promoted_to_unpromoted,
+            self.unpromoted_to_promoted,
+        )
+
+        # self.visualize_graph()
+        # exit()
         """
         Flattened directed acyclic graph representing main model.
         Only the main model will contain an instance of
