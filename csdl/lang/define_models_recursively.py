@@ -19,10 +19,8 @@ def define_models_recursively(model: 'Model'):
         model.define()
         # Model hierarchy defined by running Model.define() from the top
         # down 
-        print('defining submodels of model of type {}'.format(type(model).__name__))
         for s in model.subgraphs:
             m = s.submodel
-            print('defining model {}'.format(s.name))
             define_models_recursively(m)
 
         # check for empty model

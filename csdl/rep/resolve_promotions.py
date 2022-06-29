@@ -27,16 +27,12 @@ def validate_promotions_and_split(
     validate user specified promotions and store maps from promoted to
     unpromoted names; this function is never called on main model
     """
-    print('CHECK', namespace, promotes)
     # split dictionary between variables being promoted and not promoted
     if promotes is None:
         # promote all promotable variables
-        print('PROMOTE ALL')
         return qp, dict()
     if len(promotes) == 0:
-        print('PROMOTE NONE')
         return dict(), qup
-    print('PROMOTE SOME')
     # check that user has not specified invalid promotes
     invalid_promotes = set(promotes) - (
         local_namespace_source_shapes.keys()
@@ -63,20 +59,12 @@ def resolve_promotions(
     model: 'Model',
     promotes: List[str] | None = None,
     namespace: str = '',
-    # ) -> Tuple[Dict[str, Shape], Dict[str, Shape], Dict[ str, Input | Output], Dict[str, DeclaredVariable], Dict[ str, Input | Output], Dict[str, DeclaredVariable]]:
 ) -> Tuple[Dict[str, Shape], Dict[str, Shape], Dict[
         str, Input | Output], Dict[str, DeclaredVariable]]:
-    print('resolving promotions for model {} of type {}'.format(
-        namespace,
-        type(model).__name__))
     promoted_sources_from_children_shapes: Dict[str, Shape] = dict()
     promoted_targets_from_children_shapes: Dict[str, Shape] = dict()
     promoted_sources_from_children: Dict[str, Input | Output] = dict()
     promoted_targets_from_children: Dict[str, DeclaredVariable] = dict()
-    # unpromoted_targets: Dict[str, DeclaredVariable] = dict()
-    # unpromoted_sources: Dict[str, Input | Output] = dict()
-    # promoted_to_unpromoted_descendant_variables: Dict[
-    # str, Set[str]] = dict()
 
     for s in model.subgraphs:
         m = s.submodel
@@ -87,18 +75,11 @@ def resolve_promotions(
             promoted_targets_from_child_shapes,
             promoted_sources_from_child,
             promoted_targets_from_child,
-            # unpromoted_sources_from_child,
-            # unpromoted_targets_from_child,
         ) = resolve_promotions(
             m,
             s.promotes,
             namespace=prepend_namespace(namespace, s.name),
         )
-
-        # # gather sources and targets that are not promoted so that
-        # # automatic and user declared connections can be issued
-        # unpromoted_sources.update(unpromoted_sources_from_child)
-        # unpromoted_targets.update(unpromoted_targets_from_child)
 
         # Rule: each source (input or output) name promoted to this
         # level must be unique; comparing variables promoted from child
@@ -137,25 +118,6 @@ def resolve_promotions(
             promoted_sources_from_child)
         promoted_targets_from_children.update(
             promoted_targets_from_child)
-
-        # update map from promoted to unpromoted names; variables that
-        # are not promoted to this level will have the corresponding
-        # child model's name prepended to their promoted path later on;
-        # variables that are not promoted from this model to parent will
-        #  have name of current model prepended by parent
-        # for promoted_name, unpromoted_names in m.promoted_to_unpromoted.items(
-        # ):
-        #     new_unpromoted_names = {
-        #         prepend_namespace(s.name, unpromoted_name)
-        #         for unpromoted_name in unpromoted_names
-        #     }
-        #     try:
-        #         promoted_to_unpromoted_descendant_variables[
-        #             promoted_name].update(new_unpromoted_names)
-        #     except:
-        #         promoted_to_unpromoted_descendant_variables[
-        #             promoted_name] = new_unpromoted_names
-
     # locally defined variable information is necessary for checking
     # that the remaining rules for promotion are followed and to send
     # information about locally defined variables that are candidates
@@ -248,6 +210,12 @@ def resolve_promotions(
         promoted_to_unpromoted[k] = {k}
     for k in locally_defined_target_shapes.keys():
         promoted_to_unpromoted[k] = {k}
+
+    # update map from promoted to unpromoted names; variables that
+    # are not promoted to this level will have the corresponding
+    # child model's name prepended to their promoted path later on;
+    # variables that are not promoted from this model to parent will
+    # have name of current model prepended by parent
 
     # collect variables from children that will be promoted to parent
     # model and prepend namespace to promoted names of variables that
@@ -342,24 +310,25 @@ def resolve_promotions(
                     ))
 
             # filter promoted variables
+            # remove_keys = []
+            # for k in promoting_from_child.keys():
+            #     if k not in s.promotes:
+            #         remove_keys.append(k)
+            # for k in remove_keys:
+            #     promoting_from_child.pop(k)
+
             promoting_from_child = dict(
                 filter(lambda x: x[0] in s.promotes,
                        promoting_from_child.items()))
-            # FIXME:
+
             # filter unpromoted variables
             for k in promoting_from_child.keys():
                 unpromoted_name = prepend_namespace(s.name, k)
-                print('MODEL', s.name)
-                print('UNPROMOTED NAME', unpromoted_name)
                 if unpromoted_name in not_promoting_from_child.keys():
                     not_promoting_from_child.pop(unpromoted_name)
 
         if len(promoting_from_child) + len(
                 not_promoting_from_child) != num_pfc:
-            print('START OF SIZE MISMATCH ERROR')
-            print(s.name)
-            print(promoting_from_child)
-            print(not_promoting_from_child)
             raise ValueError('size mismatch')
 
         for k, v in promoting_from_child.items():
@@ -414,4 +383,4 @@ def resolve_promotions(
         k: targets[k]
         for k in user_promotable_targets_shapes.keys()
     }
-    return user_promotable_sources_shapes, user_promotable_targets_shapes, promotable_sources, promotable_targets  #, unpromoted_sources, unpromoted_targets
+    return user_promotable_sources_shapes, user_promotable_targets_shapes, promotable_sources, promotable_targets

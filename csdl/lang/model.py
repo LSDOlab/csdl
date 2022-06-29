@@ -82,7 +82,6 @@ class Model:
         self.promoted_to_unpromoted: Dict[str, Set[str]] = dict()
         self.unpromoted_to_promoted: Dict[str, str] = dict()
         self.model_cycles: list[list[str]] = []
-        print('constructing model of type {}'.format(type(self).__name__))
 
     def initialize(self):
         """
@@ -310,10 +309,6 @@ class Model:
             )
 
     def connect(self, a: str, b: str):
-        warn(
-            "Error messages for connections are not yet built into "
-            "CSDL frontend. Pay attention to any errors emmited by back end."
-        )
         if (a, b) in self.user_declared_connections:
             warn("Connection from {} to {} issued twice.".format(a, b))
         else:
