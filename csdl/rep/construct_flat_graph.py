@@ -81,7 +81,7 @@ def isolate_unique_targets(
 
 
 def gather_variables_by_promoted_name(
-    vars: Dict[str, VariableNode], ) -> Dict[str, VariableNode]:
+        vars: Dict[str, VariableNode], ) -> Dict[str, VariableNode]:
     """
     Create key value pairs of unique source name to corresponding source
     node
@@ -206,7 +206,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
             )
 
 
-## CONNECTIONS
+# CONNECTIONS
 def validate_connections(
     promoted_to_declared_connections: Dict[Tuple[str, str],
                                            list[Tuple[str, str, str]]],
@@ -302,32 +302,8 @@ def merge_user_connected_nodes(
 
 def construct_flat_graph(
     graph: DiGraph,
-    connections: list[Tuple[str, str]],
-    promoted_to_declared_connections: Dict[Tuple[str, str],
-                                           list[Tuple[str, str, str]]],
 ) -> DiGraph:
     graph = merge_graphs(graph)
     merge_automatically_connected_nodes(graph)
-    vars: list[VariableNode] = get_var_nodes(graph)
-    sources: Dict[str, VariableNode] = {
-        prepend_namespace(x.namespace, x.name): x
-        for x in get_src_nodes(vars)
-    }
-    targets: Dict[str, VariableNode] = {
-        prepend_namespace(x.namespace, x.name): x
-        for x in get_tgt_nodes(vars)
-    }
-    validate_connections(
-        promoted_to_declared_connections,
-        sources,
-        targets,
-    )
-    report_duplicate_connections(promoted_to_declared_connections)
-    merge_user_connected_nodes(
-        graph,
-        connections,
-        sources,
-        targets,
-    )
 
     return graph

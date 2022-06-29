@@ -4,27 +4,29 @@ import numpy as np
 
 # TESTS:
 # - Connection Example
-# -- ExampleConnectDifferentLevels
-# -- ErrorConnectWithinSameModel
-# -- ExampleConnectPromotedOutputToDeclared
-# -- ExampleConnectInputToPromotedDeclared
-# -- ExampleNestedPromotedConnections
-# -- ExampleNestedUnpromotedConnections
-# -- ExampleNestedUnpromotedConnectionsVariation1
-# -- ExampleNestedUnpromotedConnectionsVariation2
+# -- ExampleConnectDifferentLevels y=3.0
+# -- ExampleConnectWithinSameModel y=5.0
+# -- ExampleConnectPromotedOutputToDeclared y=3.0
+# -- ExampleConnectInputToPromotedDeclared y=3.0
+# -- ExampleNestedPromotedConnections y=8.0
+# -- ExampleNestedUnpromotedConnections y=8.0
+# -- ExampleNestedUnpromotedConnectionsVariation1 y=8.0
+# -- ExampleNestedUnpromotedConnectionsVariation2 y=8.0
 # -- ErrorConnectingWrongArgOrder
 # -- ErrorConnectingTwoVariables
-# -- ExampleConnectingVarsAcrossModels
-# -- ErrorConnectingVarsInModels
+# -- ExampleConnectingVarsAcrossModels y=16.0
+# -- ExampleConnectingVarsInModels
 # -- ErrorConnectingCyclicalVars
-# -- ErrorConnectingUnpromotedNames
+# -- ExampleConnectingUnpromotedNames
 # -- ErrorTwoWayConnection
-# -- ExampleValueOverwriteConnection
+# -- ExampleValueOverwriteConnection f=14.0
 # -- ErrorConnectDifferentShapes
 # -- ErrorConnectToNothing
-# -- ExampleConnectCreateOutputs
+# -- ExampleConnectCreateOutputs y=np.array([11,6])
 # -- ErrorConnectCreateOutputs
 # -- ExampleFalseCycle
+# -- ExampleConnectUnpromotedNames y=3.0
+# -- ExampleConnectUnpromotedNamesWithin y=3.0
 
 
 class ExampleConnectDifferentLevels(Model):
@@ -51,7 +53,7 @@ class ExampleConnectDifferentLevels(Model):
         self.connect('A.f', 'f1')
 
 
-class ErrorConnectWithinSameModel(Model):
+class ExampleConnectWithinSameModel(Model):
     # Connecting promoted variables
     # sim['y'] = 5
     """
@@ -194,7 +196,7 @@ class ExampleNestedUnpromotedConnections(Model):
         m4.register_output('b4', a4 + 3)
 
         m3.add(m4, name='m4', promotes=[])
-        b4 = m2.declare_variable('b4_connect')
+        b4 = m3.declare_variable('b4_connect')
         m3.register_output('b3', a3 + b4)
 
         m2.add(m3, name='m3', promotes=[])
@@ -241,7 +243,7 @@ class ExampleNestedUnpromotedConnectionsVariation1(Model):
         m4.register_output('b4', a4 + 3)
 
         m3.add(m4, name='m4', promotes=[])
-        b4 = m2.declare_variable('b4_connect')
+        b4 = m3.declare_variable('b4_connect')
         m3.register_output('b3', a3 + b4)
 
         m2.add(m3, name='m3', promotes=[])
@@ -289,7 +291,7 @@ class ExampleNestedUnpromotedConnectionsVariation2(Model):
         m4.register_output('b4', a4 + 3)
 
         m3.add(m4, name='m4', promotes=[])
-        b4 = m2.declare_variable('b4_connect')
+        b4 = m3.declare_variable('b4_connect')
         m3.register_output('b3', a3 + b4)
 
         m2.add(m3, name='m3')
@@ -306,6 +308,7 @@ class ExampleNestedUnpromotedConnectionsVariation2(Model):
         self.connect('b1', 'b1_connect')
         self.connect('m2.b2', 'b2_connect')
         self.connect('m2.m4.b4', 'm2.b4_connect')
+        # m2.m4.b4
         self.register_output('y', a + b1)
 
 
@@ -377,7 +380,7 @@ class ExampleConnectingVarsAcrossModels(Model):
         self.connect('b3', 'b4')
 
 
-class ErrorConnectingVarsInModels(Model):
+class ExampleConnectingVarsInModels(Model):
     # Cannot make connections within models
     # return error
 
@@ -387,7 +390,7 @@ class ErrorConnectingVarsInModels(Model):
         # generation more easily.
         # When defining CSDL models, please put the import statements at
         # the top of your Python file(s).
-        from connection_error import ConnectWithin
+        from csdl.examples.models.connect_within import ConnectWithin
 
         self.add(ConnectWithin(
         ))  # Adding a connection within a model will throw an error
@@ -399,18 +402,19 @@ class ErrorConnectingCyclicalVars(Model):
 
     def define(self):
 
-        a = self.create_input('a', val=3)
-        b = self.declare_variable('b')
+        a = self.create_input('a')
 
-        c = a * b
-
-        self.register_output('y',
-                             a + c)  # connect to b, creating a cycle
+        model = Model()
+        a = model.declare_variable('a')
+        b = model.declare_variable('b', val=3.0)
+        c = a*b
+        model.register_output('y', a+c)  # connect to b, creating a cycle
+        self.add(model)
 
         self.connect('y', 'b')
 
 
-class ErrorConnectingUnpromotedNames(Model):
+class ExampleConnectingUnpromotedNames(Model):
     # Cannot make connections using unpromoted names
     # return error
 
@@ -435,35 +439,45 @@ class ErrorTwoWayConnection(Model):
 
     def define(self):
 
-        a = self.create_input('a',
-                              val=3)  # connect to b, creating a cycle
-        b = self.declare_variable('b')  # connect to a, creating a cycle
+        model = Model()
+        a = model.declare_variable('a', val=2.0)  # connect to b, creating a cycle
+        b = model.declare_variable('b', val=2.0)  # connect to a, creating a cycle
+        c = a*b
+        model.register_output('y', a+c)
 
-        c = a * b
-
-        self.register_output('f', a + c)
-
-        self.connect('a', 'b')
-        self.connect('b', 'a')
+        self.add(
+            model,
+            promotes=[],
+            name='model'
+        )
+        self.connect('model.a', 'model.b')
+        self.connect('model.b', 'model.a')
 
 
 class ExampleValueOverwriteConnection(Model):
     # Connection should overwrite values
-    # return sim['y'] = 6
+    # return sim['f'] = 14
     """
     :param var: y
     """
 
     def define(self):
 
-        a = self.create_input('a', val=3)
-        b = self.declare_variable(
-            'b',
-            val=10)  # connect to a, value of 10 should be overwritten
+        model = Model()
+        a = model.declare_variable('a', val=4.0)  # connect to b, creating a cycle
+        b = model.declare_variable('b', val=3.0)  # connect to a, creating a cycle
+        c = a*b
+        model.register_output('y', a+c)
 
-        self.register_output('y', a + b)
+        self.add(
+            model,
+            promotes=[],
+            name='model',
+        )
 
-        self.connect('a', 'b')
+        d = self.declare_variable('d', val=10.0)
+        self.register_output('f', 2*d)
+        self.connect('model.y', 'd')
 
 
 class ErrorConnectDifferentShapes(Model):
@@ -472,13 +486,23 @@ class ErrorConnectDifferentShapes(Model):
 
     def define(self):
 
-        a = self.create_input('a', val=np.array([3, 3]))
-        b = self.declare_variable('b', shape=(1, ))
+        d = self.create_input('d', shape=(2, 2))
 
-        self.register_output('f', b + 2.0)
+        model = Model()
+        a = model.declare_variable('a', val=4.0)  # connect to b, creating a cycle
+        b = model.declare_variable('b', val=3.0)  # connect to a, creating a cycle
+        c = a*b
+        model.register_output('y', a+c)
 
-        self.connect('a',
-                     'b')  # Connecting wrong shapes should be an error
+        self.add(
+            model,
+            promotes=[],
+            name='model',
+        )
+
+        y = self.declare_variable('model.y')
+        self.register_output('f', y + 2.0)
+        self.connect('d', 'model.a')
 
 
 class ErrorConnectToNothing(Model):
@@ -487,13 +511,21 @@ class ErrorConnectToNothing(Model):
 
     def define(self):
 
-        a = self.create_input('a')
+        model = Model()
+        a = model.create_input('a', val=4.0)  # connect to b, creating a cycle
+        b = model.declare_variable('b', val=3.0)  # connect to a, creating a cycle
+        c = a*b
+        model.register_output('y', a+c)
 
+        self.add(
+            model,
+            promotes=[],
+            name='model',
+        )
+
+        a = self.declare_variable('model.a')
         self.register_output('f', a + 2.0)
-
-        self.connect(
-            'a',
-            'b')  # Connecting to a non-existing variable is an error
+        self.connect('model.a', 'c')
 
 
 class ExampleConnectCreateOutputs(Model):
@@ -557,3 +589,89 @@ class ExampleFalseCycle(Model):
         self.add(FalseCyclePost())
 
         self.connect('x', 'b')
+
+
+class ExampleConnectUnpromotedNames(Model):
+    # Connecting Unromoted variables
+    # sim['y'] = 3
+    """
+    :param var: y
+    """
+
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.addition import AdditionFunction
+
+        a = self.create_input('a')
+
+        self.add(AdditionFunction(), name='A')
+
+        f1 = self.declare_variable('f1')
+        self.register_output('y', a + f1)
+        self.connect('A.f', 'f1')
+
+
+class ExampleConnectUnpromotedNamesWithin(Model):
+    # Connecting Unromoted variables
+    # sim['y'] = 3
+    """
+    :param var: y
+    """
+
+    def define(self):
+        # NOTE: Importing definitions within a method is bad practice.
+        # This is only done here to automate example/test case
+        # generation more easily.
+        # When defining CSDL models, please put the import statements at
+        # the top of your Python file(s).
+        from csdl.examples.models.addition import AdditionFunction
+
+        m = Model()  # model B
+        a = m.create_input('a')
+        b = m.create_input('b')
+        m.register_output('f', a + b)
+
+        mm = Model()  # model A
+        c = mm.create_input('c')
+        d = mm.declare_variable('d')
+        mm.register_output('f1', c + d)
+        mm.add(m, promotes=[], name='B')
+        mm.connect('B.f', 'd')
+        self.add(mm, 'A')
+
+        f1 = self.declare_variable('f1')
+        self.register_output('y', a + f1)
+
+
+if __name__ == '__main__':
+    import csdl
+    rep = csdl.GraphRepresentation(ExampleConnectDifferentLevels())
+    # rep = csdl.GraphRepresentation(ExampleConnectWithinSameModel())
+    # rep = csdl.GraphRepresentation(ExampleConnectPromotedOutputToDeclared())
+    # rep = csdl.GraphRepresentation(ExampleConnectInputToPromotedDeclared())
+    # rep = csdl.GraphRepresentation(ExampleNestedPromotedConnections())
+    # rep = csdl.GraphRepresentation(ExampleNestedUnpromotedConnections())
+    # rep = csdl.GraphRepresentation(ExampleNestedUnpromotedConnectionsVariation1()) # WRONG
+    # rep = csdl.GraphRepresentation(ExampleNestedUnpromotedConnectionsVariation2()) # WRONG
+    # rep = csdl.GraphRepresentation(ErrorConnectingWrongArgOrder())
+    # rep = csdl.GraphRepresentation(ErrorConnectingTwoVariables())
+    # rep = csdl.GraphRepresentation(ExampleConnectingVarsAcrossModels())
+    # rep = csdl.GraphRepresentation(ExampleConnectingVarsInModels())
+    # rep = csdl.GraphRepresentation(ErrorConnectingCyclicalVars())
+    # rep = csdl.GraphRepresentation(ExampleConnectingUnpromotedNames())
+    # rep = csdl.GraphRepresentation(ErrorTwoWayConnection())
+    # rep = csdl.GraphRepresentation(ExampleValueOverwriteConnection())
+    # rep = csdl.GraphRepresentation(ErrorConnectDifferentShapes())
+    # rep = csdl.GraphRepresentation(ErrorConnectToNothing())
+    # rep = csdl.GraphRepresentation(ExampleConnectCreateOutputs())
+    # rep = csdl.GraphRepresentation(ErrorConnectCreateOutputs())
+    # rep = csdl.GraphRepresentation(ExampleFalseCycle()) 
+    # rep = csdl.GraphRepresentation(ExampleConnectUnpromotedNames())
+    # rep = csdl.GraphRepresentation(ExampleConnectUnpromotedNamesWithin()) # WRONG
+
+    rep.visualize_graph()
+    exit()
