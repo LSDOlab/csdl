@@ -18,7 +18,9 @@ from networkx import DiGraph, compose, contracted_nodes
 
 from csdl.rep.variable_node import VariableNode
 from copy import copy
+from collections import Counter
 from typing import Dict
+from warnings import warn
 
 
 def gather_targets_by_promoted_name(
@@ -90,7 +92,6 @@ def gather_variables_by_promoted_name(
     return unique_variables
 
 
-
 def merge_graphs(
     graph: DiGraph,
     namespace: str = '',
@@ -100,16 +101,11 @@ def merge_graphs(
     main model. User declared promotions and connections are assumed to
     be valid.
     """
-    child_model_nodes: list[ModelNode] = list(
-        filter(lambda x: isinstance(x, ModelNode), graph.nodes()))
+    child_model_nodes = get_model_nodes(graph)
 
     # create a flattened copy of the graph for each model node
     graph.remove_nodes_from(child_model_nodes)
     for mn in copy(child_model_nodes):
-        # child_graph_copy = DiGraph()
-        # child_graph_copy.add_edges_from(mn.graph.edges())
-        # # also copy ModelNode nodes, which do not have edges
-        # child_graph_copy.add_nodes_from(mn.graph.nodes())
         graph = compose(graph, mn.graph)
         graph = merge_graphs(
             graph,
@@ -121,9 +117,9 @@ def merge_graphs(
 
         # assign namespace to each variable node
         for v in child_vars:
-            if not (mn.promotes is None or v.name in mn.promotes):
-                v.namespace = prepend_namespace(
-                    namespace, prepend_namespace(v.namespace, mn.name))
+            if mn.promotes is not None:
+                if v.name not in mn.promotes:
+                    v.namespace = prepend_namespace(namespace, mn.name)
 
     return graph
 
@@ -207,30 +203,86 @@ def merge_automatically_connected_nodes(graph: DiGraph):
 
 
 ## CONNECTIONS
+def validate_connections(
+    promoted_to_declared_connections: Dict[Tuple[str, str],
+                                           list[Tuple[str, str, str]]],
+    sources: Dict[str, VariableNode],
+    targets: Dict[str, VariableNode],
+):
+    # TODO: check that multiple sources are not connected to the same target
+    # c = Counter([x for _, x in promoted_to_declared_connections.keys()])
+    # for a, b in c:
+    #     if c[b] > 1:
+    #         msg = "Multiple sources connected to target \'{}\'".format(
+    #             b)
+    #         for (
+    #                 src, tgt
+    #         ), connections in promoted_to_declared_connections.items():
+    #             if b == tgt:
+    #                 for p, q, r in connections:
+    #                     msg += "  In model \'{}\', found user declared connection (\'{}\', \'{}\')\n".format(
+    #                         r, p, q)
+
+    for (
+            promoted_source_candidate, promoted_target_candidate
+    ), connections_by_namespace in promoted_to_declared_connections.items(
+    ):
+        if promoted_source_candidate not in sources:
+            msg = "Variable with promoted name \'{}\' is not a valid source for connection.".format(
+                promoted_source_candidate)
+            for (unpromoted_source_candidate,
+                 unpromoted_target_candidate,
+                 namespace) in connections_by_namespace:
+                msg += "Connection (\'{}\', \'{}\') declared in model \'{}\'".format(
+                    unpromoted_source_candidate,
+                    unpromoted_target_candidate, namespace)
+            raise KeyError()
+        if promoted_target_candidate not in targets:
+            msg = "Variable with promoted name \'{}\' is not a valid target for connection.".format(
+                promoted_target_candidate)
+            for (unpromoted_source_candidate,
+                 unpromoted_target_candidate,
+                 namespace) in connections_by_namespace:
+                msg += "Connection (\'{}\', \'{}\') declared in model \'{}\'".format(
+                    unpromoted_source_candidate,
+                    unpromoted_target_candidate, namespace)
+            raise KeyError()
+
+
+def report_duplicate_connections(
+    promoted_to_declared_connections: Dict[Tuple[str, str],
+                                           list[Tuple[str, str,
+                                                      str]]], ):
+    if len(promoted_to_declared_connections) == 0:
+        return ''
+    duplicates_present = False
+    for v in promoted_to_declared_connections.values():
+        if len(v) > 1:
+            duplicates_present = True
+            break
+
+    if duplicates_present is False:
+        return ''
+
+    msg = "Duplicate connections found. Each connection is shown using promoted names, followed by duplicate connections as declared by the user.\n"
+    for k, v in promoted_to_declared_connections.items():
+        if len(v) > 1:
+            msg += "\nDuplicate connections found for connection:\n{}\n".format(
+                k)
+            for a, b, namespace in v:
+                msg += "  In model \'{}\', found user declared connection (\'{}\', \'{}\')\n".format(
+                    namespace, a, b)
+
+    if len(msg) > 0:
+        warn(msg)
 
 
 def merge_user_connected_nodes(
     graph: DiGraph,
     connections: list[Tuple[str, str]],
+    src_nodes_map: Dict[str, VariableNode],
+    tgt_nodes_map: Dict[str, VariableNode],
 ):
-    # list of all variables in graph
-    vars = get_var_nodes(graph)
-
-    # list of all source variables in graph
-    src_nodes = get_src_nodes(vars)
-
-    # list of all target variables in graph
-    tgt_nodes = get_tgt_nodes(vars)
-
-    # map of sources
-    src_nodes_map: Dict[str, VariableNode] = {
-        prepend_namespace(x.namespace, x.name): x
-        for x in src_nodes
-    }
-    tgt_nodes_map: Dict[str, VariableNode] = {
-        prepend_namespace(x.namespace, x.name): x
-        for x in tgt_nodes
-    }
     for a, b in connections:
         src_nodes_map[a].tgt_namespace.append(
             tgt_nodes_map[b].namespace)
@@ -247,12 +299,31 @@ def merge_user_connected_nodes(
 def construct_flat_graph(
     graph: DiGraph,
     connections: list[Tuple[str, str]],
+    promoted_to_declared_connections: Dict[Tuple[str, str],
+                                           list[Tuple[str, str, str]]],
 ) -> DiGraph:
     graph = merge_graphs(graph)
     merge_automatically_connected_nodes(graph)
+    vars: list[VariableNode] = get_var_nodes(graph)
+    sources: Dict[str, VariableNode] = {
+        prepend_namespace(x.namespace, x.name): x
+        for x in get_src_nodes(vars)
+    }
+    targets: Dict[str, VariableNode] = {
+        prepend_namespace(x.namespace, x.name): x
+        for x in get_tgt_nodes(vars)
+    }
+    validate_connections(
+        promoted_to_declared_connections,
+        sources,
+        targets,
+    )
+    report_duplicate_connections(promoted_to_declared_connections)
     merge_user_connected_nodes(
         graph,
         connections,
+        sources,
+        targets,
     )
 
     return graph

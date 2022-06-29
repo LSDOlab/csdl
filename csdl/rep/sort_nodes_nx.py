@@ -7,7 +7,7 @@ from csdl.rep.get_registered_outputs_from_graph import get_registered_outputs_fr
 from csdl.rep.get_model_nodes_from_graph import get_model_nodes_from_graph
 from networkx import DiGraph, topological_sort
 
-from csdl.rep.get_nodes import get_input_nodes
+from csdl.rep.get_nodes import get_input_nodes, get_var_nodes
 from csdl.utils.prepend_namespace import prepend_namespace
 
 
@@ -27,10 +27,8 @@ def sort_nodes_nx(
     : nodes in reverse order of execution that guarantees a triangular
     Jacobian structure
     """
-    input_nodes: List[VariableNode] = get_input_nodes(graph)
-    if flat is True:
-        print('namespace', namespace)
-        print('input_nodes', [prepend_namespace(v.namespace,v.name) for v in input_nodes])
+    var_nodes = get_var_nodes(graph)
+    input_nodes: List[VariableNode] = get_input_nodes(var_nodes)
     sorted_nodes: List[IRNode] = list(topological_sort(graph))
     sorted_nodes = list(set(input_nodes) -
                         set(sorted_nodes)) + sorted_nodes

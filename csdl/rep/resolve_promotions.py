@@ -51,7 +51,7 @@ def check_for_cycles(
 
 
 def validate_promotions_and_split(
-    promoted_to_unpromoted_descendant_variables: Dict[str, Set[str]],
+    q: Dict[str, Set[str]],
     local_namespace_source_shapes: Dict[str, Shape],
     local_namespace_target_shapes: Dict[str, Shape],
     namespace: str,
@@ -62,7 +62,14 @@ def validate_promotions_and_split(
     validate user specified promotions and store maps from promoted to
     unpromoted names; this function is never called on main model
     """
-    if promotes is not None:
+
+    if promotes is None:
+        # split dictionary between variables being promoted and not
+        # promoted; in this case, promote all promotable variables
+        return q, dict()
+    if len(promotes) == 0:
+        return dict(), q
+    else:
         # check that user has not specified invalid promotes
         invalid_promotes = set(promotes) - (
             local_namespace_source_shapes.keys()
@@ -78,17 +85,10 @@ def validate_promotions_and_split(
 
         # split dictionary between variables beting promoted and not
         # promoted
-        promoting = dict(
-            filter(lambda kv: kv[0] in promotes,
-                   promoted_to_unpromoted_descendant_variables.items()))
+        promoting = dict(filter(lambda x: x[0] in promotes, q.items()))
         not_promoting = dict(
-            filter(lambda kv: kv[0] not in promotes,
-                   promoted_to_unpromoted_descendant_variables.items()))
+            filter(lambda x: x[0] not in promotes, q.items()))
         return promoting, not_promoting
-    else:
-        # split dictionary between variables being promoted and not
-        # promoted; in this case, promote all promotable variables
-        return promoted_to_unpromoted_descendant_variables, dict()
 
 
 def resolve_promotions(
@@ -101,8 +101,8 @@ def resolve_promotions(
     promoted_targets_from_children_shapes: Dict[str, Shape] = dict()
     promoted_sources_from_children: Dict[str, Input | Output] = dict()
     promoted_targets_from_children: Dict[str, DeclaredVariable] = dict()
-    promoted_to_unpromoted_descendant_variables: Dict[
-        str, Set[str]] = dict()
+    # promoted_to_unpromoted_descendant_variables: Dict[
+    # str, Set[str]] = dict()
 
     for s in model.subgraphs:
         m = s.submodel
@@ -162,23 +162,18 @@ def resolve_promotions(
         # child model's name prepended to their promoted path later on;
         # variables that are not promoted from this model to parent will
         #  have name of current model prepended by parent
-        for promoted_name, unpromoted_names in m.promoted_to_unpromoted.items(
-        ):
-            new_unpromoted_names = {
-                prepend_namespace(s.name, unpromoted_name)
-                for unpromoted_name in unpromoted_names
-            }
-            try:
-                promoted_to_unpromoted_descendant_variables[
-                    promoted_name].update(new_unpromoted_names)
-            except:
-                promoted_to_unpromoted_descendant_variables[
-                    promoted_name] = new_unpromoted_names
-
-    print('promoted_sources_from_children_shapes',
-          promoted_sources_from_children_shapes)
-    print('promoted_targets_from_children_shapes',
-          promoted_targets_from_children_shapes)
+        # for promoted_name, unpromoted_names in m.promoted_to_unpromoted.items(
+        # ):
+        #     new_unpromoted_names = {
+        #         prepend_namespace(s.name, unpromoted_name)
+        #         for unpromoted_name in unpromoted_names
+        #     }
+        #     try:
+        #         promoted_to_unpromoted_descendant_variables[
+        #             promoted_name].update(new_unpromoted_names)
+        #     except:
+        #         promoted_to_unpromoted_descendant_variables[
+        #             promoted_name] = new_unpromoted_names
 
     # locally defined variable information is necessary for checking
     # that the remaining rules for promotion are followed and to send
@@ -262,44 +257,69 @@ def resolve_promotions(
     # the same model as a declared variable from another model is.
     # These two variables have different unpromoted names, but they have
     # the same promoted name.
-    promoted_names_to_unpromoted_names: Dict[str, Set[str]] = dict()
+    promoted_to_unpromoted: Dict[str, Set[str]] = dict()
 
     # store map from promoted to unpromoted names to enable issuing
     # connections using promoted or unpromoted names; all names are
     # relative to this model; map will be used to inform parent model of
     # promoted names and corresponding unpromoted names
     for k in locally_defined_source_shapes.keys():
-        promoted_names_to_unpromoted_names[k] = {k}
+        promoted_to_unpromoted[k] = {k}
     for k in locally_defined_target_shapes.keys():
-        promoted_names_to_unpromoted_names[k] = {k}
+        promoted_to_unpromoted[k] = {k}
 
     # collect variables from children that will be promoted to parent
     # model and prepend namespace to promoted names of variables that
     # will not be promoted any further
     for s in model.subgraphs:
-        promoting_from_child, not_promoting_from_child = validate_promotions_and_split(
-            promoted_to_unpromoted_descendant_variables,
-            local_namespace_source_shapes,
-            local_namespace_target_shapes,
-            namespace,
-            type(model).__name__,
-            s.promotes,
-        )
+        q = {
+            k: {prepend_namespace(s.name, vv)
+                for vv in v}
+            for k, v in s.submodel.promoted_to_unpromoted.items()
+        }
+        promoting_from_child = dict()
+        not_promoting_from_child = dict()
+        if s.promotes is None:
+            # split dictionary between variables being promoted and not
+            # promoted; in this case, promote all promotable
+            # variables
+            promoting_from_child = q
+        else:
+            if len(s.promotes) == 0:
+                not_promoting_from_child = q
+            else:
+                # check that user has not specified invalid promotes
+                invalid_promotes = set(s.promotes) - (
+                    local_namespace_source_shapes.keys()
+                    | local_namespace_target_shapes.keys())
+                if invalid_promotes != set():
+                    raise KeyError(
+                        "Invalid promotes {} specified in submodels within model {} of type {}"
+                        .format(
+                            invalid_promotes,
+                            namespace,
+                            type(model).__name__,
+                        ))
+
+                # split dictionary between variables being promoted and
+                # not promoted
+                promoting_from_child = dict(
+                    filter(lambda x: x[0] in s.promotes, q.items()))
+                not_promoting_from_child = dict(
+                    filter(lambda x: x[0] not in s.promotes, q.items()))
+
         for k, v in promoting_from_child.items():
             # update set of unpromoted names for each promoted name
             try:
-                promoted_names_to_unpromoted_names[k].update(v)
+                promoted_to_unpromoted[k].update(v)
             except:
-                promoted_names_to_unpromoted_names[k] = v
+                promoted_to_unpromoted[k] = v
         for k, v in not_promoting_from_child.items():
             # update set of unpromoted names for each promoted name
             # prepending namespace to promoted names
-            promoted_names_to_unpromoted_names[prepend_namespace(
-                s.name, k)] = v
+            promoted_to_unpromoted[prepend_namespace(s.name, k)] = v
 
-    model.promoted_to_unpromoted = promoted_names_to_unpromoted_names
-    print('namespace', namespace)
-    print('model.promoted_to_unpromoted', model.promoted_to_unpromoted)
+    model.promoted_to_unpromoted = promoted_to_unpromoted
 
     # store promoted sources and targets separately to look up when
     # issuing connections

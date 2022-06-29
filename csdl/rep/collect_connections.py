@@ -7,6 +7,7 @@ from csdl.lang.input import Input
 from csdl.lang.output import Output
 from csdl.lang.subgraph import Subgraph
 from csdl.utils.prepend_namespace import prepend_namespace
+from csdl.utils.find_promoted_name import find_promoted_name
 from typing import Set, Dict, Tuple
 
 
@@ -116,59 +117,59 @@ def check_target_name(
         .format(name))
 
 
-def collect_connections(
+def collect_user_declared_connections(
     model: 'Model',
-    main_promoted_to_unpromoted: Dict[str, Set[str]],
-    main_unpromoted_to_promoted: Dict[str, str],
     namespace: str = '',
-) -> list[Tuple[str, str]]:
+) -> list[Tuple[str, str, str]]:
     """
     Collect connections declared by user and store connections using
     unique names only.
     Unique names are promoted variable names relative to main model.
     """
-    connections: list[Tuple[str, str]] = []
-    promoted_source_names: Set[str] = set(
-        model.promoted_source_shapes.keys())
-    promoted_target_names: Set[str] = set(
-        model.promoted_target_shapes.keys())
+    user_declared_connections_by_namespace: list[Tuple[str, str,
+                                                       str]] = []
     for s in model.subgraphs:
         m = s.submodel
-        c = collect_connections(
+        c = collect_user_declared_connections(
             m,
-            main_promoted_to_unpromoted,
-            main_unpromoted_to_promoted,
             prepend_namespace(namespace, s.name),
         )
-        connections.extend(c)
-        promoted_source_names.update([
-            name if s.promotes is not None and name in s.promotes else
-            prepend_namespace(s.name, name)
-            for name in m.promoted_source_shapes.keys()
-        ])
-        promoted_target_names.update([
-            name if s.promotes is not None and name in s.promotes else
-            prepend_namespace(s.name, name)
-            for name in m.promoted_target_shapes.keys()
-        ])
-    connections.extend(model.user_declared_connections)
-    for a, b in model.user_declared_connections:
-        check_source_name(model, a, promoted_source_names)
-        check_target_name(model, b, promoted_target_names)
-        src = find_unique_name(
-            a,
-            main_promoted_to_unpromoted,
-            main_unpromoted_to_promoted,
-            namespace,
+        user_declared_connections_by_namespace.extend(c)
+    for src, tgt in model.user_declared_connections:
+        user_declared_connections_by_namespace.append(
+            (src, tgt, namespace))
+    return user_declared_connections_by_namespace
+
+
+def map_promoted_to_declared_connections(
+    user_declared_connections_by_namespace: list[Tuple[str, str, str]],
+    promoted_to_unpromoted: Dict[str, Set[str]],
+    unpromoted_to_promoted: Dict[str, str],
+) -> Dict[Tuple[str, str], list[Tuple[str, str, str]]]:
+    # prepend namespace to connections declared by user
+    connections_full_path: list[Tuple[str, str]] = [
+        (prepend_namespace(namespace,
+                           src), prepend_namespace(namespace, tgt))
+        for (src, tgt,
+             namespace) in user_declared_connections_by_namespace
+    ]
+    # map connections using promoted (unique) names to names from
+    # connections as declared by user and namespace in which connections
+    # were declared
+    promoted_to_declared_connections: Dict[Tuple[str, str],
+                                           list[Tuple[str, str,
+                                                      str]]] = dict()
+    for (a, b) in zip(connections_full_path,
+                      user_declared_connections_by_namespace):
+        # get connection using promoted names
+        key = (
+            find_promoted_name(a[0], promoted_to_unpromoted,
+                               unpromoted_to_promoted),
+            find_promoted_name(a[1], promoted_to_unpromoted,
+                               unpromoted_to_promoted),
         )
-        tgt = find_unique_name(
-            b,
-            main_promoted_to_unpromoted,
-            main_unpromoted_to_promoted,
-            namespace,
-        )
-        connections.append((src, tgt))
-    # return list of connections without duplicates
-    # TODO: raise error on redundant connections, show all possible
-    # unpromoted names for each connection
-    return list(set(connections))
+        try:
+            promoted_to_declared_connections[key].append(b)
+        except:
+            promoted_to_declared_connections[key] = [b]
+    return promoted_to_declared_connections

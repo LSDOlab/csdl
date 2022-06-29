@@ -22,7 +22,7 @@ from csdl.rep.ir_node import IRNode
 from csdl.rep.sort_nodes_nx import sort_nodes_nx
 from csdl.rep.get_registered_outputs_from_graph import get_registered_outputs_from_graph
 from csdl.rep.resolve_promotions import resolve_promotions
-from csdl.rep.collect_connections import collect_connections
+from csdl.rep.collect_connections import collect_user_declared_connections, map_promoted_to_declared_connections
 from csdl.rep.add_dependencies_due_to_connections import add_dependencies_due_to_connections
 from csdl.utils.prepend_namespace import prepend_namespace
 from networkx import DiGraph, ancestors, simple_cycles
@@ -35,7 +35,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from networkx import draw_networkx
 
-from csdl.rep.get_nodes import get_var_nodes
+from csdl.rep.get_nodes import get_input_nodes, get_var_nodes, get_model_nodes, get_output_nodes
 
 
 def nargs(
@@ -128,11 +128,13 @@ class GraphRepresentation:
         define_models_recursively(model)
         _, _, _, _ = resolve_promotions(model)
         generate_unpromoted_promoted_maps(model)
-        self.connections: list[Tuple[str, str]] = collect_connections(
-            model,
+        promoted_to_declared_connections = map_promoted_to_declared_connections(
+            collect_user_declared_connections(model),
             model.promoted_to_unpromoted,
             model.unpromoted_to_promoted,
         )
+        self.connections: list[Tuple[str, str]] = list(
+            promoted_to_declared_connections.keys())
         self.unpromoted_to_promoted: Dict[
             str, str] = model.unpromoted_to_promoted
         self.promoted_to_unpromoted: Dict[
@@ -153,6 +155,7 @@ class GraphRepresentation:
         self.flat_graph: DiGraph = construct_flat_graph(
             first_graph,
             self.connections,
+            promoted_to_declared_connections,
         )
         """
         Flattened directed acyclic graph representing main model.
@@ -212,24 +215,19 @@ class GraphRepresentation:
         Constraints of the optimization problem, if a constrained
         optimization problem is defined
         """
+        self._variable_nodes = get_var_nodes(self.flat_graph)
 
     def input_nodes(self) -> List[VariableNode]:
         """
         Return nodes that represent inputs to the main model.
         """
-        variable_nodes = self._variable_nodes()
-        input_nodes: Iterable[VariableNode] = filter(
-            lambda x: isinstance(x.var, Input), variable_nodes)
-        return list(input_nodes)
+        return get_input_nodes(self._variable_nodes)
 
     def output_nodes(self) -> List[VariableNode]:
         """
         Return nodes that represent outputs of the main model.
         """
-        variable_nodes = self._variable_nodes()
-        output_nodes: Iterable[VariableNode] = filter(
-            lambda x: isinstance(x.var, Output), variable_nodes)
-        return list(output_nodes)
+        return get_output_nodes(self._variable_nodes)
 
     def operation_nodes(
         self,
@@ -246,7 +244,7 @@ class GraphRepresentation:
         Return nodes that represent all variables within the model. Uses
         flattened representation to gather variables.
         """
-        return list(self._variable_nodes())
+        return self._variable_nodes
 
     def num_inputs(self) -> int:
         """
@@ -300,7 +298,7 @@ class GraphRepresentation:
         implicit operations.
         """
         if mode == 'rev':
-            return np.sum(_var_sizes(list(self._variable_nodes())))
+            return np.sum(_var_sizes(list(self._variable_nodes)))
         elif mode == 'fwd':
             # need upper triangular adjacency matrix
             return 0
@@ -600,16 +598,6 @@ class GraphRepresentation:
                 lambda x: not isinstance(x, (CustomExplicitOperation,
                                              CustomImplicitOperation)),
                 operation_nodes)
-
-    def _variable_nodes(self) -> Iterable[VariableNode]:
-        """
-        Gathers variable nodes from flattened representation for other
-        methods to use.
-        """
-        variable_nodes: Iterable[VariableNode] = filter(
-            lambda x: isinstance(x, VariableNode),
-            self.flat_graph.nodes())
-        return variable_nodes
 
     # TODO: add implicit models option
     def visualize_unflat(self):

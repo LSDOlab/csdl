@@ -117,3 +117,12 @@ class ModelH(Model):
         x3 = self.declare_variable('x3')
 
         self.register_output('x3_out', x3 * 1.0)  # should be 0.01
+
+
+# rep = GraphRepresentation(Hierarchical())  # front end
+# rep.visualize_graph()
+# # rep.visualize_unflat()
+# # # sim = Simulator(rep)  # back end
+# # # sim.run()
+# # # print(sim['f'])
+# exit()

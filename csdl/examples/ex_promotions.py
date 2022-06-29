@@ -582,10 +582,9 @@ class ExampleSameIOUnpromoted(Model):
 
 
 # rep = GraphRepresentation(ExampleComplex())  # front end
-# # rep = GraphRepresentation(AdditionFunction())
 # rep.visualize_graph()
 # # rep.visualize_unflat()
-# # sim = Simulator(rep)  # back end
-# # sim.run()
-# # print(sim['f'])
+# # # sim = Simulator(rep)  # back end
+# # # sim.run()
+# # # print(sim['f'])
 # exit()

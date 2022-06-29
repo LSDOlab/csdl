@@ -28,7 +28,11 @@ def get_model_nodes(graph: DiGraph) -> list[ModelNode]:
         filter(lambda x: isinstance(x, ModelNode), graph.nodes()))
 
 
-def get_input_nodes(graph: DiGraph) -> list[VariableNode]:
-    return list(
-        filter(lambda x: isinstance(x.var, Input),
-               get_var_nodes(graph)))
+def get_input_nodes(
+        var_nodes: list[VariableNode]) -> list[VariableNode]:
+    return list(filter(lambda x: isinstance(x.var, Input), var_nodes))
+
+
+def get_output_nodes(
+        var_nodes: list[VariableNode]) -> list[VariableNode]:
+    return list(filter(lambda x: isinstance(x.var, Output), var_nodes))
