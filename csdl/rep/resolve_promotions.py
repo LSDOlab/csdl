@@ -15,7 +15,8 @@ from typing import List, Tuple, Dict, Set, Final, Literal
 
 
 def validate_promotions_and_split(
-    q: Dict[str, Set[str]],
+    qp: Dict[str, Set[str]],
+    qup: Dict[str, Set[str]],
     local_namespace_source_shapes: Dict[str, Shape],
     local_namespace_target_shapes: Dict[str, Shape],
     namespace: str,
@@ -31,10 +32,10 @@ def validate_promotions_and_split(
     if promotes is None:
         # promote all promotable variables
         print('PROMOTE ALL')
-        return q, dict()
+        return qp, dict()
     if len(promotes) == 0:
         print('PROMOTE NONE')
-        return dict(), q
+        return dict(), qup
     print('PROMOTE SOME')
     # check that user has not specified invalid promotes
     invalid_promotes = set(promotes) - (
@@ -52,9 +53,9 @@ def validate_promotions_and_split(
     # split dictionary between variables beting promoted and not
     # promoted
     promoting: Dict[str, Set[str]] = dict(
-        filter(lambda x: x[0] in promotes, q.items()))
+        filter(lambda x: x[0] in promotes, qp.items()))
     not_promoting: Dict[str, Set[str]] = dict(
-        filter(lambda x: x[0] not in promotes, q.items()))
+        filter(lambda x: x[0] not in promotes, qup.items()))
     return promoting, not_promoting
 
 
@@ -251,30 +252,128 @@ def resolve_promotions(
     # collect variables from children that will be promoted to parent
     # model and prepend namespace to promoted names of variables that
     # will not be promoted any further
+
+    # () (x1)
+    # (A) (x2)
+    # (A.B) (x3)
+    # (A.B.C) (x4)
+
+    # promoting all
+    # A.B.C pu: {x4: {x4}}
+    # A.B pu: {x4: {C.x4}, x3: {x3}}
+    # A pu: {x4: {B.C.x4}, x3: {B.x3}, x2: {x2}}
+    # main pu: {x4: {A.B.C.x4}, x3: {A.B.x3}, x2: {A.x2}, x1: {x1}}
+
+    # promoting none
+    # A.B.C pu: {x4: {x4}}
+    # A.B pu: {C.x4: {C.x4}, x3: {x3}}
+    # A pu: {B.C.x4: {B.C.x4}, B.x3: {B.x3}, x1: {x1}}
+    # main pu: {A.B.C.x4: {A.B.C.x4}, A.B.x3: {A.B.x3}, A.x2: {A.x2}, x1: {x1}}
+
     for s in model.subgraphs:
-        q = {
+        # initialize pfc and npfc.
+        # both pfc and npfc have keys corresponding to each variable in
+        # child model. Therefore, len(pfc) = len(npfc) = n
+        # eliminate keys in both pfc and npfc depending on
+        # child model's promotions. At the end,
+        # len(pfc) + len(npfc) = n
+
+        # names as they appear in child namespace --> sets of unpromoted
+        # names in this models' namespace
+        # child model B:
+        # pfc[x] --> {B.x, B.C.x}
+        # pfc[C.y] --> {B.C.y, B.C.D.y}
+        promoting_from_child: Dict[str, Set[str]] = {
             k: {prepend_namespace(s.name, vv)
                 for vv in v}
             for k, v in s.submodel.promoted_to_unpromoted.items()
         }
-        promoting_from_child, not_promoting_from_child = validate_promotions_and_split(
-            q,
-            local_namespace_source_shapes,
-            local_namespace_target_shapes,
-            namespace,
-            type(model).__name__,
-            s.promotes,
-        )
+
+        # names as they appear in this model's namespace prior to
+        # promotion --> sets of unpromoted names in this models'
+        # namespace
+        # child model B:
+        # pfc[B.x] --> {B.x, B.C.x}
+        # pfc[B.C.y] --> {B.C.y, B.C.D.y}
+        not_promoting_from_child: Dict[str, Set[str]] = {
+            prepend_namespace(s.name, k):
+            {prepend_namespace(s.name, vv)
+             for vv in v}
+            for k, v in s.submodel.promoted_to_unpromoted.items()
+        }
+
+        num_npfc = len(not_promoting_from_child)
+        num_pfc = len(promoting_from_child)
+        if num_npfc != num_pfc:
+            raise ValueError('size mismatch')
+
+        if s.promotes is None:
+            # if promoting everything:
+            # - npfc are all variables already with a namespace
+            # - pfc are all variables without a namespace
+            remove_keys = []
+            for k in promoting_from_child.keys():
+                if '.' in k:
+                    remove_keys.append(k)
+                else:
+                    not_promoting_from_child.pop(
+                        prepend_namespace(s.name, k))
+            for k in remove_keys:
+                promoting_from_child.pop(k)
+
+        elif len(s.promotes) == 0:
+            # if promoting nothing:
+            # - npfc are all variables (leave as is)
+            # - pfc is empty
+            promoting_from_child = dict()
+        else:
+            # if promoting selectively:
+            # - check that promotions are valid
+            invalid_promotes = set(
+                s.promotes) - (local_namespace_source_shapes.keys()
+                               | local_namespace_target_shapes.keys())
+            if invalid_promotes != set():
+                raise KeyError(
+                    "Invalid promotes {} specified in submodels within model {} of type {}"
+                    .format(
+                        invalid_promotes,
+                        namespace,
+                        type(model).__name__,
+                    ))
+
+            # filter promoted variables
+            promoting_from_child = dict(
+                filter(lambda x: x[0] in s.promotes,
+                       promoting_from_child.items()))
+            # FIXME:
+            # filter unpromoted variables
+            for k in promoting_from_child.keys():
+                unpromoted_name = prepend_namespace(s.name, k)
+                print('MODEL', s.name)
+                print('UNPROMOTED NAME', unpromoted_name)
+                if unpromoted_name in not_promoting_from_child.keys():
+                    not_promoting_from_child.pop(unpromoted_name)
+
+        if len(promoting_from_child) + len(
+                not_promoting_from_child) != num_pfc:
+            print('START OF SIZE MISMATCH ERROR')
+            print(s.name)
+            print(promoting_from_child)
+            print(not_promoting_from_child)
+            raise ValueError('size mismatch')
+
         for k, v in promoting_from_child.items():
             # update set of unpromoted names for each promoted name
-            try:
+            if k in promoted_to_unpromoted.keys():
                 promoted_to_unpromoted[k].update(v)
-            except:
+            else:
                 promoted_to_unpromoted[k] = v
         for k, v in not_promoting_from_child.items():
             # update set of unpromoted names for each promoted name
-            # prepending namespace to promoted names
-            promoted_to_unpromoted[prepend_namespace(s.name, k)] = v
+            if k in promoted_to_unpromoted.keys():
+                promoted_to_unpromoted[k].update(v)
+            else:
+                promoted_to_unpromoted[k] = v
 
     model.promoted_to_unpromoted = promoted_to_unpromoted
 

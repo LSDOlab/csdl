@@ -90,6 +90,7 @@ def merge_connections(
     flat_graph.unpromoted_to_node = unpromoted_to_node
     flat_graph.connected_tgt_nodes_to_source_nodes = {}
 
+
     # draw(flat_graph, with_labels = True)
     # import matplotlib.pyplot as plt
     # plt.show()

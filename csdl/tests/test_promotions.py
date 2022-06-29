@@ -44,6 +44,7 @@ def test_outputs(backend):
         example(eval('Simulator'))
 
 
+# TODO: not an error, test values
 # def test_input_output(backend):
 #     from csdl.examples.invalid.ex_promotions_input_output import example
 #     exec('from {} import Simulator'.format(backend))
@@ -51,10 +52,13 @@ def test_outputs(backend):
 #         example(eval('Simulator'))
 
 
+# TODO: issue with csdl_om?
 # def test_manual_promotion(backend):
 #     from csdl.examples.valid.ex_promotions_manual_promotion import example
 #     exec('from {} import Simulator'.format(backend))
 #     sim, rep = example(eval('Simulator'))
+#     np.testing.assert_almost_equal(sim['addition.b'], 1.0)
+#     np.testing.assert_almost_equal(sim['b'], 4.0)
 #     np.testing.assert_almost_equal(sim['f'], 7.0)
 
 
@@ -71,7 +75,6 @@ def test_partial_promotion(backend):
 #     sim, rep = example(eval('Simulator'))
 #     np.testing.assert_almost_equal(sim['model.f'], 4.0)
 #     np.testing.assert_almost_equal(sim['f'], 4.0)
-
 
 # def test_same_i_o_unpromoted(backend):
 #     from csdl.examples.valid.ex_promotions_same_io_unpromoted import example
@@ -95,20 +98,17 @@ def test_two_models_promoted(backend):
 #     np.testing.assert_almost_equal(sim['f'], 3.0)
 #     np.testing.assert_almost_equal(sim['model.f'], 2.0)
 
-
 # def test_unconnected_vars(backend):
 #     from csdl.examples.valid.ex_promotions_unconnected_vars import example
 #     exec('from {} import Simulator'.format(backend))
 #     sim, rep = example(eval('Simulator'))
 #     np.testing.assert_almost_equal(sim['f'], 2.0)
 
-
 # def test_stacked_models(backend):
 #     from csdl.examples.valid.ex_promotions_stacked_models import example
 #     exec('from {} import Simulator'.format(backend))
 #     sim, rep = example(eval('Simulator'))
 #     np.testing.assert_almost_equal(sim['b'], 7.0)
-
 
 # def test_jumped_promotion(backend):
 #     from csdl.examples.valid.ex_promotions_jumped_promotion import example
@@ -151,7 +151,6 @@ def test_promote_absolute_name(backend):
 #                                    9.0)
 #     np.testing.assert_almost_equal(sim['hierarchical.ModelF.x3_out'],
 #                                    0.01)
-
 
 # def test_parallel_targets(backend):
 #     from csdl.examples.valid.ex_promotions_parallel_targets import example

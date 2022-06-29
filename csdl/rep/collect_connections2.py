@@ -168,8 +168,8 @@ def map_promoted_to_declared_connections(
             find_promoted_name(a[1], promoted_to_unpromoted,
                                unpromoted_to_promoted),
         )
-        try:
+        if key in promoted_to_declared_connections.keys():
             promoted_to_declared_connections[key].append(b)
-        except:
+        else:
             promoted_to_declared_connections[key] = [b]
     return promoted_to_declared_connections

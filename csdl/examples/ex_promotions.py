@@ -238,6 +238,8 @@ class ExampleComplex(Model):
         self.add(
             Hierarchical(),
             name='hierarchical',
+            # promotes=['x0', 'x3_out', 'x4_out', 'x3', 'x4', 'x1'],
+            promotes=[],
         )
 
         # f = self.declare_variable('f')

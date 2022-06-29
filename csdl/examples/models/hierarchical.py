@@ -11,7 +11,6 @@ class Hierarchical(Model):
         self.add(
             ModelB(),
             promotes=['x0', 'x1', 'x4'],
-            # promotes=[],
             name='ModelB',
         )
 

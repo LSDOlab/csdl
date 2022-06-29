@@ -22,7 +22,6 @@ from csdl.rep.sort_nodes_nx import sort_nodes_nx
 from csdl.rep.get_registered_outputs_from_graph import get_registered_outputs_from_graph
 from csdl.rep.resolve_promotions import resolve_promotions
 from csdl.rep.collect_connections import collect_connections
-from csdl.rep.merge_connections import merge_connections
 from csdl.rep.add_dependencies_due_to_connections import add_dependencies_due_to_connections
 from csdl.utils.prepend_namespace import prepend_namespace
 from networkx import DiGraph, ancestors, simple_cycles
@@ -113,10 +112,11 @@ def construct_graphs_all_levels(model: 'Model'):
     ...
     # for s in model.subgraphs:
 
-def show_model_tree(model: 'Model', name, indent: str=''):
+
+def show_model_tree(model: 'Model', name, indent: str = ''):
     print(indent + name)
     for s in model.subgraphs:
-        show_model_tree(s.submodel, s.name, indent+' ')
+        show_model_tree(s.submodel, s.name, indent + ' ')
 
 
 class GraphRepresentation:
@@ -135,15 +135,50 @@ class GraphRepresentation:
         show_model_tree(model, '')
         _, _, _, _ = resolve_promotions(model)
         generate_unpromoted_promoted_maps(model)
-        self.connections: list[Tuple[str, str]] = collect_connections(
-            model,)
+        self.connections: list[Tuple[str, str,
+                                     str]] = collect_connections(
+                                         model, )
         self.unpromoted_to_promoted: Dict[
             str, str] = model.unpromoted_to_promoted
         self.promoted_to_unpromoted: Dict[
             str, Set[str]] = model.promoted_to_unpromoted
+        # check that each value in promoted_to_unpromoted is a key in
+        # unpromoted_to_promoted
         for k in self.promoted_to_unpromoted.keys():
             if k not in self.unpromoted_to_promoted.values():
-                raise KeyError("Promotion maps not found for variable {}".format(k))
+                raise KeyError(
+                    "Promotion maps not found for variable {}. This indicates an error in the compiler implementation, not the user's model."
+                    .format(k))
+
+        # Properties of promoted_to_unpromoted/unpromoted_to_promoted
+        # -- All values in p2u to are unique
+        # -- All keys in p2u are values in u2p
+        # -- All keys in u2p are values in p2u
+        # -- # of values in p2u == # of keys in u2p
+
+        # check that each unpromoted name in promoted_to_unpromoted is a
+        # key in unpromoted_to_promoted
+        for k, v in self.promoted_to_unpromoted.items():
+            for vv in v:
+                if vv not in self.unpromoted_to_promoted.keys():
+                    raise KeyError(
+                        "Promotion maps not found for variable {}. This indicates an error in the compiler implementation, not the user's model."
+                        .format(k))
+        # check that there are no duplicate unpromoted names
+        from collections import Counter
+        from functools import reduce
+        unpromoted_name_sets = list(
+            self.promoted_to_unpromoted.values())
+        all_unpromoted_names = reduce(
+            lambda x, y: x + y, [list(s) for s in unpromoted_name_sets])
+        c = Counter(all_unpromoted_names)
+        duplicate_unpromoted_names = [
+            item for item, count in c.items() if count > 1
+        ]
+        if len(duplicate_unpromoted_names) > 0:
+            raise KeyError(
+                "Found duplicate unpromoted names {}. This indicates an error in the compiler implementation, not the user's model."
+                .format(duplicate_unpromoted_names))
 
         print(self.promoted_to_unpromoted)
         # TODO: check that there are never multiple sources connected to
@@ -160,13 +195,18 @@ class GraphRepresentation:
             model.registered_outputs,
             model.subgraphs,
         )
+
+        all_vars = get_var_nodes(first_graph)
+        for v in all_vars:
+            name = prepend_namespace(v.unpromoted_namespace, v.name)
+            if name in self.promoted_to_unpromoted.keys():
+                v.namespace = v.unpromoted_namespace
+            elif name in self.unpromoted_to_promoted.keys():
+                v.namespace = '.'.join(
+                    self.unpromoted_to_promoted[name].rsplit('.')[:-1])
+
         self.flat_graph: DiGraph = construct_flat_graph(
             first_graph,
-        )
-
-        # merge connections within flat graph
-        merge_connections(
-            self.flat_graph,
             self.connections,
             self.promoted_to_unpromoted,
             self.unpromoted_to_promoted,

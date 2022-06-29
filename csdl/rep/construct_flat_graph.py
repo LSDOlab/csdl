@@ -3,9 +3,11 @@ try:
 except ImportError:
     pass
 
+from tkinter.font import names
+from unicodedata import name
 from csdl.rep.model_node import ModelNode
 from csdl.rep.variable_node import VariableNode
-
+from csdl.rep.merge_connections import merge_connections
 from csdl.lang.declared_variable import DeclaredVariable
 from csdl.lang.input import Input
 from csdl.lang.output import Output
@@ -81,7 +83,7 @@ def isolate_unique_targets(
 
 
 def gather_variables_by_promoted_name(
-        vars: Dict[str, VariableNode], ) -> Dict[str, VariableNode]:
+    vars: Dict[str, VariableNode], ) -> Dict[str, VariableNode]:
     """
     Create key value pairs of unique source name to corresponding source
     node
@@ -95,6 +97,8 @@ def gather_variables_by_promoted_name(
 
 def merge_graphs(
     graph: DiGraph,
+    promoted_to_unpromoted: Dict[str, Set[str]],
+    unpromoted_to_promoted: Dict[str, str],
     namespace: str = '',
 ):
     """
@@ -111,6 +115,8 @@ def merge_graphs(
         graph = compose(graph, mn.graph)
         graph = merge_graphs(
             graph,
+            promoted_to_unpromoted,
+            unpromoted_to_promoted,
             namespace=prepend_namespace(namespace, mn.name),
         )
 
@@ -118,10 +124,53 @@ def merge_graphs(
         child_vars: list[VariableNode] = get_var_nodes(mn.graph)
 
         # assign namespace to each variable node
+        # We are in model A adding model B, promotes = None
+        # model B's variables are
+        #   (namespace)(name)
+        #   ()(x1)
+        #   (B.)(x2)
+        #   (B.C.)(x3)
+        # We promote only ()(x1)
+
+        # AT MODEL C
+        # namespace: A.B.C
+        # child vars:
+
+        # AT MODEL B
+        # child vars: x3
+        # namespace: A.B
+        # child model names: C
+        # new namespace: A.B.C
+
+        # AT MODEL A
+        # child vars: x2, x3
+        # namespace: A
+        # child model names: B
+        # new namespaces: B, B.C
+
+        # define full namespace only for unpromoted names;
+        # ensure that namespace is only updated for variables that can
+        # be promoted
+
+        # unpromoted namespace
+        unpromoted_namespace = prepend_namespace(namespace, mn.name)
+
         for v in child_vars:
-            if mn.promotes is not None:
-                if v.name not in mn.promotes:
-                    v.namespace = prepend_namespace(namespace, mn.name)
+            # unpromoted name
+            unpromoted_name = prepend_namespace(unpromoted_namespace,
+                                                v.name)
+            # if variable has not been promoted,
+            # variable namespace is unpromoted_namespace.
+            # otherwise, variable namespace is the promoted namespace
+            if unpromoted_name in promoted_to_unpromoted.keys():
+                v.namespace = unpromoted_namespace
+            elif unpromoted_name in unpromoted_to_promoted.keys():
+                promoted_name = unpromoted_to_promoted[unpromoted_name]
+                promoted_namespace = '.'.join(
+                    promoted_name.rsplit('.')[:-1])
+                v.namespace = promoted_namespace
+            else:
+                raise KeyError(f'{unpromoted_name} not found.')
 
     return graph
 
@@ -142,7 +191,8 @@ def merge_automatically_connected_nodes(graph: DiGraph):
 
     # List of all target nodes in graph
     targets: list[VariableNode] = get_tgt_nodes(vars)
-    print('all targets', [prepend_namespace(v.namespace, v.name) for v in targets])
+    print('all targets',
+          [prepend_namespace(v.namespace, v.name) for v in targets])
 
     # Set of all unique target names in graph
     target_names: Set[str] = set(
@@ -181,7 +231,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
     #     graph.remove_edges_from(fwd_edges)
     #     for _, op in fwd_edges:
     #         graph.add_edge(unique_targets[k], op)
-    print('redundant_targets',redundant_targets)
+    print('redundant_targets', redundant_targets)
     for k, tgts in redundant_targets.items():
         for tgt in tgts:
             if k in unique_targets.keys():
@@ -205,6 +255,8 @@ def merge_automatically_connected_nodes(graph: DiGraph):
                 copy=False,
             )
 
+    print('all sources',
+          [v for v in sources.keys()])
 
 # CONNECTIONS
 def validate_connections(
@@ -302,8 +354,22 @@ def merge_user_connected_nodes(
 
 def construct_flat_graph(
     graph: DiGraph,
+    connections,
+    promoted_to_unpromoted,
+    unpromoted_to_promoted,
 ) -> DiGraph:
-    graph = merge_graphs(graph)
+    graph = merge_graphs(
+        graph,
+        promoted_to_unpromoted,
+        unpromoted_to_promoted,
+    )
     merge_automatically_connected_nodes(graph)
+    # merge connections within flat graph
+    merge_connections(
+        graph,
+        connections,
+        promoted_to_unpromoted,
+        unpromoted_to_promoted,
+    )
 
     return graph
