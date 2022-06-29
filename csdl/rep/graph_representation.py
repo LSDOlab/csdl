@@ -8,7 +8,6 @@ from csdl.lang.input import Input
 from csdl.lang.output import Output
 from csdl.lang.custom_explicit_operation import CustomExplicitOperation
 from csdl.lang.custom_implicit_operation import CustomImplicitOperation
-import matplotlib.pyplot as plt
 from networkx import DiGraph
 from csdl.rep.ir_node import IRNode
 from csdl.rep.operation_node import OperationNode
@@ -113,6 +112,11 @@ def construct_graphs_all_levels(model: 'Model'):
     ...
     # for s in model.subgraphs:
 
+def show_model_tree(model: 'Model', name, indent: str=''):
+    print(indent + name)
+    for s in model.subgraphs:
+        show_model_tree(s.submodel, s.name, indent+' ')
+
 
 class GraphRepresentation:
     """
@@ -125,7 +129,9 @@ class GraphRepresentation:
     """
 
     def __init__(self, model: 'Model'):
+        print('main model has type {}'.format(type(model).__name__))
         define_models_recursively(model)
+        show_model_tree(model, '')
         _, _, _, _ = resolve_promotions(model)
         generate_unpromoted_promoted_maps(model)
         promoted_to_declared_connections = map_promoted_to_declared_connections(
@@ -139,6 +145,11 @@ class GraphRepresentation:
             str, str] = model.unpromoted_to_promoted
         self.promoted_to_unpromoted: Dict[
             str, Set[str]] = model.promoted_to_unpromoted
+        for k in self.promoted_to_unpromoted.keys():
+            if k not in self.unpromoted_to_promoted.values():
+                raise KeyError("Promotion maps not found for variable {}".format(k))
+
+        print(self.promoted_to_unpromoted)
         # TODO: check that there are never multiple sources connected to
         # a single target
         """
@@ -147,6 +158,7 @@ class GraphRepresentation:
         """
         # build a graph for each model without child models; this will
         # be used to generate a flat graph and an unflat graph
+        print([s.name for s in model.subgraphs])
         first_graph: DiGraph = construct_graphs_all_models(
             model.inputs,
             model.registered_outputs,

@@ -1,6 +1,4 @@
-import csdl
-from csdl import Model, GraphRepresentation
-
+from csdl import Model
 # TESTS:
 # - Different shapes throw error:
 # --- ErrorPromotionShapeMismatch
@@ -28,6 +26,7 @@ from csdl import Model, GraphRepresentation
 # --- ExampleStackedModels
 
 # --- ExampleComplex
+
 
 class ExampleManualPromotion(Model):
     # Promoting a variable to a model will automatically connect them
@@ -166,6 +165,8 @@ class ErrorPartialPromotion(Model):
         self.add(AdditionFunction(),
                  promotes=['a', 'b', 'f'],
                  name='model')
+
+
 class ErrorCycleTwoModels(Model):
     # Promotions cannot be made if connections cause cycles
     # return error
@@ -215,6 +216,7 @@ class ExampleStackedModels(Model):
         bm = self.declare_variable('bm')
         self.register_output('b', bm + a)
 
+
 class ExampleComplex(Model):
     # Use a complex hierarchical model
     # return sim['x3_out'] = 1.0
@@ -232,6 +234,7 @@ class ExampleComplex(Model):
         # the top of your Python file(s).
         from csdl.examples.models.hierarchical import Hierarchical
 
+        self.create_input('y')
         self.add(
             Hierarchical(),
             name='hierarchical',
@@ -239,8 +242,6 @@ class ExampleComplex(Model):
 
         # f = self.declare_variable('f')
         # self.register_output('b', f + a)
-
-
 
 
 class ErrorPromotionShapeMismatch(Model):
@@ -384,8 +385,7 @@ class ExampleTwoModelsUnpromoted(Model):
 
         self.create_input('a', val=2.0)
         self.add(AdditionFunction(),
-                 promotes=['a', 'b',
-                           'f'],
+                 promotes=['a', 'b', 'f'],
                  name='model')
 
         self.add(
@@ -413,7 +413,6 @@ class ExampleUnconnectedVars(Model):
         self.register_output('y', f + 1.0)
 
 
-
 class ExampleJumpedPromotion(Model):
     # Promote a variable that has not been explicitly declared in that model but in the model above
     # return sim['f'] = 5
@@ -424,12 +423,10 @@ class ExampleJumpedPromotion(Model):
 
         m = Model()
         am = m.create_input('am', val=2.0)
-        m.register_output('bm', am*2.0)
+        m.register_output('bm', am * 2.0)
 
         mm = Model()
-        mm.create_input(
-            'b', val=2.0
-        )
+        mm.create_input('b', val=2.0)
         # promote b in m even though it hasn't been declared in m
         m.add(mm, name='model2', promotes=['b'])
         self.add(m, name='model1', promotes=['b'])
@@ -448,12 +445,10 @@ class ErrorPromoteUnpromoted(Model):
 
         m = Model()
         am = m.create_input('am', val=2.0)
-        m.register_output('bm', am*2.0)
+        m.register_output('bm', am * 2.0)
 
         mm = Model()
-        mm.create_input(
-            'b', val=2.0
-        )
+        mm.create_input('b', val=2.0)
         # Do no promote b
         m.add(mm, name='model2', promotes=[])
 
@@ -514,7 +509,6 @@ class ErrorPromoteAbsoluteName(Model):
         self.register_output('b', f + a)
 
 
-
 class ExampleParallelTargets(Model):
     # Use 1 input for several declared variables of the same instance
     # return sim[f_out] = 15
@@ -553,38 +547,3 @@ class ExampleParallelTargets(Model):
         f3 = self.declare_variable('addition3.f')
 
         self.register_output('f_out', f1 + f2 + f3)
-
-
-class ExampleSameIOUnpromoted(Model):
-    # Can create two outputs in two models with same names if unpromoted
-    # Return sim['f'] = 1, sim['model.f'] = 2
-
-    def define(self):
-        # NOTE: Importing definitions within a method is bad practice.
-        # This is only done here to automate example/test case
-        # generation more easily.
-        # When defining CSDL models, please put the import statements at
-        # the top of your Python file(s).
-        from csdl.examples.models.addition import AdditionFunction
-
-        a = self.create_input('a')
-
-        self.add(
-            AdditionFunction(),
-            promotes=[
-                'a', 'b'
-            ],  # Promoting only a and b allows two outputs: f and model.f
-            name='model')
-
-        self.register_output('f', a * 1.0)
-
-
-
-
-# rep = GraphRepresentation(ExampleComplex())  # front end
-# rep.visualize_graph()
-# # rep.visualize_unflat()
-# # # sim = Simulator(rep)  # back end
-# # # sim.run()
-# # # print(sim['f'])
-# exit()

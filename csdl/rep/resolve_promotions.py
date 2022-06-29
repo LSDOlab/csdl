@@ -11,43 +11,7 @@ from csdl.utils.typehints import Shape
 from csdl.utils.check_duplicate_keys import check_duplicate_keys
 from csdl.utils.find_names_with_matching_shapes import find_names_with_matching_shapes
 from csdl.utils.prepend_namespace import prepend_namespace
-from networkx import topological_sort, simple_cycles
 from typing import List, Tuple, Dict, Set, Final, Literal
-
-
-def check_for_cycles(
-    model: 'Model',
-    model_path: str,
-    mode: Literal['promotions', 'connections'],
-):
-    # build a graph of the model at this level to detect cycles created
-    # between models by promoting variables; note: this does not
-    # necessarily mean thet there is a cyclic relationship between
-    # variables at different levels in the model hierarchy or across
-    # model boundaries at the same level of the model hierarchy; these
-    # cycles may be due to unnecessary feedbacks across model boundaries
-    graph = construct_unflat_graph(
-        model.inputs,
-        model.registered_outputs,
-        model.subgraphs,
-        recursive=False,
-    )
-
-    try:
-        _ = topological_sort(graph)
-    except:
-        model.model_cycles = [
-            x.name for x in list(simple_cycles(graph))
-        ]
-        if mode == 'promotions':
-            raise Warning(
-                "User specified promotions created the following cycles within model named {} of type {}: {}. If using a CSDL back end/code generator that uses the flattened graph representation of a model and no errors are raised, you may safely disregard this message. Otherwise, these cycles introduce unnecessary feedback in your model and will affect performance."
-                .format(model_path,
-                        type(model).__name__),
-                model.model_cycles,
-            )
-        elif mode == 'connections':
-            pass
 
 
 def validate_promotions_and_split(
@@ -62,45 +26,54 @@ def validate_promotions_and_split(
     validate user specified promotions and store maps from promoted to
     unpromoted names; this function is never called on main model
     """
-
+    print('CHECK', namespace, promotes)
+    # split dictionary between variables being promoted and not promoted
     if promotes is None:
-        # split dictionary between variables being promoted and not
-        # promoted; in this case, promote all promotable variables
+        # promote all promotable variables
+        print('PROMOTE ALL')
         return q, dict()
     if len(promotes) == 0:
+        print('PROMOTE NONE')
         return dict(), q
-    else:
-        # check that user has not specified invalid promotes
-        invalid_promotes = set(promotes) - (
-            local_namespace_source_shapes.keys()
-            | local_namespace_target_shapes.keys())
-        if invalid_promotes != set():
-            raise KeyError(
-                "Invalid promotes {} specified in submodels within model {} of type {}"
-                .format(
-                    invalid_promotes,
-                    namespace,
-                    model_type_name,
-                ))
+    print('PROMOTE SOME')
+    # check that user has not specified invalid promotes
+    invalid_promotes = set(promotes) - (
+        local_namespace_source_shapes.keys()
+        | local_namespace_target_shapes.keys())
+    if invalid_promotes != set():
+        raise KeyError(
+            "Invalid promotes {} specified in submodels within model {} of type {}"
+            .format(
+                invalid_promotes,
+                namespace,
+                model_type_name,
+            ))
 
-        # split dictionary between variables beting promoted and not
-        # promoted
-        promoting = dict(filter(lambda x: x[0] in promotes, q.items()))
-        not_promoting = dict(
-            filter(lambda x: x[0] not in promotes, q.items()))
-        return promoting, not_promoting
+    # split dictionary between variables beting promoted and not
+    # promoted
+    promoting: Dict[str, Set[str]] = dict(
+        filter(lambda x: x[0] in promotes, q.items()))
+    not_promoting: Dict[str, Set[str]] = dict(
+        filter(lambda x: x[0] not in promotes, q.items()))
+    return promoting, not_promoting
 
 
 def resolve_promotions(
     model: 'Model',
     promotes: List[str] | None = None,
     namespace: str = '',
+    # ) -> Tuple[Dict[str, Shape], Dict[str, Shape], Dict[ str, Input | Output], Dict[str, DeclaredVariable], Dict[ str, Input | Output], Dict[str, DeclaredVariable]]:
 ) -> Tuple[Dict[str, Shape], Dict[str, Shape], Dict[
         str, Input | Output], Dict[str, DeclaredVariable]]:
+    print('resolving promotions for model {} of type {}'.format(
+        namespace,
+        type(model).__name__))
     promoted_sources_from_children_shapes: Dict[str, Shape] = dict()
     promoted_targets_from_children_shapes: Dict[str, Shape] = dict()
     promoted_sources_from_children: Dict[str, Input | Output] = dict()
     promoted_targets_from_children: Dict[str, DeclaredVariable] = dict()
+    # unpromoted_targets: Dict[str, DeclaredVariable] = dict()
+    # unpromoted_sources: Dict[str, Input | Output] = dict()
     # promoted_to_unpromoted_descendant_variables: Dict[
     # str, Set[str]] = dict()
 
@@ -113,11 +86,18 @@ def resolve_promotions(
             promoted_targets_from_child_shapes,
             promoted_sources_from_child,
             promoted_targets_from_child,
+            # unpromoted_sources_from_child,
+            # unpromoted_targets_from_child,
         ) = resolve_promotions(
             m,
             s.promotes,
             namespace=prepend_namespace(namespace, s.name),
         )
+
+        # # gather sources and targets that are not promoted so that
+        # # automatic and user declared connections can be issued
+        # unpromoted_sources.update(unpromoted_sources_from_child)
+        # unpromoted_targets.update(unpromoted_targets_from_child)
 
         # Rule: each source (input or output) name promoted to this
         # level must be unique; comparing variables promoted from child
@@ -277,37 +257,14 @@ def resolve_promotions(
                 for vv in v}
             for k, v in s.submodel.promoted_to_unpromoted.items()
         }
-        promoting_from_child = dict()
-        not_promoting_from_child = dict()
-        if s.promotes is None:
-            # split dictionary between variables being promoted and not
-            # promoted; in this case, promote all promotable
-            # variables
-            promoting_from_child = q
-        else:
-            if len(s.promotes) == 0:
-                not_promoting_from_child = q
-            else:
-                # check that user has not specified invalid promotes
-                invalid_promotes = set(s.promotes) - (
-                    local_namespace_source_shapes.keys()
-                    | local_namespace_target_shapes.keys())
-                if invalid_promotes != set():
-                    raise KeyError(
-                        "Invalid promotes {} specified in submodels within model {} of type {}"
-                        .format(
-                            invalid_promotes,
-                            namespace,
-                            type(model).__name__,
-                        ))
-
-                # split dictionary between variables being promoted and
-                # not promoted
-                promoting_from_child = dict(
-                    filter(lambda x: x[0] in s.promotes, q.items()))
-                not_promoting_from_child = dict(
-                    filter(lambda x: x[0] not in s.promotes, q.items()))
-
+        promoting_from_child, not_promoting_from_child = validate_promotions_and_split(
+            q,
+            local_namespace_source_shapes,
+            local_namespace_target_shapes,
+            namespace,
+            type(model).__name__,
+            s.promotes,
+        )
         for k, v in promoting_from_child.items():
             # update set of unpromoted names for each promoted name
             try:
@@ -343,8 +300,9 @@ def resolve_promotions(
             local_namespace_target_shapes.items(),
         ))
 
-    # collect Variable objects for parent model to establish dependency
-    # relationships between Variable objects and Model objects
+    # gather sources and targets that are allowed to be promoted to
+    # parent model prior to checking if shapes and values of variables
+    # from sibling models and parent model are consistent.
     sources = dict(locally_defined_sources,
                    **promoted_sources_from_children)
     promotable_sources = {
@@ -357,4 +315,4 @@ def resolve_promotions(
         k: targets[k]
         for k in user_promotable_targets_shapes.keys()
     }
-    return user_promotable_sources_shapes, user_promotable_targets_shapes, promotable_sources, promotable_targets
+    return user_promotable_sources_shapes, user_promotable_targets_shapes, promotable_sources, promotable_targets  #, unpromoted_sources, unpromoted_targets

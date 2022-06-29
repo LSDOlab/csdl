@@ -47,6 +47,7 @@ def gather_targets_by_promoted_name(
                 grouped_tgts[name].add(v)
             except:
                 grouped_tgts[name] = {v}
+    print('grouped_tgts', grouped_tgts)
     return grouped_tgts
 
 
@@ -101,6 +102,7 @@ def merge_graphs(
     main model. User declared promotions and connections are assumed to
     be valid.
     """
+    print('merging graphs for models contained in {}'.format(namespace))
     child_model_nodes = get_model_nodes(graph)
 
     # create a flattened copy of the graph for each model node
@@ -140,6 +142,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
 
     # List of all target nodes in graph
     targets: list[VariableNode] = get_tgt_nodes(vars)
+    print('all targets', [prepend_namespace(v.namespace, v.name) for v in targets])
 
     # Set of all unique target names in graph
     target_names: Set[str] = set(
@@ -178,6 +181,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
     #     graph.remove_edges_from(fwd_edges)
     #     for _, op in fwd_edges:
     #         graph.add_edge(unique_targets[k], op)
+    print('redundant_targets',redundant_targets)
     for k, tgts in redundant_targets.items():
         for tgt in tgts:
             if k in unique_targets.keys():

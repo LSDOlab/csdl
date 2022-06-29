@@ -17,11 +17,12 @@ def define_models_recursively(model: 'Model'):
         # user defines model inline, submodels are not defined until
         # this context
         model.define()
-        model.defined = True
-        # Models must be defined from the top down because ubgraphs are
-        # not added to the model until after the model is defined
+        # Model hierarchy defined by running Model.define() from the top
+        # down 
+        print('defining submodels of model of type {}'.format(type(model).__name__))
         for s in model.subgraphs:
             m = s.submodel
+            print('defining model {}'.format(s.name))
             define_models_recursively(m)
 
         # check for empty model
@@ -51,3 +52,4 @@ def define_models_recursively(model: 'Model'):
                     raise ValueError(
                         "Output not defined for {}. When defining a concatenation, at least one index must be defined in terms of another CSDL Variable"
                         .format(repr(output)))
+        model.defined = True
