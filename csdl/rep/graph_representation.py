@@ -2,7 +2,7 @@ try:
     from csdl.lang.model import Model
 except ImportError:
     pass
-from networkx import DiGraph, adjacency_matrix, dag_longest_path_length
+from networkx import DiGraph, adjacency_matrix, dag_longest_path_length, laplacian_matrix
 from typing import List, Dict, Literal, Tuple, Any
 from csdl.lang.input import Input
 from csdl.lang.output import Output
@@ -30,11 +30,12 @@ try:
 except ImportError:
     pass
 from csdl.lang.define_models_recursively import define_models_recursively
+from scipy.sparse import csc_matrix
 import numpy as np
 import matplotlib.pyplot as plt
 from networkx import draw_networkx
 
-from csdl.rep.get_nodes import get_input_nodes, get_var_nodes, get_model_nodes, get_output_nodes
+from csdl.rep.get_nodes import get_input_nodes, get_var_nodes, get_model_nodes, get_output_nodes, get_implicit_operation_nodes, get_operation_nodes
 
 
 def nargs(
@@ -66,15 +67,6 @@ def _var_sizes(variable_nodes: list[VariableNode], ) -> list[int]:
     """
     var_sizes = [np.prod(x.var.shape) for x in variable_nodes]
     return var_sizes
-
-
-def _visualize(graph: DiGraph, markersize: float):
-    """
-    Visualize the flattened graph for the main model containing
-    variable/operation nodes and edges
-    """
-    plt.spy(adjacency_matrix(graph), markersize=markersize)
-    plt.show()
 
 
 def _visualize_unflat(graph: DiGraph):
@@ -113,12 +105,6 @@ def construct_graphs_all_levels(model: 'Model'):
     # for s in model.subgraphs:
 
 
-def show_model_tree(model: 'Model', name, indent: str = ''):
-    print(indent + name)
-    for s in model.subgraphs:
-        show_model_tree(s.submodel, s.name, indent + ' ')
-
-
 class GraphRepresentation:
     """
     The intermediate representation of a CSDL Model, stored as a
@@ -130,9 +116,7 @@ class GraphRepresentation:
     """
 
     def __init__(self, model: 'Model'):
-        print('main model has type {}'.format(type(model).__name__))
         define_models_recursively(model)
-        show_model_tree(model, '')
         _, _, _, _ = resolve_promotions(model)
         generate_unpromoted_promoted_maps(model)
         self.connections: list[Tuple[str, str,
@@ -180,7 +164,6 @@ class GraphRepresentation:
                 "Found duplicate unpromoted names {}. This indicates an error in the compiler implementation, not the user's model."
                 .format(duplicate_unpromoted_names))
 
-        print(self.promoted_to_unpromoted)
         # TODO: check that there are never multiple sources connected to
         # a single target
         """
@@ -196,7 +179,7 @@ class GraphRepresentation:
             model.subgraphs,
         )
 
-        all_vars = get_var_nodes(first_graph)
+        all_vars: list[VariableNode] = get_var_nodes(first_graph)
         for v in all_vars:
             name = prepend_namespace(v.unpromoted_namespace, v.name)
             if name in self.promoted_to_unpromoted.keys():
@@ -211,9 +194,6 @@ class GraphRepresentation:
             self.promoted_to_unpromoted,
             self.unpromoted_to_promoted,
         )
-
-        # self.visualize_graph()
-        # exit()
         """
         Flattened directed acyclic graph representing main model.
         Only the main model will contain an instance of
@@ -225,6 +205,12 @@ class GraphRepresentation:
                 self.flat_graph,
                 flat=True,
             )
+            n_nodes = len(self.flat_graph.nodes)
+            n_sorted_nodes = len(self.flat_sorted_nodes)
+            if n_nodes != n_sorted_nodes:
+                raise ValueError(
+                    "The number of nodes {} is not equal to the number of sorted nodes {}. this indicates a compiler error, not an error in the user's model."
+                    .format(n_nodes, n_sorted_nodes))
         except:
             cycles = list(simple_cycles(self.flat_graph))
             # TODO: show secondary names of connected variables
@@ -272,7 +258,9 @@ class GraphRepresentation:
         Constraints of the optimization problem, if a constrained
         optimization problem is defined
         """
-        self._variable_nodes = get_var_nodes(self.flat_graph)
+        self._variable_nodes: list[VariableNode]= get_var_nodes(self.flat_graph)
+        self._operation_nodes: list[OperationNode] = get_operation_nodes(self.flat_graph)
+        self._std_operation_nodes: list[OperationNode] = [op for op in self._operation_nodes if not isinstance(op, (CustomExplicitOperation, CustomImplicitOperation) )]
 
     def input_nodes(self) -> List[VariableNode]:
         """
@@ -294,7 +282,7 @@ class GraphRepresentation:
         Return nodes that represent operations within the model. Uses
         flattened representation to gather operations.
         """
-        return list(self._operation_nodes(ignore_custom))
+        return self._operation_nodes if ignore_custom is False else self._std_operation_nodes
 
     def variable_nodes(self) -> List[VariableNode]:
         """
@@ -383,6 +371,7 @@ class GraphRepresentation:
         If `ignore_custom` is `False`, then `CustomOperation` nodes are
         not used to compute the average.
         """
+        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
         nargs_per_op = [
             nargs(self.flat_graph, op, vectorized) for op in ops
         ]
@@ -398,7 +387,7 @@ class GraphRepresentation:
         If `ignore_custom` is `False`, then `CustomOperation` nodes are
         not used to compute the average.
         """
-        ops = self._operation_nodes(ignore_custom)
+        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
         nouts_per_op = [
             nouts(self.flat_graph, op, vectorized) for op in ops
         ]
@@ -413,7 +402,7 @@ class GraphRepresentation:
         Compute minimum number of arguments per operation in the model.
         Result will always be at least 1.
         """
-        ops = self._operation_nodes(ignore_custom)
+        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
         return np.min(
             [nargs(self.flat_graph, op, vectorized) for op in ops])
 
@@ -428,7 +417,7 @@ class GraphRepresentation:
         not used to compute the maximum. If Result will always be at
         least 1.
         """
-        ops = self._operation_nodes(ignore_custom)
+        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
         return np.max(
             [nargs(self.flat_graph, op, vectorized) for op in ops])
 
@@ -441,7 +430,7 @@ class GraphRepresentation:
         Compute minimum number of arguments per operation in the model.
         Result will always be at least 1.
         """
-        ops = self._operation_nodes(ignore_custom)
+        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
         return np.min(
             [nouts(self.flat_graph, op, vectorized) for op in ops])
 
@@ -456,7 +445,7 @@ class GraphRepresentation:
         not used to compute the maximum. If Result will always be at
         least 1.
         """
-        ops = self._operation_nodes(ignore_custom)
+        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
         return np.max(
             [nouts(self.flat_graph, op, vectorized) for op in ops])
 
@@ -574,7 +563,7 @@ class GraphRepresentation:
                 CustomExplicitOperation,
                 CustomImplicitOperation,
             )),
-            self._operation_nodes(False),
+            ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
         )
         return list(custom_ops)
 
@@ -596,7 +585,7 @@ class GraphRepresentation:
         cos                 |              12 |
         linear_combination  |             189 |
         """
-        ops = self._operation_nodes(False)
+        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
         optypes: dict[str, int] = dict()
         for op in ops:
             optype = type(op.op).__name__
@@ -616,45 +605,28 @@ class GraphRepresentation:
     def visualize_adjacency_mtx(
         self,
         implicit_models: bool = False,
-        markersize: float = 1.0,
     ):
         """
-        Visualize the flattened graph containing variable/operation
-        nodes and edges; setting `implicit_models` flag to `True` will
-        also visulaize the flattened graph for each model defining an
-        implicit operation
+        Visualize the adjacency matrix for the flattened graph
+        representation of the model; setting `implicit_models` flag to
+        `True` will also visualize each model defining an implicit
+        operation.
         """
-        _visualize(self.flat_graph, markersize)
+        A = csc_matrix(adjacency_matrix(self.flat_graph, nodelist=self.flat_sorted_nodes))
+        plt.spy(A)
+        plt.show()
+
         if implicit_models is True:
-            apply_fn_to_implicit_operation_nodes(self, _visualize)
+            for op in get_implicit_operation_nodes(self._operation_nodes):
+                op.op._model.rep.visualize_adjacency_mtx(implicit_models=implicit_models)
 
     def visualize_graph(self):
-
         draw_networkx(self.flat_graph,
                       labels={
                           n: prepend_namespace(n.namespace, n.name)
                           for n in self.flat_graph.nodes()
                       })
         plt.show()
-
-    def _operation_nodes(
-        self,
-        ignore_custom: bool,
-    ) -> Iterable[OperationNode]:
-        """
-        Gathers operation nodes from flattened representation for other
-        methods to use.
-        """
-        operation_nodes: Iterable[OperationNode] = filter(
-            lambda x: isinstance(x, OperationNode),
-            self.flat_graph.nodes())
-        if ignore_custom is False:
-            return operation_nodes
-        else:
-            return filter(
-                lambda x: not isinstance(x, (CustomExplicitOperation,
-                                             CustomImplicitOperation)),
-                operation_nodes)
 
     # TODO: add implicit models option
     def visualize_unflat(self):
