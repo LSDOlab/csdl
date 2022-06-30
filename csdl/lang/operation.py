@@ -1,6 +1,10 @@
 from typing import Any, Tuple
 from csdl.lang.node import Node
 try:
+    from csdl.lang.output import Output
+except ImportError:
+    pass
+try:
     from csdl.lang.variable import Variable
 except ImportError:
     pass
@@ -13,35 +17,12 @@ class Operation(Node):
         *args: 'Variable',
         **kwargs: Any,
     ):
-        self.nouts: int | None = None
-        self.nargs: int | None = None
         super().__init__(*args, **kwargs)
-
-        # TODO: why also custom operation?
-        if self.nouts is None:
-            AttributeError(
-                "Operation subclass has not defined number of outputs")
-        if self.nargs is None:
-            AttributeError(
-                "Operation subclass has not defined number of arguments"
-            )
-        if self.nouts is not None and self.nouts < 1:
-            ValueError(
-                "Operation classes must declare at least one output")
-        if self.nargs is not None and self.nargs < 1:
-            ValueError(
-                "Operation classes must declare at least one argument"
-                "or None if number of arguments is variable", )
+        self.nargs: int = len(args)
         for arg in args:
             self.add_dependency_node(arg)
+        self.nouts: int = 0
 
-        if self.nargs is not None:
-            if len(self.dependencies) > self.nargs:
-                raise TypeError(
-                    "{} can have at most {} nonliteral (Variable) object dependencies, found {}"
-                    .format(repr(self), self.nargs,
-                            len(self.dependencies)))
-        from csdl.lang.output import Output
         self.outs: Tuple[Output, ...] = ()
 
     # TODO: this isn't very clean; op should never be None

@@ -2,10 +2,8 @@ try:
     from csdl.lang.model import Model
 except ImportError:
     pass
-from networkx import DiGraph, adjacency_matrix, dag_longest_path_length, laplacian_matrix
+from networkx import DiGraph, adjacency_matrix, dag_longest_path_length
 from typing import List, Dict, Literal, Tuple, Any
-from csdl.lang.input import Input
-from csdl.lang.output import Output
 from csdl.lang.custom_explicit_operation import CustomExplicitOperation
 from csdl.lang.custom_implicit_operation import CustomImplicitOperation
 from networkx import DiGraph
@@ -15,18 +13,16 @@ from csdl.rep.model_node import ModelNode
 from csdl.rep.construct_unflat_graph import construct_unflat_graph, construct_graphs_all_models
 from csdl.rep.construct_flat_graph import construct_flat_graph
 from csdl.rep.variable_node import VariableNode
-from typing import List, Tuple, Dict, Set, Iterable
-from csdl.rep.issue_user_specified_connections import issue_user_specified_connections
+from typing import Dict, List, Set, Tuple
 from csdl.rep.ir_node import IRNode
 from csdl.rep.sort_nodes_nx import sort_nodes_nx
 from csdl.rep.get_registered_outputs_from_graph import get_registered_outputs_from_graph
 from csdl.rep.resolve_promotions import resolve_promotions
 from csdl.rep.collect_connections import collect_connections
-from csdl.rep.add_dependencies_due_to_connections import add_dependencies_due_to_connections
 from csdl.utils.prepend_namespace import prepend_namespace
 from networkx import DiGraph, ancestors, simple_cycles
 try:
-    from csdl.rep.apply_fn_to_implicit_operation_nodes import apply_fn_to_implicit_operation_nodes
+    pass
 except ImportError:
     pass
 from csdl.lang.define_models_recursively import define_models_recursively
@@ -35,7 +31,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from networkx import draw_networkx
 
-from csdl.rep.get_nodes import get_input_nodes, get_var_nodes, get_model_nodes, get_output_nodes, get_implicit_operation_nodes, get_operation_nodes
+from csdl.rep.get_nodes import get_implicit_operation_nodes, get_input_nodes, get_operation_nodes, get_output_nodes, get_var_nodes
 
 
 def nargs(
@@ -98,11 +94,6 @@ def generate_unpromoted_promoted_maps(model: 'Model') -> Dict[str, str]:
     model.unpromoted_to_promoted = create_reverse_map(
         model.promoted_to_unpromoted)
     return model.unpromoted_to_promoted
-
-
-def construct_graphs_all_levels(model: 'Model'):
-    ...
-    # for s in model.subgraphs:
 
 
 class GraphRepresentation:
@@ -190,12 +181,16 @@ class GraphRepresentation:
                 v.namespace = '.'.join(
                     self.unpromoted_to_promoted[name].rsplit('.')[:-1])
 
-        self.flat_graph: DiGraph = construct_flat_graph(
+        graph_meta = construct_flat_graph(
             first_graph.copy(),
             connections,
             self.promoted_to_unpromoted,
             self.unpromoted_to_promoted,
         )
+        self.flat_graph: DiGraph = graph_meta.graph
+        self.connected_tgt_nodes_to_source_nodes = graph_meta.connected_tgt_nodes_to_source_nodes
+        self.promoted_to_node = graph_meta.promoted_to_node
+        self.unpromoted_to_node = graph_meta.unpromoted_to_node
         """
         Flattened directed acyclic graph representing main model.
         Only the main model will contain an instance of

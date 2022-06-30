@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Callable, Tuple, List, Dict, Any, Set
+from typing import Any, Dict, List, Set, Tuple
 from copy import deepcopy
 from csdl.utils.typehints import Shape
 

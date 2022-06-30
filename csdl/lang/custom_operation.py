@@ -6,9 +6,8 @@ from collections import OrderedDict
 
 class CustomOperation(Operation):
     def __init__(self, *args, **kwargs):
-        self.nargs = 0
-        self.nouts = 1
         super().__init__(*args, **kwargs)
+        self.nargs = 0
         self.nouts = 0
         self.input_meta = OrderedDict()
         self.output_meta = OrderedDict()

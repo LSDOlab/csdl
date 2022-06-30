@@ -24,6 +24,15 @@ from collections import Counter
 from typing import Dict
 from warnings import warn
 
+class GraphWithMetadata:
+
+    def __init__(self, graph: DiGraph):
+        self.graph = graph
+        self.promoted_to_node = dict()
+        self.unpromoted_to_node = dict()
+        self.connected_tgt_nodes_to_source_nodes = dict()
+
+
 
 def gather_targets_by_promoted_name(
     ungrouped_tgts: Dict[str, VariableNode],
@@ -352,7 +361,7 @@ def construct_flat_graph(
     connections,
     promoted_to_unpromoted,
     unpromoted_to_promoted,
-) -> DiGraph:
+) -> GraphWithMetadata:
     graph = merge_graphs(
         graph,
         promoted_to_unpromoted,
@@ -360,11 +369,14 @@ def construct_flat_graph(
     )
     merge_automatically_connected_nodes(graph)
     # merge connections within flat graph
-    merge_connections(
-        graph,
+
+
+
+    graph_meta = merge_connections(
+        GraphWithMetadata(graph),
         connections,
         promoted_to_unpromoted,
         unpromoted_to_promoted,
     )
 
-    return graph
+    return graph_meta
