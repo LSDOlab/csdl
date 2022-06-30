@@ -1,8 +1,6 @@
 def example(Simulator):
     from csdl import Model, GraphRepresentation
     import csdl
-    from csdl.examples.operations.solve_quadratic import SolveQuadratic
-    from csdl.examples.operations.solve_quadratic import SolveQuadratic
     
     
     class ExampleQuadraticEquationImplicitScalar(Model):

@@ -1,28 +1,5 @@
 def example(Simulator):
-    import csdl
     from csdl import Model, GraphRepresentation
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionFunction
-    from csdl.examples.models.hierarchical import Hierarchical
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionVectorFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
     
     
     class ErrorWrongShapeTwoModels(Model):

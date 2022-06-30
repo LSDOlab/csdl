@@ -2,7 +2,6 @@ def example(Simulator):
     from csdl import Model, GraphRepresentation, NonlinearBlockGS
     import csdl
     import numpy as np
-    from csdl.examples.models.product import Product
     
     
     class ExampleNoRegisteredOutput(Model):

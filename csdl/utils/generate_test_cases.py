@@ -86,6 +86,8 @@ def export_examples(
                     if re.match('import', line_text) or re.match(
                             'from', line_text):
                         import_statements.append(line_text)
+                    elif line_text != '\n':
+                        break
 
             # Python 3.9: use removesuffix
             lang_examples_module = importlib.import_module(

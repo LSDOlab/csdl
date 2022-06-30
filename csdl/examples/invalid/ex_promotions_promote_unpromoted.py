@@ -1,28 +1,5 @@
 def example(Simulator):
-    import csdl
     from csdl import Model, GraphRepresentation
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionFunction
-    from csdl.examples.models.hierarchical import Hierarchical
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionVectorFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
     
     
     class ErrorPromoteUnpromoted(Model):
@@ -35,12 +12,10 @@ def example(Simulator):
     
             m = Model()
             am = m.create_input('am', val=2.0)
-            m.register_output('bm', am*2.0)
+            m.register_output('bm', am * 2.0)
     
             mm = Model()
-            mm.create_input(
-                'b', val=2.0
-            )
+            mm.create_input('b', val=2.0)
             # Do no promote b
             m.add(mm, name='model2', promotes=[])
     
