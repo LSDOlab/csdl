@@ -258,9 +258,15 @@ class GraphRepresentation:
         Constraints of the optimization problem, if a constrained
         optimization problem is defined
         """
-        self._variable_nodes: list[VariableNode]= get_var_nodes(self.flat_graph)
-        self._operation_nodes: list[OperationNode] = get_operation_nodes(self.flat_graph)
-        self._std_operation_nodes: list[OperationNode] = [op for op in self._operation_nodes if not isinstance(op, (CustomExplicitOperation, CustomImplicitOperation) )]
+        self._variable_nodes: list[VariableNode] = get_var_nodes(
+            self.flat_graph)
+        self._operation_nodes: list[
+            OperationNode] = get_operation_nodes(self.flat_graph)
+        self._std_operation_nodes: list[OperationNode] = [
+            op for op in self._operation_nodes
+            if not isinstance(op, (CustomExplicitOperation,
+                                   CustomImplicitOperation))
+        ]
 
     def input_nodes(self) -> List[VariableNode]:
         """
@@ -563,8 +569,8 @@ class GraphRepresentation:
                 CustomExplicitOperation,
                 CustomImplicitOperation,
             )),
-            ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
-        )
+            ops=self._operation_nodes
+            if ignore_custom is False else self._std_operation_nodes)
         return list(custom_ops)
 
     def count_operation_types(
@@ -604,6 +610,7 @@ class GraphRepresentation:
 
     def visualize_adjacency_mtx(
         self,
+        markersize=None,
         implicit_models: bool = False,
     ):
         """
@@ -612,13 +619,19 @@ class GraphRepresentation:
         `True` will also visualize each model defining an implicit
         operation.
         """
-        A = csc_matrix(adjacency_matrix(self.flat_graph, nodelist=self.flat_sorted_nodes))
-        plt.spy(A)
+        A = csc_matrix(
+            adjacency_matrix(self.flat_graph,
+                             nodelist=self.flat_sorted_nodes))
+        plt.spy(A, markersize=markersize)
         plt.show()
 
         if implicit_models is True:
-            for op in get_implicit_operation_nodes(self._operation_nodes):
-                op.op._model.rep.visualize_adjacency_mtx(implicit_models=implicit_models)
+            for op in get_implicit_operation_nodes(
+                    self._operation_nodes):
+                op.op._model.rep.visualize_adjacency_mtx(
+                    markersize=markersize,
+                    implicit_models=implicit_models,
+                )
 
     def visualize_graph(self):
         draw_networkx(self.flat_graph,
