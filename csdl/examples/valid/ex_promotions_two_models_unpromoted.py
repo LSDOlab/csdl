@@ -1,28 +1,5 @@
 def example(Simulator):
-    import csdl
     from csdl import Model, GraphRepresentation
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionFunction
-    from csdl.examples.models.hierarchical import Hierarchical
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionVectorFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
     
     
     class ExampleTwoModelsUnpromoted(Model):
@@ -39,8 +16,7 @@ def example(Simulator):
     
             self.create_input('a', val=2.0)
             self.add(AdditionFunction(),
-                     promotes=['a', 'b',
-                               'f'],
+                     promotes=['a', 'b', 'f'],
                      name='model')
     
             self.add(

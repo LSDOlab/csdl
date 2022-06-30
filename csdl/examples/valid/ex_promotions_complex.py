@@ -1,28 +1,5 @@
 def example(Simulator):
-    import csdl
     from csdl import Model, GraphRepresentation
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionFunction
-    from csdl.examples.models.hierarchical import Hierarchical
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionVectorFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
     
     
     class ExampleComplex(Model):
@@ -42,13 +19,11 @@ def example(Simulator):
             # the top of your Python file(s).
             from csdl.examples.models.hierarchical import Hierarchical
     
+            self.create_input('y')
             self.add(
                 Hierarchical(),
                 name='hierarchical',
             )
-    
-            # f = self.declare_variable('f')
-            # self.register_output('b', f + a)
     
     
     rep = GraphRepresentation(ExampleComplex())

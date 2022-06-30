@@ -1,4 +1,4 @@
-from csdl import Model
+from csdl import Model, GraphRepresentation
 # TESTS:
 # - Different shapes throw error:
 # --- ErrorPromotionShapeMismatch
@@ -236,12 +236,8 @@ class ExampleComplex(Model):
         self.add(
             Hierarchical(),
             name='hierarchical',
-            # promotes=['x0', 'x3_out', 'x4_out', 'x3', 'x4', 'x1'],
-            promotes=[],
         )
 
-        # f = self.declare_variable('f')
-        # self.register_output('b', f + a)
 
 
 class ErrorPromotionShapeMismatch(Model):

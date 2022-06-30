@@ -1,37 +1,15 @@
 def example(Simulator):
-    import csdl
     from csdl import Model, GraphRepresentation
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionFunction
-    from csdl.examples.models.hierarchical import Hierarchical
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.subtraction import SubtractionVectorFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-
+    
+    
     class ExampleStackedModels(Model):
         # Autopromotions should work for models within models
         # return sim['b'] = 11
-
+    
         def define(self):
-
+    
             a = self.create_input('a', val=3.0)
-
+    
             with self.create_submodel('model1') as m:
                 am = m.create_input('am', val=2.0)
                 with m.create_submodel('model2') as mm:
@@ -41,12 +19,13 @@ def example(Simulator):
                     mm.register_output('bmm', amm * 2.0)
                 bmm = m.declare_variable('bmm')
                 m.register_output('bm', bmm + am)
-
+    
             bm = self.declare_variable('bm')
             self.register_output('b', bm + a)
-
+    
+    
     rep = GraphRepresentation(ExampleStackedModels())
     sim = Simulator(rep)
     sim.run()
-
+    
     return sim, rep
