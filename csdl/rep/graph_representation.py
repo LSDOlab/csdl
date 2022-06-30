@@ -119,9 +119,11 @@ class GraphRepresentation:
         define_models_recursively(model)
         _, _, _, _ = resolve_promotions(model)
         generate_unpromoted_promoted_maps(model)
-        self.connections: list[Tuple[str, str,
-                                     str]] = collect_connections(
-                                         model, )
+        connections: list[Tuple[str, str,
+                                str]] = collect_connections(model, )
+        self.connections: list[Tuple[str, str]] = [
+            (a, b) for (a, b, _) in connections
+        ]
         self.unpromoted_to_promoted: Dict[
             str, str] = model.unpromoted_to_promoted
         self.promoted_to_unpromoted: Dict[
@@ -189,8 +191,8 @@ class GraphRepresentation:
                     self.unpromoted_to_promoted[name].rsplit('.')[:-1])
 
         self.flat_graph: DiGraph = construct_flat_graph(
-            first_graph,
-            self.connections,
+            first_graph.copy(),
+            connections,
             self.promoted_to_unpromoted,
             self.unpromoted_to_promoted,
         )
