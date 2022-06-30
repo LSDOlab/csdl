@@ -2,14 +2,6 @@ def example(Simulator):
     from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from connection_error import ConnectWithin
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.false_cycle import FalseCyclePost
-    from csdl.examples.models.addition import AdditionFunction
     
     
     class ErrorConnectingTwoVariables(Model):

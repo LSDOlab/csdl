@@ -4,8 +4,8 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleConnectPromotedOutputToDeclared(Model):
-        # Connecting promoted variables
+    class ExampleConnectUnpromotedNamesWithin(Model):
+        # Connecting Unromoted variables
         # sim['y'] = 3
     
         def define(self):
@@ -16,16 +16,25 @@ def example(Simulator):
             # the top of your Python file(s).
             from csdl.examples.models.addition import AdditionFunction
     
-            a = self.create_input('a')
+            m = Model()  # model B
+            a = m.create_input('a')
+            b = m.create_input('b')
+            m.register_output('f', a + b)
     
-            self.add(AdditionFunction(), name='A')
+            mm = Model()  # model A
+            c = mm.create_input('c')
+            d = mm.declare_variable('d')
+            mm.register_output('f1', c + d)
+            mm.add(m, promotes=[], name='B')
+            mm.connect('B.f', 'd')
+            self.add(mm, 'A')
     
             f1 = self.declare_variable('f1')
-            self.register_output('y', a + f1)
-            self.connect('f', 'f1')
+            e = self.create_input('e')
+            self.register_output('y', e + f1)
     
     
-    rep = GraphRepresentation(ExampleConnectPromotedOutputToDeclared())
+    rep = GraphRepresentation(ExampleConnectUnpromotedNamesWithin())
     sim = Simulator(rep)
     sim.run()
     

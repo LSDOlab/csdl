@@ -2,14 +2,6 @@ def example(Simulator):
     from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from connection_error import ConnectWithin
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.false_cycle import FalseCyclePost
-    from csdl.examples.models.addition import AdditionFunction
     
     
     class ErrorConnectToNothing(Model):
@@ -18,13 +10,23 @@ def example(Simulator):
     
         def define(self):
     
-            a = self.create_input('a')
+            model = Model()
+            a = model.create_input(
+                'a', val=4.0)  # connect to b, creating a cycle
+            b = model.declare_variable(
+                'b', val=3.0)  # connect to a, creating a cycle
+            c = a * b
+            model.register_output('y', a + c)
     
+            self.add(
+                model,
+                promotes=[],
+                name='model',
+            )
+    
+            a = self.declare_variable('model.a')
             self.register_output('f', a + 2.0)
-    
-            self.connect(
-                'a',
-                'b')  # Connecting to a non-existing variable is an error
+            self.connect('model.a', 'c')
     
     
     rep = GraphRepresentation(ErrorConnectToNothing())

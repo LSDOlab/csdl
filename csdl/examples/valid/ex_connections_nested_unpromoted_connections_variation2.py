@@ -2,14 +2,6 @@ def example(Simulator):
     from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from connection_error import ConnectWithin
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.false_cycle import FalseCyclePost
-    from csdl.examples.models.addition import AdditionFunction
     
     
     class ExampleNestedUnpromotedConnectionsVariation2(Model):
@@ -36,7 +28,7 @@ def example(Simulator):
             m4.register_output('b4', a4 + 3)
     
             m3.add(m4, name='m4', promotes=[])
-            b4 = m2.declare_variable('b4_connect')
+            b4 = m3.declare_variable('b4_connect')
             m3.register_output('b3', a3 + b4)
     
             m2.add(m3, name='m3')
@@ -50,9 +42,15 @@ def example(Simulator):
             self.add(m1, name='m1')
             b1 = self.declare_variable('b1_connect')
     
-            self.connect('b1', 'b1_connect')
-            self.connect('m2.b2', 'b2_connect')
-            self.connect('m2.m4.b4', 'm2.b4_connect')
+            # self.connect('b1', 'b1_connect')
+            # self.connect('m2.b2', 'b2_connect')
+            # self.connect('m2.m4.b4', 'm2.b4_connect')
+            # m2.m4.b4
+            self.connect('m1.b1', 'b1_connect')
+            self.connect('m1.m2.b2', 'm1.b2_connect')
+            self.connect('m1.m2.m3.b3', 'm1.m2.b3_connect')
+            self.connect('m1.m2.m3.m4.b4', 'm1.m2.m3.b4_connect')
+    
             self.register_output('y', a + b1)
     
     

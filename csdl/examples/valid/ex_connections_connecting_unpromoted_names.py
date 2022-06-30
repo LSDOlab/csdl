@@ -4,9 +4,9 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleConnectInputToPromotedDeclared(Model):
-        # Connecting promoted variables
-        # sim['y'] = 3
+    class ExampleConnectingUnpromotedNames(Model):
+        # Cannot make connections using unpromoted names
+        # return error
     
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
@@ -16,18 +16,15 @@ def example(Simulator):
             # the top of your Python file(s).
             from csdl.examples.models.addition import AdditionFunction
     
-            x = self.create_input('x')
+            c = self.create_input('c', val=3)
     
-            self.add(AdditionFunction(), name='A')
+            self.add(AdditionFunction(), name='m')
     
-            self.connect('x', 'a')
+            self.connect('c', 'm.b')
     
     
-    rep = GraphRepresentation(ExampleConnectInputToPromotedDeclared())
+    rep = GraphRepresentation(ExampleConnectingUnpromotedNames())
     sim = Simulator(rep)
     sim.run()
-    
-    print('y', sim['y'].shape)
-    print(sim['y'])
     
     return sim, rep

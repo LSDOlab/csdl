@@ -4,9 +4,9 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleConnectInputToPromotedDeclared(Model):
+    class ExampleConnectWithinSameModel(Model):
         # Connecting promoted variables
-        # sim['y'] = 3
+        # sim['y'] = 5
     
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
@@ -16,14 +16,16 @@ def example(Simulator):
             # the top of your Python file(s).
             from csdl.examples.models.addition import AdditionFunction
     
-            x = self.create_input('x')
+            a = self.create_input('a')
+            b = self.create_input('b', val=2.0)
+            c = a + b
     
-            self.add(AdditionFunction(), name='A')
+            f1 = self.declare_variable('f1')
+            self.register_output('y', c + f1)
+            self.connect('b', 'f1')
     
-            self.connect('x', 'a')
     
-    
-    rep = GraphRepresentation(ExampleConnectInputToPromotedDeclared())
+    rep = GraphRepresentation(ExampleConnectWithinSameModel())
     sim = Simulator(rep)
     sim.run()
     

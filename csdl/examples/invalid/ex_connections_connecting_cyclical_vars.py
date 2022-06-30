@@ -2,14 +2,6 @@ def example(Simulator):
     from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from connection_error import ConnectWithin
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.false_cycle import FalseCyclePost
-    from csdl.examples.models.addition import AdditionFunction
     
     
     class ErrorConnectingCyclicalVars(Model):
@@ -18,13 +10,15 @@ def example(Simulator):
     
         def define(self):
     
-            a = self.create_input('a', val=3)
-            b = self.declare_variable('b')
+            a = self.create_input('a')
     
+            model = Model()
+            a = model.declare_variable('a')
+            b = model.declare_variable('b', val=3.0)
             c = a * b
-    
-            self.register_output('y',
-                                 a + c)  # connect to b, creating a cycle
+            model.register_output('y',
+                                  a + c)  # connect to b, creating a cycle
+            self.add(model)
     
             self.connect('y', 'b')
     

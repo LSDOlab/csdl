@@ -4,9 +4,9 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleConnectInputToPromotedDeclared(Model):
-        # Connecting promoted variables
-        # sim['y'] = 3
+    class ExampleConnectingVarsInModels(Model):
+        # Cannot make connections within models
+        # return error
     
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
@@ -14,20 +14,14 @@ def example(Simulator):
             # generation more easily.
             # When defining CSDL models, please put the import statements at
             # the top of your Python file(s).
-            from csdl.examples.models.addition import AdditionFunction
+            from csdl.examples.models.connect_within import ConnectWithin
     
-            x = self.create_input('x')
-    
-            self.add(AdditionFunction(), name='A')
-    
-            self.connect('x', 'a')
+            self.add(ConnectWithin(
+            ))  # Adding a connection within a model will throw an error
     
     
-    rep = GraphRepresentation(ExampleConnectInputToPromotedDeclared())
+    rep = GraphRepresentation(ExampleConnectingVarsInModels())
     sim = Simulator(rep)
     sim.run()
-    
-    print('y', sim['y'].shape)
-    print(sim['y'])
     
     return sim, rep

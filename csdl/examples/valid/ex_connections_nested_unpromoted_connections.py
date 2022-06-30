@@ -2,14 +2,6 @@ def example(Simulator):
     from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.addition import AdditionFunction
-    from connection_error import ConnectWithin
-    from csdl.examples.models.addition import AdditionFunction
-    from csdl.examples.models.false_cycle import FalseCyclePost
-    from csdl.examples.models.addition import AdditionFunction
     
     
     class ExampleNestedUnpromotedConnections(Model):
@@ -35,7 +27,7 @@ def example(Simulator):
             m4.register_output('b4', a4 + 3)
     
             m3.add(m4, name='m4', promotes=[])
-            b4 = m2.declare_variable('b4_connect')
+            b4 = m3.declare_variable('b4_connect')
             m3.register_output('b3', a3 + b4)
     
             m2.add(m3, name='m3', promotes=[])
