@@ -44,7 +44,6 @@ def test_no_registered_outputs(backend):
                                 compact_print=True,
                                 method='fd')
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
-    assert len(sim.prob.model._subgroups_myproc) == 1
 
 
 def test_unary_exprs(backend):

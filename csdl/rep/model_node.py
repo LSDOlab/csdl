@@ -19,7 +19,7 @@ class ModelNode(IRNode):
                                     Dict[str,
                                          Any]] = model.design_variables
         self.constraints: Dict[str, Dict[str, Any]] = model.constraints
-        self.objective: Dict[str, Any] | None = model.objective
+        self.objective: Dict[str, Any] = model.objective
         self.graph: DiGraph = DiGraph()
         self.sorted_nodes: list[IRNode] = []
         self.promotes: list[str] | None = promotes

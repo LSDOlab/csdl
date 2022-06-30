@@ -168,7 +168,8 @@ def merge_graphs(
                 promoted_namespace = '.'.join(
                     promoted_name.rsplit('.')[:-1])
                 v.namespace = promoted_namespace
-            else:
+            elif v.name[0] != '_':
+                # promote all automatically named variables
                 raise KeyError(f'{unpromoted_name} not found.')
 
     return graph

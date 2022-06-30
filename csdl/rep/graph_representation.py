@@ -566,14 +566,12 @@ class GraphRepresentation:
         Return all `CustomExplicitOperation` and
         `CustomImplicitOperation` nodes.
         """
-        custom_ops: Iterable[OperationNode] = filter(
-            lambda x: isinstance(x.op, (
-                CustomExplicitOperation,
-                CustomImplicitOperation,
-            )),
-            ops=self._operation_nodes
-            if ignore_custom is False else self._std_operation_nodes)
-        return list(custom_ops)
+        custom_ops: list[OperationNode] = [
+            x for x in self._operation_nodes
+            if isinstance(x.op, (CustomExplicitOperation,
+                                 CustomImplicitOperation))
+        ]
+        return custom_ops
 
     def count_operation_types(
         self,
@@ -593,9 +591,8 @@ class GraphRepresentation:
         cos                 |              12 |
         linear_combination  |             189 |
         """
-        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
         optypes: dict[str, int] = dict()
-        for op in ops:
+        for op in self._operation_nodes:
             optype = type(op.op).__name__
             if optype not in optypes.keys():
                 optypes[optype] = 1
@@ -604,9 +601,9 @@ class GraphRepresentation:
         title1 = 'Operation Type'
         title2 = 'Number of Nodes'
         if print is True:
-            col1_width = max(title1,
+            col1_width = max(len(title1),
                              max([len(x) for x in optypes.keys()]))
-            col2_width = max(title2, max(optypes.values()))
+            col2_width = max(len(title2), max(optypes.values()))
 
         return optypes
 
@@ -644,5 +641,5 @@ class GraphRepresentation:
         plt.show()
 
     # TODO: add implicit models option
-    def visualize_unflat(self):
+    def visualize_unflat_graph(self):
         _visualize_unflat(self.unflat_graph)

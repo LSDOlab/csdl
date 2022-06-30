@@ -7,7 +7,7 @@ from warnings import warn
 from typing import Set
 
 
-def define_models_recursively(model: 'Model'):
+def define_models_recursively(model: 'Model', name: str = ''):
     """
     Define each model by running user-defined `Model.define` method in
     the hierarchy from the top down
@@ -27,11 +27,11 @@ def define_models_recursively(model: 'Model'):
         if model.registered_outputs == [] and model.subgraphs == []:
             if model.inputs == []:
                 raise ValueError(
-                    "This model doesn't do anything. Models must register inputs, outputs, or contain submodels."
+                    "Model {} of type {} doesn't do anything. Models must register inputs, outputs, or contain submodels.".format(name, type(model).__name__)
                 )
             else:
                 warn(
-                    "This model only registers inputs for the main model"
+                    "Model {} of type {} only registers inputs for the main model.".format(name, type(model).__name__)
                 )
 
         # Check if all design variables are inputs

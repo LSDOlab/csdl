@@ -1,5 +1,8 @@
-from collections import OrderedDict
+from csdl.rep.graph_representation import GraphRepresentation
 import numpy as np
+from warnings import warn
+from collections import OrderedDict
+from typing import Dict, Set, Any
 
 
 class _ReprClass(object):
@@ -52,23 +55,61 @@ class SimulatorBase:
     back end of choice.
     """
 
-    def __init__(self, model, reorder=False):
+    def __init__(self, rep: GraphRepresentation):
         """
         Constructor.
         """
-        raise NotImplementedError(msg)
+        if not isinstance(rep, GraphRepresentation):
+            raise TypeError(
+                "CSDL-OM only accepts a CSDL GraphRepresentation to construct a Simulator; received object of type {}."
+                .format(type(rep)))
+
+        self._promoted_to_unpromoted: Dict[
+            str, Set[str]] = rep.promoted_to_unpromoted
+        self._unpromoted_to_promoted: Dict[
+            str, str] = rep.unpromoted_to_promoted
+        self.iter = 0
+        """
+        Keep count of how many times simulation has run. Useful for
+        counting optimization iterations.
+        """
+        self.data_dir: str | None = None
+        """
+        Directory where simulation data is recorded
+        """
+        self._totals: OrderedDict | np.ndarray = OrderedDict()
+        """
+        Total derivative values
+        """
+        self.executable: Any = None
 
     def __getitem__(self, key) -> np.ndarray:
         """
         Method to get variable values before or after a simulation run
         """
-        raise NotImplementedError(msg)
+        if self.iter < 1:
+            warn("Simulation has not been run. Reading default value.")
+        return self.executable[self._find_promoted_name(key)]
 
     def __setitem__(self, key, val):
         """
         Method to set values for variables by name
         """
-        raise NotImplementedError(msg)
+        self.executable[self._find_promoted_name(key)] = val
+
+
+    def _find_promoted_name(self, key: str) -> str:
+        """
+        Find the promoted name for a variable whose value the user
+        requests/sets. Use in __setitem__ and __getitem__
+        """
+        if key in self._promoted_to_unpromoted.keys():
+            return key
+        if key in self._unpromoted_to_promoted.keys():
+            return self._unpromoted_to_promoted[key]
+        raise KeyError(
+            "{} not a user defined variable in this Simulator".format(
+                key))
 
     def run(self):
         """

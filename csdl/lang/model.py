@@ -48,7 +48,7 @@ class Model:
         self.inputs: List[Input] = []
         self.declared_variables: List[DeclaredVariable] = []
         self.registered_outputs: List[Output] = []
-        self.objective: Dict[str, Any] | None = None
+        self.objective: Dict[str, Any] = dict()
         self.constraints: Dict[str, Dict[str, Any]] = dict()
         self.design_variables: Dict[str, Dict[str, Any]] = dict()
         self.user_declared_connections: List[Tuple[str, str]] = []
@@ -999,13 +999,13 @@ class Model:
         # TODO: transfer metadata to declared variables in model
         # check that name and shape of each argument matches name and
         # shape of a declared variable in internal model
-        print('_something.arguments', [arg.name for arg in arguments])
+        # print('_something.arguments', [arg.name for arg in arguments])
         for arg in arguments:
             arg_name_match = False
-            print(
-                [var.name for var in implicit_model.declared_variables])
+            # print(
+            #     [var.name for var in implicit_model.declared_variables])
             for var in implicit_model.declared_variables:
-                print(var.name)
+                # print(var.name)
                 if arg.name == var.name:
                     arg_name_match = True
                     if arg.shape != var.shape:
