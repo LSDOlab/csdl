@@ -201,17 +201,15 @@ class ExampleStackedModels(Model):
 
         a = self.create_input('a', val=3.0)
 
-        m = Model()
-        am = m.create_input('am', val=2.0)
-        mm = Model()
-        amm = mm.declare_variable(
-            'a', val=1.0
-        )  # 'model1.model2.a' should automatically promote and connect to 'a'
-        mm.register_output('bmm', amm * 2.0)
-        m.add(mm, name='model2')
-        bmm = m.declare_variable('bmm')
-        m.register_output('bm', bmm + am)
-        self.add(m, name='model1')
+        with self.create_submodel('model1') as m:
+            am = m.create_input('am', val=2.0)
+            with m.create_submodel('model2') as mm:
+                amm = mm.declare_variable(
+                    'a', val=1.0
+                )  # 'model1.model2.a' should automatically promote and connect to 'a'
+                mm.register_output('bmm', amm * 2.0)
+            bmm = m.declare_variable('bmm')
+            m.register_output('bm', bmm + am)
 
         bm = self.declare_variable('bm')
         self.register_output('b', bm + a)
@@ -544,9 +542,12 @@ class ExampleParallelTargets(Model):
             promotes=['a', 'b'],
         )
 
-        f1 = self.declare_variable('addition1.f')
-        f2 = self.declare_variable('addition2.f')
-        f3 = self.declare_variable('addition3.f')
+        f1 = self.declare_variable('f1')
+        f2 = self.declare_variable('f2')
+        f3 = self.declare_variable('f3')
+        self.connect('addition1.f', 'f1')
+        self.connect('addition2.f', 'f2')
+        self.connect('addition3.f', 'f3')
 
         self.register_output('f_out', f1 + f2 + f3)
 
@@ -651,4 +652,3 @@ class ExampleImplicit2(Model):
         xx, uu = solve_quadratic(aa, bb, cc)
 
         self.register_output('f', xx * 3.0 + uu * 3.0 + 0.5 * aa)
-

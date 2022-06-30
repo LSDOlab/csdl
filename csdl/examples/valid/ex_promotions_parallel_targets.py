@@ -58,9 +58,12 @@ def example(Simulator):
                 promotes=['a', 'b'],
             )
     
-            f1 = self.declare_variable('addition1.f')
-            f2 = self.declare_variable('addition2.f')
-            f3 = self.declare_variable('addition3.f')
+            f1 = self.declare_variable('f1')
+            f2 = self.declare_variable('f2')
+            f3 = self.declare_variable('f3')
+            self.connect('addition1.f', 'f1')
+            self.connect('addition2.f', 'f2')
+            self.connect('addition3.f', 'f3')
     
             self.register_output('f_out', f1 + f2 + f3)
     
