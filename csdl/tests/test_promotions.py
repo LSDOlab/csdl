@@ -75,6 +75,7 @@ def test_absolute_relative_name(backend):
     np.testing.assert_almost_equal(sim['model.f'], 4.0)
     np.testing.assert_almost_equal(sim['f'], 4.0)
 
+
 def test_same_i_o_unpromoted(backend):
     from csdl.examples.valid.ex_promotions_same_io_unpromoted import example
     exec('from {} import Simulator'.format(backend))
@@ -98,11 +99,13 @@ def test_two_models_unpromoted(backend):
     np.testing.assert_almost_equal(sim['model.f'], 3.0)
     np.testing.assert_almost_equal(sim['model2.f'], 4.0)
 
+
 def test_unconnected_vars(backend):
     from csdl.examples.valid.ex_promotions_unconnected_vars import example
     exec('from {} import Simulator'.format(backend))
     sim, rep = example(eval('Simulator'))
     np.testing.assert_almost_equal(sim['y'], 2.0)
+
 
 def test_stacked_models(backend):
     from csdl.examples.valid.ex_promotions_stacked_models import example
@@ -112,6 +115,7 @@ def test_stacked_models(backend):
     np.testing.assert_almost_equal(sim['bmm'], 6.0)
     np.testing.assert_almost_equal(sim['bm'], 8.0)
     np.testing.assert_almost_equal(sim['b'], 11.0)
+
 
 def test_jumped_promotion(backend):
     from csdl.examples.valid.ex_promotions_jumped_promotion import example
@@ -152,8 +156,8 @@ def test_complex(backend):
                                    5.0)
     np.testing.assert_almost_equal(sim['hierarchical.ModelB.ModelC.x2'],
                                    9.0)
-    np.testing.assert_almost_equal(sim['hierarchical.ModelF.x3'],
-                                   0.01)
+    np.testing.assert_almost_equal(sim['hierarchical.ModelF.x3'], 0.01)
+
 
 def test_parallel_targets(backend):
     from csdl.examples.valid.ex_promotions_parallel_targets import example

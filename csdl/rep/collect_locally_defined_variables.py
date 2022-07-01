@@ -5,7 +5,6 @@ except ImportError:
 from csdl.lang.input import Input
 from csdl.lang.output import Output
 from csdl.lang.declared_variable import DeclaredVariable
-
 from csdl.utils.typehints import Shape
 from typing import Tuple, Dict, List
 

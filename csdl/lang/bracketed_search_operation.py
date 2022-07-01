@@ -20,6 +20,7 @@ class BracketedSearchOperation(Operation):
         brackets: Dict[str, Tuple[np.ndarray, np.ndarray]],
         expose: List[str] = [],
         maxiter: int = 100,
+        tol: float = 1e-6,
         *args,
         **kwargs,
     ):
@@ -37,3 +38,4 @@ class BracketedSearchOperation(Operation):
                                        np.ndarray]] = brackets
         self.expose: List[str] = expose
         self.maxiter: int = maxiter
+        self.tol: float = tol

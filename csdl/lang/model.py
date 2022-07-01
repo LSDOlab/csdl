@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple, Union
 from copy import deepcopy
 from csdl.utils.typehints import Shape
 
@@ -554,6 +554,8 @@ class Model:
         """
         if not isinstance(submodel, Model):  # type: ignore
             raise TypeError("{} is not a Model".format(submodel))
+        # if issubclass(Model, type(submodel)):
+        #     raise DeprecationWarning("Adding a submodel that is an instance of the Model base class will not be allowed in future versions of CSDL. Use with self.create_submodel(\'<name>\') as <obj>` instead.")
         if name in [s.name for s in self.subgraphs]:
             raise KeyError(
                 "Cannot add model with duplicate name {}".format(name))
@@ -1249,7 +1251,9 @@ class Model:
         self.define()
 
     @contextmanager
-    def create_submodel(self, name: str):
+    def create_submodel(self,
+                        name: str,
+                        promotes: Union[list[str], None] = None):
         """
         Create a `Model` object and add as a submodel, promoting all
         inputs and outputs.
@@ -1268,7 +1272,15 @@ class Model:
             Child `Model` object whose variables are all promoted
         """
         try:
-            with Model() as m:
+            with InlineModel() as m:
                 yield m
         finally:
-            self.add(m, name=name)
+            self.add(m, name=name, promotes=promotes)
+
+
+class InlineModel(Model):
+    """
+    Subclass of Model to use within create_submodel context to avoid
+    creating instances of Model base class
+    """
+    pass

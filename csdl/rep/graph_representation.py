@@ -222,7 +222,6 @@ class GraphRepresentation:
         """
         Nodes sorted in order of execution, using the flattened graph
         """
-
         self.unflat_graph: DiGraph = construct_unflat_graph(
             first_graph, )
         """
@@ -264,6 +263,11 @@ class GraphRepresentation:
             if not isinstance(op, (CustomExplicitOperation,
                                    CustomImplicitOperation))
         ]
+
+        implicit_operation_nodes = get_implicit_operation_nodes(
+            self.flat_graph)
+        for op in implicit_operation_nodes:
+            op.rep = GraphRepresentation(op.op._model)
 
     def input_nodes(self) -> List[VariableNode]:
         """

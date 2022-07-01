@@ -4,13 +4,15 @@ from csdl.lang.output import Output
 from csdl.lang.input import Input
 from csdl.lang.variable import Variable
 from csdl.lang.operation import Operation
+from csdl.lang.implicit_operation import ImplicitOperation
 from csdl.lang.subgraph import Subgraph
 from csdl.lang.node import Node
 from csdl.rep.ir_node import IRNode
 from csdl.rep.variable_node import VariableNode
 from csdl.rep.operation_node import OperationNode
+from csdl.rep.implicit_operation_node import ImplicitOperationNode
 from csdl.rep.model_node import ModelNode
-from csdl.rep.get_nodes import get_model_nodes, get_src_nodes, get_tgt_nodes, get_var_nodes
+from csdl.rep.get_nodes import get_model_nodes, get_src_nodes, get_tgt_nodes, get_var_nodes, get_operation_nodes, get_implicit_operation_nodes
 from csdl.utils.prepend_namespace import prepend_namespace
 from typing import List, Dict, Set
 from warnings import warn
@@ -31,7 +33,10 @@ def _construct_graph_this_level(
             nodes[node.name] = VariableNode(node)
     elif isinstance(node, Operation):
         if node.name not in nodes.keys():
-            nodes[node.name] = OperationNode(node)
+            if isinstance(node, ImplicitOperation):
+                nodes[node.name] = ImplicitOperationNode(node)
+            else:
+                nodes[node.name] = OperationNode(node)
     for predecessor in node.dependencies:
         _construct_graph_this_level(graph, nodes, predecessor)
         # adding redundant edge will not affect graph structure
@@ -65,6 +70,7 @@ def construct_graphs_all_models(
                 s.submodel.registered_outputs,
                 s.submodel.subgraphs,
             )
+
 
     # add variables and operations to the graph for this model
 
