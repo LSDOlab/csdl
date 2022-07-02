@@ -3,7 +3,7 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleBracketedScalar(Model):
+    class ExampleBracketedScalarVariableBrackets(Model):
     
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
@@ -13,9 +13,12 @@ def example(Simulator):
             # the top of your Python file(s).
             from csdl.examples.models.quadratic_function import QuadraticFunction
     
+            l = self.declare_variable('l', val=0)
+            u = self.declare_variable('l', val=2)
+    
             solve_quadratic = self.create_implicit_operation(
                 QuadraticFunction(shape=(1, )))
-            solve_quadratic.declare_state('x', residual='y', bracket=(0, 2))
+            solve_quadratic.declare_state('x', residual='y', bracket=(l, u))
     
             a = self.declare_variable('a', val=1)
             b = self.declare_variable('b', val=-4)
@@ -23,7 +26,7 @@ def example(Simulator):
             x = solve_quadratic(a, b, c)
     
     
-    rep = GraphRepresentation(ExampleBracketedScalar())
+    rep = GraphRepresentation(ExampleBracketedScalarVariableBrackets())
     sim = Simulator(rep)
     sim.run()
     

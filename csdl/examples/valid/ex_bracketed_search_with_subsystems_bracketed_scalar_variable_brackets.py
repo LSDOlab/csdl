@@ -3,7 +3,7 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleWithSubsystemsBracketedArray(Model):
+    class ExampleWithSubsystemsBracketedScalarVariableBrackets(Model):
     
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
@@ -14,36 +14,30 @@ def example(Simulator):
             from csdl.examples.models.quadratic_wih_extra_term import QuadraticWithExtraTerm
             from csdl.examples.models.simple_add import SimpleAdd
             from csdl.examples.models.fixed_point import FixedPoint2
-            self.add(SimpleAdd(p=[7, -7], q=[8, -8]), name='R')
-    
+            self.add(SimpleAdd(p=7, q=8), name='R')
             solve_fixed_point_iteration = self.create_implicit_operation(
-                FixedPoint2(name='ap'))
-            solve_fixed_point_iteration.declare_state('ap', residual='r')
+                FixedPoint2(name='a'))
+            solve_fixed_point_iteration.declare_state('a', residual='r')
             solve_fixed_point_iteration.nonlinear_solver = NonlinearBlockGS(
                 maxiter=100)
     
+            l = self.declare_variable('l', val=0)
+            u = self.declare_variable('l', val=2)
+    
             solve_quadratic = self.create_implicit_operation(
-                QuadraticWithExtraTerm(shape=(2, )))
-            solve_quadratic.declare_state('y',
-                                          residual='z',
-                                          bracket=(
-                                              np.array([0, 2.]),
-                                              np.array([2, np.pi], ),
-                                          ))
+                QuadraticWithExtraTerm(shape=(1, )))
+            solve_quadratic.declare_state('y', residual='z', bracket=(l, u))
             solve_quadratic.nonlinear_solver = NonlinearBlockGS(maxiter=100)
     
-            ap = solve_fixed_point_iteration()
-            a = self.create_output('a', shape=(2, ))
-            a[0] = ap
-            a[1] = -ap
+            a = solve_fixed_point_iteration()
     
-            b = self.declare_variable('b', val=[-4, 4])
-            c = self.declare_variable('c', val=[18, -18])
-            r = self.declare_variable('r', shape=(2, ))
+            b = self.declare_variable('b', val=-4)
+            c = self.declare_variable('c', val=18)
+            r = self.declare_variable('r')
             y = solve_quadratic(a, b, c, r)
     
     
-    rep = GraphRepresentation(ExampleWithSubsystemsBracketedArray())
+    rep = GraphRepresentation(ExampleWithSubsystemsBracketedScalarVariableBrackets())
     sim = Simulator(rep)
     sim.run()
     

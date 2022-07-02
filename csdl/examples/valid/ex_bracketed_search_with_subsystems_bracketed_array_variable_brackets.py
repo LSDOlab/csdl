@@ -3,7 +3,7 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleWithSubsystemsBracketedArray(Model):
+    class ExampleWithSubsystemsBracketedArrayVariableBrackets(Model):
     
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
@@ -22,14 +22,12 @@ def example(Simulator):
             solve_fixed_point_iteration.nonlinear_solver = NonlinearBlockGS(
                 maxiter=100)
     
+            l = self.declare_variable('l', val=np.array([0, 2.]))
+            u = self.declare_variable('u', val=np.array([2, np.pi]))
+    
             solve_quadratic = self.create_implicit_operation(
                 QuadraticWithExtraTerm(shape=(2, )))
-            solve_quadratic.declare_state('y',
-                                          residual='z',
-                                          bracket=(
-                                              np.array([0, 2.]),
-                                              np.array([2, np.pi], ),
-                                          ))
+            solve_quadratic.declare_state('y', residual='z', bracket=(l, u))
             solve_quadratic.nonlinear_solver = NonlinearBlockGS(maxiter=100)
     
             ap = solve_fixed_point_iteration()
@@ -43,7 +41,7 @@ def example(Simulator):
             y = solve_quadratic(a, b, c, r)
     
     
-    rep = GraphRepresentation(ExampleWithSubsystemsBracketedArray())
+    rep = GraphRepresentation(ExampleWithSubsystemsBracketedArrayVariableBrackets())
     sim = Simulator(rep)
     sim.run()
     

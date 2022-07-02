@@ -3,7 +3,8 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleWithSubsystemsBracketedScalarDefineModelInline(Model):
+    class ExampleWithSubsystemsBracketedScalarDefineModelInlineVariableBrackets(
+            Model):
     
         def define(self):
             with self.create_submodel('R') as model:
@@ -29,8 +30,11 @@ def example(Simulator):
             solve_fixed_point_iteration.nonlinear_solver = NonlinearBlockGS(
                 maxiter=100)
     
+            l = self.declare_variable('l', val=0)
+            u = self.declare_variable('u', val=2)
+    
             solve_quadratic = self.create_implicit_operation(m3)
-            solve_quadratic.declare_state('y', residual='z', bracket=(0, 2))
+            solve_quadratic.declare_state('y', residual='z', bracket=(l, u))
             solve_quadratic.nonlinear_solver = NonlinearBlockGS(maxiter=100)
     
             a = solve_fixed_point_iteration()
@@ -41,7 +45,7 @@ def example(Simulator):
             y = solve_quadratic(a, b, c, r)
     
     
-    rep = GraphRepresentation(ExampleWithSubsystemsBracketedScalarDefineModelInline())
+    rep = GraphRepresentation(ExampleWithSubsystemsBracketedScalarDefineModelInlineVariableBrackets())
     sim = Simulator(rep)
     sim.run()
     

@@ -3,7 +3,7 @@ def example(Simulator):
     import numpy as np
     
     
-    class ExampleBracketedArrayDefineModelInline(Model):
+    class ExampleBracketedArrayDefineModelInlineVariableBrackets(Model):
     
         def define(self):
             model = Model()
@@ -14,13 +14,11 @@ def example(Simulator):
             y = a * x**2 + b * x + c
             model.register_output('y', y)
     
+            l = self.declare_variable('l', val=np.array([0, 2.]))
+            u = self.declare_variable('u', val=np.array([2, np.pi]))
+    
             solve_quadratic = self.create_implicit_operation(model)
-            solve_quadratic.declare_state('x',
-                                          residual='y',
-                                          bracket=(
-                                              np.array([0, 2.]),
-                                              np.array([2, np.pi], ),
-                                          ))
+            solve_quadratic.declare_state('x', residual='y', bracket=(l, u))
     
             a = self.declare_variable('a', val=[1, -1])
             b = self.declare_variable('b', val=[-4, 4])
@@ -28,7 +26,7 @@ def example(Simulator):
             x = solve_quadratic(a, b, c)
     
     
-    rep = GraphRepresentation(ExampleBracketedArrayDefineModelInline())
+    rep = GraphRepresentation(ExampleBracketedArrayDefineModelInlineVariableBrackets())
     sim = Simulator(rep)
     sim.run()
     
