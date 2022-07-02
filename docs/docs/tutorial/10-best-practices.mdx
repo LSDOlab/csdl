@@ -104,6 +104,92 @@ self.connect('child_1.a', 'child_2.b')
 self.connect('child_1.c', 'child_2.grandchild.b')
 ```
 
+## Connect variables immediately after declaring them
+
+This helps improve code readability, which may reduce the amount of time
+users need to spend rewriting their models.
+
+In order to use a varible from a different model in the hierarchy, it is
+necessary to declare the variable as it will be used in the current
+model.
+In cases where variables are not connected automatically by promotion,
+CSDL gives users a way to connect variables via the `Model.connect`
+method.
+Calling the `Model.connect` method before or after variables are
+declared or defined is valid CSDL code.
+To illustrate this, see the following snippet.
+
+```py
+self.add(
+    MyModel(),
+    name='mymodel',
+    promotes=[],
+)
+
+y = self.declare('y')
+
+z = f(y)
+self.register_output('z', z)
+
+# `MyModel` contains an output 'x', but it's not clear that 'x' is used
+# in the current model until this line
+self.connect('mymodel.x', 'y')
+```
+
+The CSDL compiler knows that `'mymodel.x'` and `'y'` are variables when
+`self.connect` is called, but a user reading this code from top to
+bottom will need to pause and search for where `'y'` was declared.
+Consider the next snippet:
+
+```py
+
+# `MyModel` contains an output 'x', and it's clear that 'x' is used
+# in the current model, but by the time the user reaches the line
+# declaring 'y', the user may forget that this connection was issued,
+# and misunderstand what 'y' represents or how it is defined.
+self.connect('mymodel.x', 'y')
+self.add(
+    MyModel(),
+    name='mymodel',
+    promotes=[],
+)
+
+y = self.declare('y')
+
+z = f(y)
+self.register_output('z', z)
+```
+
+This snippet is slightly better for a model of this size, but it's still
+not the best solution.
+For larger models, placing connections at the beginning may lead to
+using up the user's working memory, making it more difficult to
+understand and maintain model code.
+
+Finally, we have the best solution:
+
+```py
+self.add(
+    MyModel(),
+    name='mymodel',
+    promotes=[],
+)
+
+y = self.declare('y')
+# `MyModel` contains an output 'x', and it's clear that 'x' is used
+# in the current model as 'y' immediately after declaring 'y'
+self.connect('mymodel.x', 'y')
+
+z = f(y)
+self.register_output('z', z)
+```
+
+In this snippet, the user will know immediately where 'y' is defined and
+that 'y' will not have a default value of `1`.
+The user doesn't have to remember that 'y' was connected earlier, nor
+will the user be surprised later by a connection changing the user's
+understanding of the definition of 'y'.
+
 ## Don't redefine variables
 
 Python does not enforce variable immutability, so if a variable is redefined (or
