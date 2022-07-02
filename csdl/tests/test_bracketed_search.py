@@ -62,7 +62,7 @@ def test_bracketed_with_subsystems_array(backend):
 # ----------------------------------------------------------------------
 
 
-def test_solve_quadratic_bracketed_scalar_define_model_inlines(backend):
+def test_solve_quadratic_bracketed_scalar_define_model_inline(backend):
     from csdl.examples.valid.ex_bracketed_search_bracketed_scalar_define_model_inline import example
     exec('from {} import Simulator'.format(backend))
     sim, rep = example(eval('Simulator'))
@@ -74,7 +74,7 @@ def test_solve_quadratic_bracketed_scalar_define_model_inlines(backend):
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
-def test_solve_quadratic_bracketed_array_define_model_inlines(backend):
+def test_solve_quadratic_bracketed_array_define_model_inline(backend):
     from csdl.examples.valid.ex_bracketed_search_bracketed_array_define_model_inline import example
     exec('from {} import Simulator'.format(backend))
     sim, rep = example(eval('Simulator'))
@@ -89,7 +89,7 @@ def test_solve_quadratic_bracketed_array_define_model_inlines(backend):
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
-def test_bracketed_with_subsystems_scalar_define_model_inlines(backend):
+def test_bracketed_with_subsystems_scalar_define_model_inline(backend):
     from csdl.examples.valid.ex_bracketed_search_with_subsystems_bracketed_scalar_define_model_inline import example
     exec('from {} import Simulator'.format(backend))
     sim, rep = example(eval('Simulator'))
@@ -104,7 +104,7 @@ def test_bracketed_with_subsystems_scalar_define_model_inlines(backend):
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
-def test_bracketed_with_subsystems_array_define_model_inlines(backend):
+def test_bracketed_with_subsystems_array_define_model_inline(backend):
     from csdl.examples.valid.ex_bracketed_search_with_subsystems_bracketed_array_define_model_inline import example
     exec('from {} import Simulator'.format(backend))
     sim, rep = example(eval('Simulator'))
@@ -179,7 +179,7 @@ def test_bracketed_with_subsystems_array_variable_brackets (backend):
 # ----------------------------------------------------------------------
 
 
-def test_solve_quadratic_bracketed_scalar_define_model_inlines_variable_brackets (backend):
+def test_solve_quadratic_bracketed_scalar_define_model_inline_variable_brackets (backend):
     from csdl.examples.valid.ex_bracketed_search_bracketed_scalar_define_model_inline_variable_brackets import example
     exec('from {} import Simulator'.format(backend))
     sim, rep = example(eval('Simulator'))
@@ -191,7 +191,7 @@ def test_solve_quadratic_bracketed_scalar_define_model_inlines_variable_brackets
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
-def test_solve_quadratic_bracketed_array_define_model_inlines_variable_brackets (backend):
+def test_solve_quadratic_bracketed_array_define_model_inline_variable_brackets (backend):
     from csdl.examples.valid.ex_bracketed_search_bracketed_array_define_model_inline_variable_brackets import example
     exec('from {} import Simulator'.format(backend))
     sim, rep = example(eval('Simulator'))
@@ -206,7 +206,7 @@ def test_solve_quadratic_bracketed_array_define_model_inlines_variable_brackets 
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
-def test_bracketed_with_subsystems_scalar_define_model_inlines_variable_brackets (backend):
+def test_bracketed_with_subsystems_scalar_define_model_inline_variable_brackets (backend):
     from csdl.examples.valid.ex_bracketed_search_with_subsystems_bracketed_scalar_define_model_inline_variable_brackets import example
     exec('from {} import Simulator'.format(backend))
     sim, rep = example(eval('Simulator'))
@@ -221,7 +221,7 @@ def test_bracketed_with_subsystems_scalar_define_model_inlines_variable_brackets
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
-def test_bracketed_with_subsystems_array_define_model_inlines_variable_brackets (backend):
+def test_bracketed_with_subsystems_array_define_model_inline_variable_brackets (backend):
     from csdl.examples.valid.ex_bracketed_search_with_subsystems_bracketed_array_define_model_inline_variable_brackets import example
     exec('from {} import Simulator'.format(backend))
     sim, rep = example(eval('Simulator'))
