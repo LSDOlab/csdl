@@ -9,6 +9,7 @@ from csdl.rep.model_node import ModelNode
 from csdl.rep.variable_node import VariableNode
 from csdl.rep.merge_connections import merge_connections
 from csdl.lang.declared_variable import DeclaredVariable
+from csdl.lang.custom_operation import CustomOperation
 from csdl.lang.input import Input
 from csdl.lang.output import Output
 from csdl.rep.model_node import ModelNode
@@ -179,8 +180,10 @@ def merge_graphs(
                 v.namespace = promoted_namespace
             elif v.name[0] != '_':
                 # promote all automatically named variables
-                raise KeyError(f'{unpromoted_name} not found.')
-
+                # raise KeyError(f'{unpromoted_name} not found.')
+                previous_op = list(graph.predecessors(v))[0].op
+                if not isinstance(previous_op, CustomOperation):
+                    raise KeyError(f'{unpromoted_name} not found.')
     return graph
 
 
