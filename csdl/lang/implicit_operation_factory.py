@@ -1,4 +1,4 @@
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Union
 from csdl.lang.output import Output
 
 # from csdl.lang.intermediate_representation import IntermediateRepresentation
@@ -25,16 +25,18 @@ class ImplicitOperationFactory(object):
         self.residuals: List[str] = []
         self.nonlinear_solver: NonlinearSolver | None = None
         self.linear_solver: LinearSolver | None = None
-        self.brackets: Dict[str,
-                            Tuple[int | float | np.ndarray,
-                                  int | float | np.ndarray]] = dict()
+        self.brackets: Dict[str, Tuple[Union[int, float, np.ndarray,
+                                             Variable],
+                                       Union[int, float, np.ndarray,
+                                             Variable]]] = dict()
         self.implicit_metadata: Dict[str, dict] = dict()
 
     def declare_state(
         self,
         state: str,
-        bracket: Tuple[int | float | np.ndarray,
-                       int | float | np.ndarray] | None = None,
+        bracket: Union[Tuple[Union[int, float, np.ndarray, Variable],
+                             Union[int, float, np.ndarray, Variable]],
+                       None] = None,
         val=1.0,
         units=None,
         desc='',
@@ -71,6 +73,9 @@ class ImplicitOperationFactory(object):
             res_ref=res_ref,
         )
 
+    # TODO: what is defaults?
+    # TODO: where to define maxiter?
+    # TODO: where to define tol?
     def __call__(
             self,
             *arguments: Variable,
@@ -92,11 +97,11 @@ class ImplicitOperationFactory(object):
         if len(self.brackets) > 0:
             return self.parent._bracketed_search(
                 self.implicit_metadata,
+                self.states,
+                self.residuals,
+                self.model,
+                self.brackets,
                 *arguments,
-                states=self.states,
-                residuals=self.residuals,
-                implicit_model=self.model,
-                brackets=self.brackets,
                 expose=expose,
             )
         else:

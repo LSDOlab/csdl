@@ -21,7 +21,7 @@ class BracketedSearchOperation(ImplicitOperation):
         *args,
         expose: List[str] = [],
         brackets: Dict[str, Tuple[np.ndarray, np.ndarray]] = dict(),
-        maxiter: int = 100,
+        maxiter: int = 1000,
         tol: float = 1e-7,
         **kwargs,
     ):
@@ -38,7 +38,8 @@ class BracketedSearchOperation(ImplicitOperation):
         for _, v in out_in_map.items():
             in_vars = in_vars.union(set(v))
         self._model = model
-        self.brackets: Dict[str, Tuple[np.ndarray,
-                                       np.ndarray]] = brackets
+        self.brackets: Dict[str, Tuple[Union[np.ndarray, Variable],
+                                       Union[np.ndarray,
+                                             Variable]]] = brackets
         self.maxiter: int = maxiter
         self.tol: float = tol

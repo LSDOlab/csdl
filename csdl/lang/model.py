@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from typing import Any, Dict, List, Set, Tuple, Union
-from copy import deepcopy
+from copy import copy
 from csdl.utils.typehints import Shape
 
 from csdl.rep.graph_representation import GraphRepresentation
@@ -31,6 +31,14 @@ except ImportError:
 _residual = '_residual'
 
 # TODO: if defined, raise error on each user facing method
+
+
+def _to_array(
+    x: Union[int, float, np.ndarray, Variable]
+) -> Union[np.ndarray, Variable]:
+    if not isinstance(x, (np.ndarray, Variable)):
+        x = np.array(x)
+    return x
 
 
 class Model:
@@ -309,6 +317,8 @@ class Model:
             )
 
     def connect(self, a: str, b: str):
+        if a == b:
+            raise KeyError(f"Attempting to connect two variables named {a}. This name refers to the same variable, which cannot be connected to itself.")
         if (a, b) in self.user_declared_connections:
             warn("Connection from {} to {} issued twice.".format(a, b))
         else:
@@ -575,14 +585,14 @@ class Model:
     def _bracketed_search(
         self,
         implicit_metadata: Dict[str, Dict[str, Any]],
-        *arguments: Variable,
         states: List[str],
         residuals: List[str],
         implicit_model: 'Model',
-        brackets: Dict[str, Tuple[int | float | np.ndarray,
-                                  int | float | np.ndarray]],
+        brackets: Dict[str,
+                       Tuple[Union[int, float, np.ndarray, Variable],
+                             Union[int, float, np.ndarray, Variable]]],
+        *arguments: Variable,
         expose: List[str] = [],
-        maxiter: int = 100,
     ):
         """
         Create an implicit operation whose residuals are defined by a
@@ -705,8 +715,10 @@ class Model:
             expose,
         )
 
-        new_brackets: Dict[str, Tuple[np.ndarray, np.ndarray]] = dict()
-        states_without_brackets = deepcopy(states)
+        new_brackets: Dict[str, Tuple[Union[np.ndarray, Variable],
+                                      Union[np.ndarray,
+                                            Variable]]] = dict()
+        states_without_brackets = copy(states)
         for k, v in brackets.items():
             if k not in states:
                 raise ValueError(
@@ -716,10 +728,12 @@ class Model:
 
             if len(v) != 2:
                 raise ValueError(
-                    "Bracket {} for state {} is not a tuple of two values"
+                    "Bracket {} for state {} is not a tuple of two values or Variable objects."
                     .format(v, k))
 
-            (a, b) = (np.array(v[0]), np.array(v[1]))
+            (a, b) = v
+            a = _to_array(a)
+            b = _to_array(b)
             if a.shape != b.shape:
                 raise ValueError(
                     "Bracket values for {} are not the same shape; {} != {}"
@@ -739,7 +753,6 @@ class Model:
             *arguments,
             expose=expose,
             brackets=new_brackets,
-            maxiter=maxiter,
             # TODO: add tol
         )
         self.implicit_operations.append(op)
