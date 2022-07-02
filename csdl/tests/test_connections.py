@@ -110,12 +110,12 @@ def test_two_way_connection(backend):
 	with pytest.raises(ValueError):
 		example(eval('Simulator'))
 
-# FIXME: y not a user defined variable
-# def test_value_overwrite_connection(backend):
-# 	from csdl.examples.valid.ex_connections_value_overwrite_connection import example
-# 	exec('from {} import Simulator'.format(backend))
-# 	sim, rep = example(eval('Simulator'))
-# 	np.testing.assert_almost_equal(sim['f'], 14.0)
+def test_value_overwrite_connection(backend):
+	from csdl.examples.valid.ex_connections_value_overwrite_connection import example
+	exec('from {} import Simulator'.format(backend))
+	sim, rep = example(eval('Simulator'))
+	np.testing.assert_almost_equal(sim['model.y'], 16.0)
+	np.testing.assert_almost_equal(sim['f'], 32.0)
 
 
 def test_connect_different_shapes(backend):
@@ -125,13 +125,13 @@ def test_connect_different_shapes(backend):
 		example(eval('Simulator'))
 
 
-# def test_connect_to_nothing(backend):
-# 	from csdl.examples.invalid.ex_connections_connect_to_nothing import example
-# 	exec('from {} import Simulator'.format(backend))
-# 	with pytest.raises(KeyError):
-# 		example(eval('Simulator'))
+def test_connect_to_nothing(backend):
+	from csdl.examples.invalid.ex_connections_connect_to_nothing import example
+	exec('from {} import Simulator'.format(backend))
+	with pytest.raises(KeyError):
+		example(eval('Simulator'))
 
-
+# TODO: This shouldn't be allowed
 # def test_connect_create_outputs(backend):
 # 	from csdl.examples.valid.ex_connections_connect_create_outputs import example
 # 	exec('from {} import Simulator'.format(backend))
@@ -139,28 +139,30 @@ def test_connect_different_shapes(backend):
 # 	np.testing.assert_almost_equal(sim['y'], np.array([11,6]))
 
 
-# def test_connect_create_outputs(backend):
-# 	from csdl.examples.invalid.ex_connections_connect_create_outputs import example
-# 	exec('from {} import Simulator'.format(backend))
-# 	with pytest.raises(KeyError):
-# 		example(eval('Simulator'))
+def test_connect_create_outputs(backend):
+	from csdl.examples.invalid.ex_connections_connect_create_outputs import example
+	exec('from {} import Simulator'.format(backend))
+	with pytest.raises(ValueError):
+		example(eval('Simulator'))
 
-
+# TODO: test value/error
 # def test_false_cycle(backend):
 # 	from csdl.examples.valid.ex_connections_false_cycle import example
 # 	exec('from {} import Simulator'.format(backend))
 # 	sim, rep = example(eval('Simulator'))
 
 
-# def test_connect_unpromoted_names(backend):
-# 	from csdl.examples.valid.ex_connections_connect_unpromoted_names import example
-# 	exec('from {} import Simulator'.format(backend))
-# 	sim, rep = example(eval('Simulator'))
-# 	np.testing.assert_almost_equal(sim['y'], 3.0)
+def test_connect_unpromoted_names(backend):
+	from csdl.examples.valid.ex_connections_connect_unpromoted_names import example
+	exec('from {} import Simulator'.format(backend))
+	sim, rep = example(eval('Simulator'))
+	np.testing.assert_almost_equal(sim['f1'], sim['A.f'])
+	np.testing.assert_almost_equal(sim['A.f'], 4.0)
+	np.testing.assert_almost_equal(sim['f1'], 4.0)
 
 
-# def test_connect_unpromoted_names_within(backend):
-# 	from csdl.examples.valid.ex_connections_connect_unpromoted_names_within import example
-# 	exec('from {} import Simulator'.format(backend))
-# 	sim, rep = example(eval('Simulator'))
-# 	np.testing.assert_almost_equal(sim['y'], 3.0)
+def test_connect_unpromoted_names_within(backend):
+	from csdl.examples.valid.ex_connections_connect_unpromoted_names_within import example
+	exec('from {} import Simulator'.format(backend))
+	sim, rep = example(eval('Simulator'))
+	np.testing.assert_almost_equal(sim['y'], 4.0)

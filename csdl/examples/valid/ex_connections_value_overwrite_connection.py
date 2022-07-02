@@ -33,7 +33,7 @@ def example(Simulator):
     sim = Simulator(rep)
     sim.run()
     
-    print('y', sim['y'].shape)
-    print(sim['y'])
+    print('model.y', sim['model.y'].shape)
+    print(sim['model.y'])
     
     return sim, rep

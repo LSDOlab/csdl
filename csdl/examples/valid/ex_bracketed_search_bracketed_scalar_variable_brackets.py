@@ -34,3 +34,5 @@ def example(Simulator):
     print(sim['x'])
     
     return sim, rep
+from csdl_om import Simulator
+example(Simulator)

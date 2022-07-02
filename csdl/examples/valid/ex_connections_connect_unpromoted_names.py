@@ -18,7 +18,7 @@ def example(Simulator):
     
             a = self.create_input('a')
     
-            self.add(AdditionFunction(), name='A')
+            self.add(AdditionFunction(), name='A', promotes=[])
     
             f1 = self.declare_variable('f1')
             self.register_output('y', a + f1)

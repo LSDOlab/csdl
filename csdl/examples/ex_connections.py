@@ -462,7 +462,7 @@ class ExampleValueOverwriteConnection(Model):
     # Connection should overwrite values
     # return sim['f'] = 14
     """
-    :param var: y
+    :param var: model.y
     """
 
     def define(self):
@@ -542,7 +542,7 @@ class ExampleConnectCreateOutputs(Model):
     # Connections should work for concatenations
     # return sim['y'] = [11, 6]
     """
-    :param var: f
+    :param var: y
     """
 
     def define(self):
@@ -618,7 +618,11 @@ class ExampleConnectUnpromotedNames(Model):
 
         a = self.create_input('a')
 
-        self.add(AdditionFunction(), name='A')
+        self.add(
+            AdditionFunction(),
+            name='A',
+            promotes=[],
+        )
 
         f1 = self.declare_variable('f1')
         self.register_output('y', a + f1)
@@ -633,27 +637,20 @@ class ExampleConnectUnpromotedNamesWithin(Model):
     """
 
     def define(self):
-        # NOTE: Importing definitions within a method is bad practice.
-        # This is only done here to automate example/test case
-        # generation more easily.
-        # When defining CSDL models, please put the import statements at
-        # the top of your Python file(s).
-        from csdl.examples.models.addition import AdditionFunction
-
-        m = Model()  # model B
-        a = m.create_input('a')
-        b = m.create_input('b')
-        m.register_output('f', a + b)
-
-        mm = Model()  # model A
-        c = mm.create_input('c')
-        d = mm.declare_variable('d')
-        mm.register_output('f1', c + d)
-        mm.add(m, promotes=[], name='B')
-        mm.connect('B.f', 'd')
-        self.add(mm, 'A')
+        with self.create_submodel('A') as mm:
+            c = mm.create_input('c')
+            with mm.create_submodel('B', promotes=[]) as m:
+                a = m.create_input('a')
+                b = m.create_input('b')
+                m.register_output('f', a + b)
+            d = mm.declare_variable('d')
+            mm.connect('B.f', 'd')
+            mm.register_output('f1', c + d)
 
         f1 = self.declare_variable('f1')
         e = self.create_input('e')
         self.register_output('y', e + f1)
 
+    
+   
+       
