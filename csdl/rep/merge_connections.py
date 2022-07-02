@@ -97,7 +97,7 @@ def merge_connections(
                     list(container.graph.predecessors(var_node))[0].op,
                     CustomOperation):
                 raise KeyError(
-                    f'\'{promoted_name}\' not found in promoted_to_unpromoted'
+                    f'\'{promoted_name}\' not found in promoted_to_unpromoted. This error is usually an indication that a `Model` was defined "inline" and one of its variables were used outside that `Model` instance.'
                 )
             else:
                 continue
