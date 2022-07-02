@@ -1,12 +1,12 @@
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Union
 from csdl.lang.declared_variable import DeclaredVariable
 from csdl.lang.output import Output
-from csdl.lang.operation import Operation
+from csdl.lang.implicit_operation import ImplicitOperation
 
 import numpy as np
 
 
-class BracketedSearchOperation(Operation):
+class BracketedSearchOperation(ImplicitOperation):
     """
     Class for solving implicit functions using a bracketed search
     """
@@ -15,27 +15,30 @@ class BracketedSearchOperation(Operation):
         self,
         model,
         out_res_map: Dict[str, Output],
-        res_out_map: Dict[str, DeclaredVariable],
+        # allow Output types for exposed intermediate variables
+        res_out_map: Dict[str, Union[DeclaredVariable, Output]],
         out_in_map: Dict[str, List[DeclaredVariable]],
-        brackets: Dict[str, Tuple[np.ndarray, np.ndarray]],
-        expose: List[str] = [],
-        maxiter: int = 100,
-        tol: float = 1e-6,
         *args,
+        expose: List[str] = [],
+        brackets: Dict[str, Tuple[np.ndarray, np.ndarray]] = dict(),
+        maxiter: int = 100,
+        tol: float = 1e-7,
         **kwargs,
     ):
-        self.nouts = len(out_res_map.keys())
+        super().__init__(
+            model,
+            out_res_map,
+            res_out_map,
+            out_in_map,
+            *args,
+            expose=expose,
+            **kwargs,
+        )
         in_vars: Set[DeclaredVariable] = set()
         for _, v in out_in_map.items():
             in_vars = in_vars.union(set(v))
-        self.nargs = len(in_vars)
-        super().__init__(*args, **kwargs)
         self._model = model
-        self.res_out_map: Dict[str, DeclaredVariable] = res_out_map
-        self.out_res_map: Dict[str, Output] = out_res_map
-        self.out_in_map: Dict[str, List[DeclaredVariable]] = out_in_map
         self.brackets: Dict[str, Tuple[np.ndarray,
                                        np.ndarray]] = brackets
-        self.expose: List[str] = expose
         self.maxiter: int = maxiter
         self.tol: float = tol

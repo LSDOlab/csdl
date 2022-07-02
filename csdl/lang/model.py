@@ -523,7 +523,6 @@ class Model:
             self.registered_outputs.append(var)
         return var
 
-    # TODO: what to do about create_model?
     def add(
         self,
         submodel: 'Model',
@@ -733,13 +732,15 @@ class Model:
                     states_without_brackets))
 
         op = BracketedSearchOperation(
-            model=implicit_model,
-            out_res_map=out_res_map,
-            res_out_map=res_out_map,
-            out_in_map=out_in_map,
+            implicit_model,
+            out_res_map,
+            res_out_map,
+            out_in_map,
+            *arguments,
+            expose=expose,
             brackets=new_brackets,
             maxiter=maxiter,
-            expose=expose,
+            # TODO: add tol
         )
         self.implicit_operations.append(op)
 
@@ -911,14 +912,14 @@ class Model:
         # create operation, establish dependencies on arguments
         op = ImplicitOperation(
             model,
-            nonlinear_solver,
-            linear_solver,
             out_res_map,
             res_out_map,
             out_in_map,
-            expose,
-            new_default_values,
             *arguments,
+            expose=expose,
+            defaults=new_default_values,
+            nonlinear_solver=nonlinear_solver,
+            linear_solver=linear_solver,
         )
         self.implicit_operations.append(op)
 
