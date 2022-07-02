@@ -14,7 +14,7 @@ def example(Simulator):
             from csdl.examples.models.quadratic_function import QuadraticFunction
     
             l = self.declare_variable('l', val=0)
-            u = self.declare_variable('l', val=2)
+            u = self.declare_variable('u', val=2)
     
             solve_quadratic = self.create_implicit_operation(
                 QuadraticFunction(shape=(1, )))
@@ -34,5 +34,3 @@ def example(Simulator):
     print(sim['x'])
     
     return sim, rep
-from csdl_om import Simulator
-example(Simulator)

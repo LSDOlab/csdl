@@ -15,7 +15,7 @@ def example(Simulator):
             model.register_output('y', y)
     
             l = self.declare_variable('l', val=0)
-            u = self.declare_variable('l', val=2)
+            u = self.declare_variable('u', val=2)
     
             solve_quadratic = self.create_implicit_operation(model)
             solve_quadratic.declare_state('x', residual='y', bracket=(l, u))

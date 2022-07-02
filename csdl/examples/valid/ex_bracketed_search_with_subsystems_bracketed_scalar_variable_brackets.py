@@ -22,7 +22,7 @@ def example(Simulator):
                 maxiter=100)
     
             l = self.declare_variable('l', val=0)
-            u = self.declare_variable('l', val=2)
+            u = self.declare_variable('u', val=2)
     
             solve_quadratic = self.create_implicit_operation(
                 QuadraticWithExtraTerm(shape=(1, )))
