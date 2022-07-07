@@ -212,6 +212,10 @@ class Model:
         Declare the objective for the optimization problem. Objective
         must be a scalar variable.
         """
+        if len(self.objective) > 0:
+            raise ValueError(
+                "Cannot add more than one objective. More than one objective was added to the same model."
+            )
         self.objective = dict(
             name=name,
             ref=ref,
@@ -1007,14 +1011,6 @@ class Model:
                 KeyError(
                     "Invalid name {} for exposing an intermediate variable in composite residual. Exposing intermediate variables with unpromoted names is not supported."
                     .format(name))
-
-        # ignore optimization problem defined in model, if any;
-        # this instance of the model is not defining an optimization
-        # problem
-        # TODO: do this in the GraphRepresentation
-        model.design_variables = dict()
-        model.objective = None
-        model.constraints = dict()
 
         # check that name and shape of each argument matches name and
         # shape of a declared variable in internal model, and transfer

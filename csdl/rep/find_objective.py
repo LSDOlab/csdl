@@ -7,16 +7,16 @@ from csdl.utils.prepend_namespace import prepend_namespace
 from csdl.utils.find_promoted_name import find_promoted_name
 
 
-def collect_constraints(
-    model: 'Model',
-    promoted_to_unpromoted: Dict[str, Set[str]],
-    unpromoted_to_promoted: Dict[str, str],
-    namespace: str = '',
-    constraints: Dict[str, Dict[str, Any]] = dict(),
-) -> Dict[str, Dict[str, Any]]:
-    for k, constraint in model.constraints.items():
+def find_objective(
+        model: 'Model',
+        promoted_to_unpromoted: Dict[str, Set[str]],
+        unpromoted_to_promoted: Dict[str, str],
+        namespace: str = '',
+        objective: Dict[str, Any] = dict(),
+) -> Dict[str, Any]:
+    if len(model.objective) > 0:
         name = find_promoted_name(
-            k,
+            model.objective['name'],
             model.promoted_to_unpromoted,
             model.unpromoted_to_promoted,
         )
@@ -26,22 +26,21 @@ def collect_constraints(
             unpromoted_to_promoted,
         )
 
-        # TODO: make this more helpful for users to find both
-        # constraints
-        if name in constraints.keys():
+        if len(objective) > 1:
             raise ValueError(
-                f"Redundant constraint {name} declared."
+                f"Cannot add more than one objective. Attempting to add two objectives, {objective['name']} and {name}."
             )
 
-        constraints[name] = constraint
+        objective = model.objective
+        objective['name'] = name
 
     for s in model.subgraphs:
-        constraints = collect_constraints(
+        objective = find_objective(
             s.submodel,
             promoted_to_unpromoted,
             unpromoted_to_promoted,
             prepend_namespace(namespace, s.name),
-            constraints=constraints,
+            objective=objective,
         )
 
-    return constraints
+    return objective

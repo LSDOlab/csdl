@@ -19,6 +19,9 @@ from csdl.rep.sort_nodes_nx import sort_nodes_nx
 from csdl.rep.get_registered_outputs_from_graph import get_registered_outputs_from_graph
 from csdl.rep.resolve_promotions import resolve_promotions
 from csdl.rep.collect_connections import collect_connections
+from csdl.rep.collect_design_variables import collect_design_variables
+from csdl.rep.collect_constraints import collect_constraints
+from csdl.rep.find_objective import find_objective
 from csdl.utils.prepend_namespace import prepend_namespace
 from networkx import DiGraph, ancestors, simple_cycles
 try:
@@ -141,6 +144,36 @@ class GraphRepresentation:
                     raise KeyError(
                         "Promotion maps not found for variable {}. This indicates an error in the compiler implementation, not the user's model."
                         .format(k))
+        # collect information about optimization problem
+        self.design_variables: Dict[str, Dict[
+            str, Any]] = collect_design_variables(
+                model,
+                model.promoted_to_unpromoted,
+                model.unpromoted_to_promoted,
+            )
+        """
+        Design variables of the optimization problem, if an optimization
+        problem is defined
+        """
+        self.objective: Dict[str, Any] = find_objective(
+            model,
+            model.promoted_to_unpromoted,
+            model.unpromoted_to_promoted,
+        )
+        """
+        Objective of the optimization problem, if an optimization
+        problem is defined
+        """
+        self.constraints: Dict[str,
+                               Dict[str, Any]] = collect_constraints(
+                                   model,
+                                   model.promoted_to_unpromoted,
+                                   model.unpromoted_to_promoted,
+                               )
+        """
+        Constraints of the optimization problem, if a constrained
+        optimization problem is defined
+        """
         # check that there are no duplicate unpromoted names
         from collections import Counter
         from functools import reduce
@@ -235,24 +268,7 @@ class GraphRepresentation:
         """
         Nodes sorted in order of execution, using the unflattened graph
         """
-        # TODO: collect_design_variables
-        self.design_variables: Dict[str, Dict[str, Any]] = dict()
-        """
-        Design variables of the optimization problem, if an optimization
-        problem is defined
-        """
-        # TODO: find_objective
-        self.objective: Dict[str, Any] | None = None
-        """
-        Objective of the optimization problem, if an optimization
-        problem is defined
-        """
-        # TODO: collect_constraints
-        self.constraints: Dict[str, Dict[str, Any]] = dict()
-        """
-        Constraints of the optimization problem, if a constrained
-        optimization problem is defined
-        """
+
         self._variable_nodes: list[VariableNode] = get_var_nodes(
             self.flat_graph)
         self._operation_nodes: list[
