@@ -5,7 +5,7 @@ import pytest
 def test_vector_vector_dot(backend):
     from csdl.examples.valid.ex_dot_vector_vector import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 3
 
@@ -27,7 +27,7 @@ def test_vector_vector_dot(backend):
 def test_tensor_tensor_first_dot(backend):
     from csdl.examples.valid.ex_dot_tensor_tensor_first import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 3
     n = 4
@@ -57,7 +57,7 @@ def test_tensor_tensor_first_dot(backend):
 def test_tensor_tensor_last_dot(backend):
     from csdl.examples.valid.ex_dot_tensor_tensor_last import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 2
     n = 4

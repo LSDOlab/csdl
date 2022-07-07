@@ -1,6 +1,6 @@
-from csdl.core.custom_operation import CustomOperation
-from csdl.core.variable import Variable
-from csdl.core.output import Output
+from csdl.lang.custom_operation import CustomOperation
+from csdl.lang.variable import Variable
+from csdl.lang.output import Output
 from collections import OrderedDict
 from csdl.utils.gen_hex_name import gen_hex_name
 

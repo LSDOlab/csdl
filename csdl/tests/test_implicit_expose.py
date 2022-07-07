@@ -5,7 +5,7 @@ import pytest
 def test_implicit_nonlinear(backend):
     from csdl.examples.valid.ex_implicit_expose_apply_nonlinear_with_expose import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     sim['x'] = 1.9
     sim.run()
@@ -30,7 +30,7 @@ def test_implicit_nonlinear(backend):
 def test_fixed_point_iteration(backend):
     from csdl.examples.valid.ex_implicit_expose_fixed_point_iteration_with_expose import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     np.testing.assert_approx_equal(
         sim['a'],
         1.1241230297043157,
@@ -50,14 +50,14 @@ def test_fixed_point_iteration(backend):
     )
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
-                                method='fd')
+                                method='cs')
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
 def test_implicit_nonlinear_with_subsystems_in_residual(backend):
     from csdl.examples.valid.ex_implicit_expose_with_subsystems_with_expose import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     np.testing.assert_approx_equal(
         sim['a'],
@@ -104,14 +104,14 @@ def test_implicit_nonlinear_with_subsystems_in_residual(backend):
     )
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
-                                method='fd')
+                                method='cs')
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
 def test_implicit_multiple_residuals(backend):
     from csdl.examples.valid.ex_implicit_expose_multiple_residuals_with_expose import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     np.testing.assert_almost_equal(
         sim['x'],
         np.array([np.sqrt(3)]),
@@ -149,7 +149,7 @@ def test_implicit_multiple_residuals(backend):
 def test_implicit_nonlinear_define_model_inline(backend):
     from csdl.examples.valid.ex_implicit_expose_apply_nonlinear_with_expose_define_model_inline import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     sim['x'] = 1.9
     sim.run()
@@ -174,7 +174,7 @@ def test_implicit_nonlinear_define_model_inline(backend):
 def test_fixed_point_iteration_define_model_inline(backend):
     from csdl.examples.valid.ex_implicit_expose_fixed_point_iteration_with_expose_define_model_inline import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     np.testing.assert_approx_equal(
         sim['a'],
         1.1241230297043157,
@@ -194,7 +194,7 @@ def test_fixed_point_iteration_define_model_inline(backend):
     )
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
-                                method='fd')
+                                method='cs')
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 
@@ -202,7 +202,7 @@ def test_implicit_nonlinear_with_subsystems_in_residual_define_model_inline(
         backend):
     from csdl.examples.valid.ex_implicit_expose_with_subsystems_with_expose_define_model_inline import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     np.testing.assert_approx_equal(
         sim['a'],
@@ -220,10 +220,8 @@ def test_implicit_nonlinear_with_subsystems_in_residual_define_model_inline(
         sim['x'],
         np.array([1.044583306084130]),
     )
-    np.testing.assert_almost_equal(
-        sim['t4'],
-        np.array([1.044583306084130**2]),
-    )
+    np.testing.assert_almost_equal( sim['t4'],0)
+    np.testing.assert_almost_equal( sim['y'],0)
 
     sim['x'] = 1.9
     sim.run()
@@ -243,10 +241,8 @@ def test_implicit_nonlinear_with_subsystems_in_residual_define_model_inline(
         sim['x'],
         np.array([2.659476838580102]),
     )
-    np.testing.assert_approx_equal(
-        sim['t4'],
-        np.array([2.659476838580102**2]),
-    )
+    np.testing.assert_almost_equal( sim['t4'],0)
+    np.testing.assert_almost_equal( sim['y'],0)
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='fd')
@@ -256,7 +252,7 @@ def test_implicit_nonlinear_with_subsystems_in_residual_define_model_inline(
 def test_implicit_multiple_residuals_define_model_inline(backend):
     from csdl.examples.valid.ex_implicit_expose_multiple_residuals_with_expose_define_model_inline import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     np.testing.assert_almost_equal(
         sim['x'],
         np.array([np.sqrt(3)]),

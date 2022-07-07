@@ -1,10 +1,11 @@
 import imp
-from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+from csdl import Model, GraphRepresentation, ScipyKrylov, NewtonSolver, NonlinearBlockGS
 from csdl.examples.models.fixed_point import FixedPoint2Expose
 import numpy as np
 
 
 class ExampleApplyNonlinearWithExpose(Model):
+
     def define(self):
         # define internal model that defines a residual
         model = Model()
@@ -37,6 +38,7 @@ class ExampleFixedPointIterationWithExpose(Model):
     :param var: b
     :param var: c
     """
+
     def define(self):
         # x == (3 + x - 2 * x**2)**(1 / 4)
         m1 = Model()
@@ -78,6 +80,7 @@ class ExampleFixedPointIterationWithExpose(Model):
 
 
 class ExampleWithSubsystemsWithExpose(Model):
+
     def define(self):
         with self.create_submodel('R') as model:
             p = model.create_input('p', val=7)
@@ -130,6 +133,7 @@ class ExampleMultipleResidualsWithExpose(Model):
     :param var: t3
     :param var: t4
     """
+
     def define(self):
         m = Model()
         r = m.declare_variable('r')
@@ -173,6 +177,7 @@ class ExampleApplyNonlinearWithExposeDefineModelInline(Model):
     :param var: x
     :param var: t
     """
+
     def define(self):
         # NOTE: Importing definitions within a method is bad practice.
         # This is only done here to automate example/test case
@@ -203,6 +208,7 @@ class ExampleFixedPointIterationWithExposeDefineModelInline(Model):
     :param var: b
     :param var: c
     """
+
     def define(self):
         # NOTE: Importing definitions within a method is bad practice.
         # This is only done here to automate example/test case
@@ -234,6 +240,7 @@ class ExampleFixedPointIterationWithExposeDefineModelInline(Model):
 
 
 class ExampleWithSubsystemsWithExposeDefineModelInline(Model):
+
     def define(self):
         # NOTE: Importing definitions within a method is bad practice.
         # This is only done here to automate example/test case
@@ -266,7 +273,13 @@ class ExampleWithSubsystemsWithExposeDefineModelInline(Model):
         solve_quadratic.linear_solver = ScipyKrylov()
 
         c = self.declare_variable('c', val=18)
-        y, t3, t4 = solve_quadratic(a, b, c, r, expose=['t3', 't4'])
+        x, t3, t4, y = solve_quadratic(
+            a,
+            b,
+            c,
+            r,
+            expose=['t3', 't4', 'y'],
+        )
 
 
 class ExampleMultipleResidualsWithExposeDefineModelInline(Model):
@@ -278,6 +291,7 @@ class ExampleMultipleResidualsWithExposeDefineModelInline(Model):
     :param var: t3
     :param var: t4
     """
+
     def define(self):
         # NOTE: Importing definitions within a method is bad practice.
         # This is only done here to automate example/test case
@@ -292,7 +306,9 @@ class ExampleMultipleResidualsWithExposeDefineModelInline(Model):
         solve_multiple_implicit.declare_state('y', residual='ry')
         solve_multiple_implicit.linear_solver = ScipyKrylov()
         solve_multiple_implicit.nonlinear_solver = NewtonSolver(
-            solve_subsystems=False)
+            solve_subsystems=False,
+            maxiter=100,
+        )
 
         r = self.declare_variable('r', val=2)
         a = self.declare_variable('a', val=1)

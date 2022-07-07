@@ -1,7 +1,7 @@
 def example(Simulator):
     import numpy as np
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ErrorMultidimensionalOverlap(Model):
@@ -15,6 +15,7 @@ def example(Simulator):
             x[0:2, 0:3] = z
     
     
-    sim = Simulator(ErrorMultidimensionalOverlap())
+    rep = GraphRepresentation(ErrorMultidimensionalOverlap())
+    sim = Simulator(rep)
     sim.run()
     

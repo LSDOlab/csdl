@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -31,7 +31,8 @@ def example(Simulator):
             assert ma.shape == (m, o, p, q)
     
     
-    sim = Simulator(ExampleAxiswiseRandom())
+    rep = GraphRepresentation(ExampleAxiswiseRandom())
+    sim = Simulator(rep)
     sim.run()
     
     print('tensor', sim['tensor'].shape)
@@ -39,4 +40,4 @@ def example(Simulator):
     print('AxiswiseMax', sim['AxiswiseMax'].shape)
     print(sim['AxiswiseMax'])
     
-    return sim
+    return sim, rep

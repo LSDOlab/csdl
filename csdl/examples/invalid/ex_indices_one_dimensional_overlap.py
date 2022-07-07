@@ -1,7 +1,7 @@
 def example(Simulator):
     import numpy as np
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ErrorOneDimensionalOverlap(Model):
@@ -20,6 +20,7 @@ def example(Simulator):
             z[n - 5:n - 1] = y - 3
     
     
-    sim = Simulator(ErrorOneDimensionalOverlap())
+    rep = GraphRepresentation(ErrorOneDimensionalOverlap())
+    sim = Simulator(rep)
     sim.run()
     

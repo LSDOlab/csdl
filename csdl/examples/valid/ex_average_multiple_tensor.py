@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -28,7 +28,8 @@ def example(Simulator):
                                  csdl.average(T1, T2))
     
     
-    sim = Simulator(ExampleMultipleTensor())
+    rep = GraphRepresentation(ExampleMultipleTensor())
+    sim = Simulator(rep)
     sim.run()
     
     print('T1', sim['T1'].shape)
@@ -38,4 +39,4 @@ def example(Simulator):
     print('multiple_tensor_average', sim['multiple_tensor_average'].shape)
     print(sim['multiple_tensor_average'])
     
-    return sim
+    return sim, rep

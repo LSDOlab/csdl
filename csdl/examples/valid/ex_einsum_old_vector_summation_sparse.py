@@ -1,6 +1,6 @@
 def example(Simulator):
     import numpy as np
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     
     
@@ -14,7 +14,8 @@ def example(Simulator):
                 csdl.einsum(vec, subscripts='i->', partial_format='sparse'))
     
     
-    sim = Simulator(ExampleVectorSummationSparse())
+    rep = GraphRepresentation(ExampleVectorSummationSparse())
+    sim = Simulator(rep)
     sim.run()
     
     print('a', sim['a'].shape)
@@ -22,4 +23,4 @@ def example(Simulator):
     print('einsum_summ1_sparse_derivs', sim['einsum_summ1_sparse_derivs'].shape)
     print(sim['einsum_summ1_sparse_derivs'])
     
-    return sim
+    return sim, rep

@@ -5,7 +5,7 @@ import pytest
 def test_reshape_tensor2vector(backend):
     from csdl.examples.valid.ex_reshape_tensor2_vector import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     i = 2
     j = 3
@@ -32,7 +32,7 @@ def test_reshape_tensor2vector(backend):
 def test_reshape_vector2tensor(backend):
     from csdl.examples.valid.ex_reshape_vector2_tensor import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     i = 2
     j = 3

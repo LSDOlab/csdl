@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -27,7 +27,8 @@ def example(Simulator):
             assert ma.shape == (2, 3)
     
     
-    sim = Simulator(ExampleElementwise())
+    rep = GraphRepresentation(ExampleElementwise())
+    sim = Simulator(rep)
     sim.run()
     
     print('tensor1', sim['tensor1'].shape)
@@ -37,4 +38,4 @@ def example(Simulator):
     print('ElementwiseMin', sim['ElementwiseMin'].shape)
     print(sim['ElementwiseMin'])
     
-    return sim
+    return sim, rep

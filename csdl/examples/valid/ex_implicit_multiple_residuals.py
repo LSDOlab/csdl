@@ -1,13 +1,6 @@
 def example(Simulator):
-    from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl import Model, GraphRepresentation, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     import numpy as np
-    from csdl.examples.models.quadratic_function import QuadraticFunction
-    from csdl.examples.models.fixed_point import FixedPoint1, FixedPoint2, FixedPoint3
-    from csdl.examples.models.fixed_point import FixedPoint2
-    from csdl.examples.models.quadratic_wih_extra_term import QuadraticWithExtraTerm
-    from csdl.examples.models.simple_add import SimpleAdd
-    from csdl.examples.models.circle_parabola import CircleParabola
-    from csdl.examples.models.quadratic_function import QuadraticFunction
     
     
     class ExampleMultipleResiduals(Model):
@@ -37,7 +30,8 @@ def example(Simulator):
             x, y = solve_multiple_implicit(r, a, b, c)
     
     
-    sim = Simulator(ExampleMultipleResiduals())
+    rep = GraphRepresentation(ExampleMultipleResiduals())
+    sim = Simulator(rep)
     sim.run()
     
     print('x', sim['x'].shape)
@@ -45,4 +39,4 @@ def example(Simulator):
     print('y', sim['y'].shape)
     print(sim['y'])
     
-    return sim
+    return sim, rep

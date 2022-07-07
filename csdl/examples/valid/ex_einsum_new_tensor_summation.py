@@ -1,6 +1,6 @@
 def example(Simulator):
     import numpy as np
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     
     
@@ -22,7 +22,8 @@ def example(Simulator):
                 ))
     
     
-    sim = Simulator(ExampleTensorSummation())
+    rep = GraphRepresentation(ExampleTensorSummation())
+    sim = Simulator(rep)
     sim.run()
     
     print('c', sim['c'].shape)
@@ -30,4 +31,4 @@ def example(Simulator):
     print('einsum_summ2', sim['einsum_summ2'].shape)
     print(sim['einsum_summ2'])
     
-    return sim
+    return sim, rep

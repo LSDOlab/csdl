@@ -5,7 +5,7 @@ import pytest
 def test_literals(backend):
     from csdl.examples.valid.ex_explicit_literals import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     np.testing.assert_approx_equal(sim['y'], -3.)
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
@@ -16,7 +16,7 @@ def test_literals(backend):
 def test_simple_binary(backend):
     from csdl.examples.valid.ex_explicit_binary_operations import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     np.testing.assert_approx_equal(sim['y1'], 7.)
     np.testing.assert_approx_equal(sim['y2'], 5.)
     np.testing.assert_approx_equal(sim['y3'], 1.)
@@ -38,19 +38,18 @@ def test_simple_binary(backend):
 def test_no_registered_outputs(backend):
     from csdl.examples.valid.ex_explicit_no_registered_output import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     np.testing.assert_approx_equal(sim['prod'], 24.)
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
                                 method='fd')
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
-    assert len(sim.prob.model._subgroups_myproc) == 1
 
 
 def test_unary_exprs(backend):
     from csdl.examples.valid.ex_explicit_unary import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     x = np.pi
     y = 1
     np.testing.assert_approx_equal(sim['arccos'], np.arccos(y))
@@ -80,7 +79,7 @@ def test_unary_exprs(backend):
 def test_explicit_with_subsystems(backend):
     from csdl.examples.valid.ex_explicit_with_subsystems import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     np.testing.assert_approx_equal(sim['x1'], 40.)
     np.testing.assert_approx_equal(sim['x2'], 12.)
     np.testing.assert_approx_equal(sim['y1'], 52.)

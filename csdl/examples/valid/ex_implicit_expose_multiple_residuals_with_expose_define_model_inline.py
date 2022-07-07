@@ -1,17 +1,12 @@
 def example(Simulator):
     import imp
-    from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl import Model, GraphRepresentation, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     from csdl.examples.models.fixed_point import FixedPoint2Expose
     import numpy as np
-    from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
-    from csdl.examples.models.fixed_point import FixedPoint1Expose, FixedPoint2Expose, FixedPoint3Expose
-    from csdl.examples.models.simple_add import SimpleAdd
-    from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
-    from csdl.examples.models.fixed_point import FixedPoint2Expose
-    from csdl.examples.models.circle_parabola import CircleParabolaExpose
     
     
     class ExampleMultipleResidualsWithExposeDefineModelInline(Model):
+    
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
             # This is only done here to automate example/test case
@@ -26,7 +21,9 @@ def example(Simulator):
             solve_multiple_implicit.declare_state('y', residual='ry')
             solve_multiple_implicit.linear_solver = ScipyKrylov()
             solve_multiple_implicit.nonlinear_solver = NewtonSolver(
-                solve_subsystems=False)
+                solve_subsystems=False,
+                maxiter=100,
+            )
     
             r = self.declare_variable('r', val=2)
             a = self.declare_variable('a', val=1)
@@ -41,7 +38,8 @@ def example(Simulator):
             )
     
     
-    sim = Simulator(ExampleMultipleResidualsWithExposeDefineModelInline())
+    rep = GraphRepresentation(ExampleMultipleResidualsWithExposeDefineModelInline())
+    sim = Simulator(rep)
     sim.run()
     
     print('x', sim['x'].shape)
@@ -57,4 +55,4 @@ def example(Simulator):
     print('t4', sim['t4'].shape)
     print(sim['t4'])
     
-    return sim
+    return sim, rep

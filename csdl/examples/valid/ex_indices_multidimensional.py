@@ -1,7 +1,7 @@
 def example(Simulator):
     import numpy as np
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ExampleMultidimensional(Model):
@@ -40,7 +40,8 @@ def example(Simulator):
             t[0:5, 0:-1, 0:3] = p
     
     
-    sim = Simulator(ExampleMultidimensional())
+    rep = GraphRepresentation(ExampleMultidimensional())
+    sim = Simulator(rep)
     sim.run()
     
     print('x', sim['x'].shape)
@@ -56,4 +57,4 @@ def example(Simulator):
     print('t', sim['t'].shape)
     print(sim['t'])
     
-    return sim
+    return sim, rep

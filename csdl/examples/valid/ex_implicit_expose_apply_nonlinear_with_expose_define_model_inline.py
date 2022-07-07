@@ -1,17 +1,12 @@
 def example(Simulator):
     import imp
-    from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl import Model, GraphRepresentation, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     from csdl.examples.models.fixed_point import FixedPoint2Expose
     import numpy as np
-    from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
-    from csdl.examples.models.fixed_point import FixedPoint1Expose, FixedPoint2Expose, FixedPoint3Expose
-    from csdl.examples.models.simple_add import SimpleAdd
-    from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
-    from csdl.examples.models.fixed_point import FixedPoint2Expose
-    from csdl.examples.models.circle_parabola import CircleParabolaExpose
     
     
     class ExampleApplyNonlinearWithExposeDefineModelInline(Model):
+    
         def define(self):
             # NOTE: Importing definitions within a method is bad practice.
             # This is only done here to automate example/test case
@@ -36,7 +31,8 @@ def example(Simulator):
             x, t = solve_quadratic(a, b, c, expose=['t'])
     
     
-    sim = Simulator(ExampleApplyNonlinearWithExposeDefineModelInline())
+    rep = GraphRepresentation(ExampleApplyNonlinearWithExposeDefineModelInline())
+    sim = Simulator(rep)
     sim.run()
     
     print('x', sim['x'].shape)
@@ -44,4 +40,4 @@ def example(Simulator):
     print('t', sim['t'].shape)
     print(sim['t'])
     
-    return sim
+    return sim, rep

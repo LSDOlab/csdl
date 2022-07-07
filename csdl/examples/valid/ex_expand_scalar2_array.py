@@ -1,6 +1,6 @@
 def example(Simulator):
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import numpy as np
     
     
@@ -12,7 +12,8 @@ def example(Simulator):
             self.register_output('expanded_scalar', expanded_scalar)
     
     
-    sim = Simulator(ExampleScalar2Array())
+    rep = GraphRepresentation(ExampleScalar2Array())
+    sim = Simulator(rep)
     sim.run()
     
     print('scalar', sim['scalar'].shape)
@@ -20,4 +21,4 @@ def example(Simulator):
     print('expanded_scalar', sim['expanded_scalar'].shape)
     print(sim['expanded_scalar'])
     
-    return sim
+    return sim, rep

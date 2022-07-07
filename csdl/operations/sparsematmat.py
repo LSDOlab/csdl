@@ -1,4 +1,4 @@
-from csdl.core.standard_operation import StandardOperation
+from csdl.lang.standard_operation import StandardOperation
 
 
 class sparsematmat(StandardOperation):
@@ -8,4 +8,3 @@ class sparsematmat(StandardOperation):
         super().__init__(*args, **kwargs)
         self.properties['iterative'] = False
         self.literals['sparse_mat'] = sparse_mat
-

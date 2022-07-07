@@ -1,5 +1,5 @@
-from csdl.core.standard_operation import StandardOperation
-from csdl.core.node import Node
+from csdl.lang.standard_operation import StandardOperation
+from csdl.lang.node import Node
 
 
 class indexed_passthrough(StandardOperation):
@@ -8,4 +8,4 @@ class indexed_passthrough(StandardOperation):
         self.nargs = None
         self.nouts = 1
         super().__init__(*args, **kwargs)
-        self.outs = [output]
+        self.outs = (output, )

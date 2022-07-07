@@ -1,7 +1,7 @@
 def example(Simulator):
     import numpy as np
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ErrorIntegerOutOfRange(Model):
@@ -12,6 +12,7 @@ def example(Simulator):
             x[1] = a
     
     
-    sim = Simulator(ErrorIntegerOutOfRange())
+    rep = GraphRepresentation(ErrorIntegerOutOfRange())
+    sim = Simulator(rep)
     sim.run()
     

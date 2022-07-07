@@ -5,7 +5,7 @@ import pytest
 def test_rotmat_scalar_rotX(backend):
     from csdl.examples.valid.ex_rotmat_scalar_rot_x import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     c = np.cos(np.pi / 3)
     s = np.sin(np.pi / 3)
@@ -26,7 +26,7 @@ def test_rotmat_scalar_rotX(backend):
 def test_rotmat_scalar_rotY(backend):
     from csdl.examples.valid.ex_rotmat_scalar_rot_y import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     c = np.cos(np.pi / 3)
     s = np.sin(np.pi / 3)
@@ -40,7 +40,7 @@ def test_rotmat_scalar_rotY(backend):
 def test_rotmat_same_radian_tensor_rotX(backend):
     from csdl.examples.valid.ex_rotmat_same_radian_tensor_rot_x import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     # Shape of a random tensor rotation matrix
     shape = (2, 3, 4)
@@ -70,7 +70,7 @@ def test_rotmat_same_radian_tensor_rotX(backend):
 def test_rotmat_same_radian_tensor_rotX(backend):
     from csdl.examples.valid.ex_rotmat_same_radian_tensor_rot_x import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     # Shape of a random tensor rotation matrix
     shape = (2, 3, 4)
@@ -100,7 +100,7 @@ def test_rotmat_same_radian_tensor_rotX(backend):
 def test_rotmat_diff_radian_tensor_rotX(backend):
     from csdl.examples.valid.ex_rotmat_diff_radian_tensor_rot_x import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     # Shape of a random tensor rotation matrix
     shape = (2, 3, 4)

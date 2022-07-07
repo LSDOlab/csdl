@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -19,7 +19,8 @@ def example(Simulator):
             self.register_output('multiple_vector_sum', csdl.sum(v1, v2))
     
     
-    sim = Simulator(ExampleMultipleVector())
+    rep = GraphRepresentation(ExampleMultipleVector())
+    sim = Simulator(rep)
     sim.run()
     
     print('v1', sim['v1'].shape)
@@ -29,4 +30,4 @@ def example(Simulator):
     print('multiple_vector_sum', sim['multiple_vector_sum'].shape)
     print(sim['multiple_vector_sum'])
     
-    return sim
+    return sim, rep

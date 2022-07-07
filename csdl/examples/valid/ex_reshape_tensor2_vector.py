@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -22,7 +22,8 @@ def example(Simulator):
                                  csdl.reshape(in1, new_shape=(size, )))
     
     
-    sim = Simulator(ExampleTensor2Vector())
+    rep = GraphRepresentation(ExampleTensor2Vector())
+    sim = Simulator(rep)
     sim.run()
     
     print('in1', sim['in1'].shape)
@@ -30,4 +31,4 @@ def example(Simulator):
     print('reshape_tensor2vector', sim['reshape_tensor2vector'].shape)
     print(sim['reshape_tensor2vector'])
     
-    return sim
+    return sim, rep

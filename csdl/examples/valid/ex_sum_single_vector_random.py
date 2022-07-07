@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -17,7 +17,8 @@ def example(Simulator):
             self.register_output('single_vector_sum', csdl.sum(v1))
     
     
-    sim = Simulator(ExampleSingleVectorRandom())
+    rep = GraphRepresentation(ExampleSingleVectorRandom())
+    sim = Simulator(rep)
     sim.run()
     
     print('v1', sim['v1'].shape)
@@ -25,4 +26,4 @@ def example(Simulator):
     print('single_vector_sum', sim['single_vector_sum'].shape)
     print(sim['single_vector_sum'])
     
-    return sim
+    return sim, rep

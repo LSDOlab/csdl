@@ -1,12 +1,11 @@
-from typing import Tuple, Union
+from typing import Tuple, List
 import numpy as np
-from numbers import Number
 
 
 def get_shape_val(
-    shape: Union[int, Tuple[int]],
-    val: Union[int, float, np.ndarray],
-) -> Tuple[Tuple[int], np.ndarray]:
+    shape: int | Tuple[int],
+    val: int | float | np.ndarray | List[int] | List[float],
+) -> Tuple[Tuple[int, ...], np.ndarray]:
     """
     Get shape from shape or value if shape is unspecified
 

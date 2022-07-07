@@ -1,5 +1,5 @@
-from csdl.core.variable import Variable
-from csdl.core.output import Output
+from csdl.lang.variable import Variable
+from csdl.lang.output import Output
 import csdl.operations as ops
 from typing import List
 import numpy as np
@@ -8,7 +8,7 @@ import scipy.sparse
 
 def sparsematmat(mat, sparse_mat=None):
     '''
-    This function can compute a quaternion-vector multiplication, that results in a 
+    This function can compute a quaternion-vector multiplication, that results in a
     rotated vector.
 
     **Parameters**
@@ -36,7 +36,7 @@ def sparsematmat(mat, sparse_mat=None):
                 mat.name,
                 mat.shape,
             ))
-            
+
     op = ops.sparsematmat(mat, sparse_mat=sparse_mat)
     op.outs = [
         Output(

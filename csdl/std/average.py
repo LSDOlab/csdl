@@ -1,5 +1,5 @@
-from csdl.core.variable import Variable
-from csdl.core.output import Output
+from csdl.lang.variable import Variable
+from csdl.lang.output import Output
 import csdl.operations as ops
 from typing import List
 import numpy as np

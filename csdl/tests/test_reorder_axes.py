@@ -5,7 +5,7 @@ import pytest
 def test_reorder_axes_matrix(backend):
     from csdl.examples.valid.ex_reorder_axes_matrix import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     val = np.arange(4 * 2).reshape((4, 2))
     desired_output = np.transpose(val)
@@ -24,7 +24,7 @@ def test_reorder_axes_matrix(backend):
 def test_reorder_axes_tensor(backend):
     from csdl.examples.valid.ex_reorder_axes_tensor import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     val = np.arange(4 * 3 * 5 * 2).reshape((4, 3, 5, 2))
     desired_output = np.transpose(val, [3, 1, 2, 0])

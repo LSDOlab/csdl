@@ -1,7 +1,7 @@
 from csdl.utils.einsum_utils import compute_einsum_shape, new_einsum_subscripts_to_string_and_list
 import csdl.operations as ops
-from csdl.core.variable import Variable
-from csdl.core.output import Output
+from csdl.lang.variable import Variable
+from csdl.lang.output import Output
 from typing import List
 
 

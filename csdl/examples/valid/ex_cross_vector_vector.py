@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -17,7 +17,8 @@ def example(Simulator):
             self.register_output('VecVecCross', csdl.cross(vec1, vec2, axis=0))
     
     
-    sim = Simulator(ExampleVectorVector())
+    rep = GraphRepresentation(ExampleVectorVector())
+    sim = Simulator(rep)
     sim.run()
     
     print('vec1', sim['vec1'].shape)
@@ -27,4 +28,4 @@ def example(Simulator):
     print('VecVecCross', sim['VecVecCross'].shape)
     print(sim['VecVecCross'])
     
-    return sim
+    return sim, rep

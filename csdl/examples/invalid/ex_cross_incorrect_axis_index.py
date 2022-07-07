@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -20,6 +20,7 @@ def example(Simulator):
             self.register_output('TenTenCross', csdl.cross(ten1, ten2, axis=2))
     
     
-    sim = Simulator(ErrorIncorrectAxisIndex())
+    rep = GraphRepresentation(ErrorIncorrectAxisIndex())
+    sim = Simulator(rep)
     sim.run()
     

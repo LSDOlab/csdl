@@ -1,7 +1,7 @@
 def example(Simulator):
     import numpy as np
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ExampleInteger(Model):
@@ -28,7 +28,8 @@ def example(Simulator):
             self.register_output('x_2', x[-2])
     
     
-    sim = Simulator(ExampleInteger())
+    rep = GraphRepresentation(ExampleInteger())
+    sim = Simulator(rep)
     sim.run()
     
     print('x', sim['x'].shape)
@@ -38,4 +39,4 @@ def example(Simulator):
     print('x6', sim['x6'].shape)
     print(sim['x6'])
     
-    return sim
+    return sim, rep

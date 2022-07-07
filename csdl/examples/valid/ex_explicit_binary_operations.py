@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model, NonlinearBlockGS
+    from csdl import Model, GraphRepresentation, NonlinearBlockGS
     import csdl
     import numpy as np
     
@@ -54,7 +54,8 @@ def example(Simulator):
             self.register_output('y12', y12)
     
     
-    sim = Simulator(ExampleBinaryOperations())
+    rep = GraphRepresentation(ExampleBinaryOperations())
+    sim = Simulator(rep)
     sim.run()
     
     print('y1', sim['y1'].shape)
@@ -82,4 +83,4 @@ def example(Simulator):
     print('y12', sim['y12'].shape)
     print(sim['y12'])
     
-    return sim
+    return sim, rep

@@ -1,17 +1,12 @@
 def example(Simulator):
     import imp
-    from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl import Model, GraphRepresentation, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     from csdl.examples.models.fixed_point import FixedPoint2Expose
     import numpy as np
-    from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
-    from csdl.examples.models.fixed_point import FixedPoint1Expose, FixedPoint2Expose, FixedPoint3Expose
-    from csdl.examples.models.simple_add import SimpleAdd
-    from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
-    from csdl.examples.models.fixed_point import FixedPoint2Expose
-    from csdl.examples.models.circle_parabola import CircleParabolaExpose
     
     
     class ExampleWithSubsystemsWithExpose(Model):
+    
         def define(self):
             with self.create_submodel('R') as model:
                 p = model.create_input('p', val=7)
@@ -55,7 +50,8 @@ def example(Simulator):
             x, t3, t4 = solve_quadratic(a, b, c, r, expose=['t3', 't4'])
     
     
-    sim = Simulator(ExampleWithSubsystemsWithExpose())
+    rep = GraphRepresentation(ExampleWithSubsystemsWithExpose())
+    sim = Simulator(rep)
     sim.run()
     
-    return sim
+    return sim, rep

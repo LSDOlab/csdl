@@ -1,17 +1,10 @@
 def example(Simulator):
-    from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl import Model, GraphRepresentation, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     import numpy as np
-    from csdl.examples.models.quadratic_function import QuadraticFunction
-    from csdl.examples.models.quadratic_function import QuadraticFunction
-    from csdl.examples.models.quadratic_wih_extra_term import QuadraticWithExtraTerm
-    from csdl.examples.models.simple_add import SimpleAdd
-    from csdl.examples.models.fixed_point import FixedPoint2
-    from csdl.examples.models.quadratic_wih_extra_term import QuadraticWithExtraTerm
-    from csdl.examples.models.simple_add import SimpleAdd
-    from csdl.examples.models.fixed_point import FixedPoint2
     
     
     class ExampleBracketedScalarDefineModelInline(Model):
+    
         def define(self):
             model = Model()
             a = model.declare_variable('a')
@@ -30,10 +23,11 @@ def example(Simulator):
             x = solve_quadratic(a, b, c)
     
     
-    sim = Simulator(ExampleBracketedScalarDefineModelInline())
+    rep = GraphRepresentation(ExampleBracketedScalarDefineModelInline())
+    sim = Simulator(rep)
     sim.run()
     
     print('x', sim['x'].shape)
     print(sim['x'])
     
-    return sim
+    return sim, rep

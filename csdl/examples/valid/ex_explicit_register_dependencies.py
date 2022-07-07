@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model, NonlinearBlockGS
+    from csdl import Model, GraphRepresentation, NonlinearBlockGS
     import csdl
     import numpy as np
     
@@ -18,7 +18,8 @@ def example(Simulator):
             self.register_output('y', y)
     
     
-    sim = Simulator(ExampleRegisterDependencies())
+    rep = GraphRepresentation(ExampleRegisterDependencies())
+    sim = Simulator(rep)
     sim.run()
     
     print('x', sim['x'].shape)
@@ -28,4 +29,4 @@ def example(Simulator):
     print('z', sim['z'].shape)
     print(sim['z'])
     
-    return sim
+    return sim, rep

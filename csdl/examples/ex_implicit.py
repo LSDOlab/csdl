@@ -1,4 +1,4 @@
-from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+from csdl import Model, GraphRepresentation, ScipyKrylov, NewtonSolver, NonlinearBlockGS
 import numpy as np
 
 

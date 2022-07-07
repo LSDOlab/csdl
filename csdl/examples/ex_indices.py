@@ -1,7 +1,6 @@
 import numpy as np
-
 import csdl
-from csdl import Model
+from csdl import Model, GraphRepresentation
 
 
 class ExampleInteger(Model):

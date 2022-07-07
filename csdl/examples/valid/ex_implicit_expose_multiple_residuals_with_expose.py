@@ -1,17 +1,12 @@
 def example(Simulator):
     import imp
-    from csdl import Model, ScipyKrylov, NewtonSolver, NonlinearBlockGS
+    from csdl import Model, GraphRepresentation, ScipyKrylov, NewtonSolver, NonlinearBlockGS
     from csdl.examples.models.fixed_point import FixedPoint2Expose
     import numpy as np
-    from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
-    from csdl.examples.models.fixed_point import FixedPoint1Expose, FixedPoint2Expose, FixedPoint3Expose
-    from csdl.examples.models.simple_add import SimpleAdd
-    from csdl.examples.models.quadratic_function import QuadraticFunctionExpose
-    from csdl.examples.models.fixed_point import FixedPoint2Expose
-    from csdl.examples.models.circle_parabola import CircleParabolaExpose
     
     
     class ExampleMultipleResidualsWithExpose(Model):
+    
         def define(self):
             m = Model()
             r = m.declare_variable('r')
@@ -47,7 +42,8 @@ def example(Simulator):
             )
     
     
-    sim = Simulator(ExampleMultipleResidualsWithExpose())
+    rep = GraphRepresentation(ExampleMultipleResidualsWithExpose())
+    sim = Simulator(rep)
     sim.run()
     
     print('x', sim['x'].shape)
@@ -63,4 +59,4 @@ def example(Simulator):
     print('t4', sim['t4'].shape)
     print(sim['t4'])
     
-    return sim
+    return sim, rep

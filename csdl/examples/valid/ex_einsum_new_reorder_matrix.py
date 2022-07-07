@@ -1,6 +1,6 @@
 def example(Simulator):
     import numpy as np
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     
     
@@ -16,7 +16,8 @@ def example(Simulator):
                 csdl.einsum_new_api(mat, operation=[(46, 99), (99, 46)]))
     
     
-    sim = Simulator(ExampleReorderMatrix())
+    rep = GraphRepresentation(ExampleReorderMatrix())
+    sim = Simulator(rep)
     sim.run()
     
     print('b', sim['b'].shape)
@@ -24,4 +25,4 @@ def example(Simulator):
     print('einsum_reorder1', sim['einsum_reorder1'].shape)
     print(sim['einsum_reorder1'])
     
-    return sim
+    return sim, rep

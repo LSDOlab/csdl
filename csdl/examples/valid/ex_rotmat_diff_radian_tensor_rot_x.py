@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -26,7 +26,8 @@ def example(Simulator):
                                                              axis='x'))
     
     
-    sim = Simulator(ExampleDiffRadianTensorRotX())
+    rep = GraphRepresentation(ExampleDiffRadianTensorRotX())
+    sim = Simulator(rep)
     sim.run()
     
     print('tensor', sim['tensor'].shape)
@@ -34,4 +35,4 @@ def example(Simulator):
     print('tensor_Rot_x', sim['tensor_Rot_x'].shape)
     print(sim['tensor_Rot_x'])
     
-    return sim
+    return sim, rep

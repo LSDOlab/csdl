@@ -19,7 +19,7 @@ def test_integer_index_assignement_out_of_range(backend):
 def test_integer_index_assignement(backend):
     from csdl.examples.valid.ex_indices_integer import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     x = np.array([0, 1, 2, 7.4, np.pi, 9, np.pi + 9])
     np.testing.assert_array_equal(sim['x'], x)
     np.testing.assert_array_equal(sim['x0'], x[0])
@@ -62,7 +62,7 @@ def test_one_dimensional_index_assignement_out_of_range(backend):
 def test_one_dimensional_index_assignement(backend):
     from csdl.examples.valid.ex_indices_one_dimensional import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     np.testing.assert_array_equal(sim['u'], np.arange(20))
     np.testing.assert_array_equal(sim['v'], np.arange(16))
     np.testing.assert_array_equal(sim['w'], 16 + np.arange(4))
@@ -102,7 +102,7 @@ def test_multidimensional_index_assignement_out_of_range(backend):
 def test_multidimensional_dimensional_index_assignement(backend):
     from csdl.examples.valid.ex_indices_multidimensional import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     np.testing.assert_array_equal(
         sim['z'],
         np.arange(6).reshape((2, 3)),
@@ -152,7 +152,7 @@ def test_mesh(backend):
     mesh[:, :, 0] = np.outer(np.arange(nx), np.ones(ny))
     mesh[:, :, 1] = np.outer(np.arange(ny), np.ones(nx)).T
     mesh[:, :, 2] = 0.
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     np.testing.assert_array_equal(
         sim['def_mesh'],
         mesh,

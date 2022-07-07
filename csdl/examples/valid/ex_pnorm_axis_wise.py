@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -24,7 +24,8 @@ def example(Simulator):
                                  csdl.pnorm(in1, axis=(1, 3), pnorm_type=6))
     
     
-    sim = Simulator(ExampleAxisWise())
+    rep = GraphRepresentation(ExampleAxisWise())
+    sim = Simulator(rep)
     sim.run()
     
     print('in1', sim['in1'].shape)
@@ -32,4 +33,4 @@ def example(Simulator):
     print('axiswise_pnorm', sim['axiswise_pnorm'].shape)
     print(sim['axiswise_pnorm'])
     
-    return sim
+    return sim, rep

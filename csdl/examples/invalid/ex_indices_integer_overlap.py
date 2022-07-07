@@ -1,7 +1,7 @@
 def example(Simulator):
     import numpy as np
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ErrorIntegerOverlap(Model):
@@ -14,6 +14,7 @@ def example(Simulator):
             x[0] = b
     
     
-    sim = Simulator(ErrorIntegerOverlap())
+    rep = GraphRepresentation(ErrorIntegerOverlap())
+    sim = Simulator(rep)
     sim.run()
     

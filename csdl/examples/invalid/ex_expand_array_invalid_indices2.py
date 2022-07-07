@@ -1,6 +1,6 @@
 def example(Simulator):
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import numpy as np
     
     
@@ -16,6 +16,7 @@ def example(Simulator):
             self.register_output('expanded_array', expanded_array)
     
     
-    sim = Simulator(ErrorArrayInvalidIndices2())
+    rep = GraphRepresentation(ErrorArrayInvalidIndices2())
+    sim = Simulator(rep)
     sim.run()
     

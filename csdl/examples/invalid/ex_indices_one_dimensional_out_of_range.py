@@ -1,7 +1,7 @@
 def example(Simulator):
     import numpy as np
     import csdl
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ErrorOneDimensionalOutOfRange(Model):
@@ -20,6 +20,7 @@ def example(Simulator):
             z[n - 3:n + 1] = y - 3
     
     
-    sim = Simulator(ErrorOneDimensionalOutOfRange())
+    rep = GraphRepresentation(ErrorOneDimensionalOutOfRange())
+    sim = Simulator(rep)
     sim.run()
     

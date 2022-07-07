@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     
     
     class ErrorUnusedInputs(Model):
@@ -11,6 +11,7 @@ def example(Simulator):
             c = self.declare_variable('c', val=2)
     
     
-    sim = Simulator(ErrorUnusedInputs())
+    rep = GraphRepresentation(ErrorUnusedInputs())
+    sim = Simulator(rep)
     sim.run()
     

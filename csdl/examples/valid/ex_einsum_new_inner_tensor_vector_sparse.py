@@ -1,6 +1,6 @@
 def example(Simulator):
     import numpy as np
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     
     
@@ -29,7 +29,8 @@ def example(Simulator):
                                     partial_format='sparse'))
     
     
-    sim = Simulator(ExampleInnerTensorVectorSparse())
+    rep = GraphRepresentation(ExampleInnerTensorVectorSparse())
+    sim = Simulator(rep)
     sim.run()
     
     print('a', sim['a'].shape)
@@ -39,4 +40,4 @@ def example(Simulator):
     print('einsum_inner2_sparse_derivs', sim['einsum_inner2_sparse_derivs'].shape)
     print(sim['einsum_inner2_sparse_derivs'])
     
-    return sim
+    return sim, rep

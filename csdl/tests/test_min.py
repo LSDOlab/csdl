@@ -5,7 +5,7 @@ import pytest
 def test_min_scalar(backend):
     from csdl.examples.valid.ex_min_scalar import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 2
     n = 3
@@ -32,7 +32,7 @@ def test_min_scalar(backend):
 def test_min_axiswise(backend):
     from csdl.examples.valid.ex_min_axiswise import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 2
     n = 3
@@ -60,7 +60,7 @@ def test_min_axiswise(backend):
 def test_min_elementwise(backend):
     from csdl.examples.valid.ex_min_elementwise import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     tensor1 = np.array([[1, 5, -8], [10, -3, -5]])
     tensor2 = np.array([[2, 6, 9], [-1, 2, 4]])
@@ -96,7 +96,7 @@ def test_min_inputs_not_same_size(backend):
 def test_min_scalar_random(backend):
     from csdl.examples.valid.ex_min_scalar_random import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 2
     n = 3
@@ -124,7 +124,7 @@ def test_min_scalar_random(backend):
 def test_min_axiswise_random(backend):
     from csdl.examples.valid.ex_min_axiswise_random import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     m = 2
     n = 3

@@ -5,7 +5,7 @@ import pytest
 def test_expand_scalar2array(backend):
     from csdl.examples.valid.ex_expand_scalar2_array import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
     np.testing.assert_array_equal(sim['scalar'], np.array([1]))
     np.testing.assert_array_equal(
         sim['expanded_scalar'],
@@ -24,7 +24,7 @@ def test_expand_scalar2array(backend):
 def test_expand_array2higherarray(backend):
     from csdl.examples.valid.ex_expand_array2_higher_array import example
     exec('from {} import Simulator'.format(backend))
-    sim = example(eval('Simulator'))
+    sim, rep = example(eval('Simulator'))
 
     array = np.array([
         [1., 2., 3.],

@@ -1,5 +1,5 @@
-from csdl.core.concatenation import Concatenation
-from csdl.core.variable import Variable
+from csdl.lang.concatenation import Concatenation
+from csdl.lang.variable import Variable
 
 
 def diff(delta: Concatenation, array: Variable, axis: int):

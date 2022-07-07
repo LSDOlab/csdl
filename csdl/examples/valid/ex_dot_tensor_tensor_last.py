@@ -1,5 +1,5 @@
 def example(Simulator):
-    from csdl import Model
+    from csdl import Model, GraphRepresentation
     import csdl
     import numpy as np
     
@@ -30,7 +30,8 @@ def example(Simulator):
             self.register_output('TenTenDotLast', csdl.dot(ten1, ten2, axis=2))
     
     
-    sim = Simulator(ExampleTensorTensorLast())
+    rep = GraphRepresentation(ExampleTensorTensorLast())
+    sim = Simulator(rep)
     sim.run()
     
     print('ten1', sim['ten1'].shape)
@@ -40,4 +41,4 @@ def example(Simulator):
     print('TenTenDotLast', sim['TenTenDotLast'].shape)
     print(sim['TenTenDotLast'])
     
-    return sim
+    return sim, rep

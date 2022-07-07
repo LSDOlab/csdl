@@ -1,17 +1,19 @@
-from csdl.core.node import Node
-from csdl.core.variable import Variable
-from csdl.core.output import Output
-from csdl.core.subgraph import Subgraph
-from csdl.core.operation import Operation
-from csdl.core.implicit_operation import ImplicitOperation
-from csdl.core.input import Input
-from csdl.core.standard_operation import StandardOperation
+from csdl.rep.ir_node import IRNode
+from csdl.lang.node import Node
+from csdl.lang.variable import Variable
+from csdl.lang.output import Output
+from csdl.lang.input import Input
+from csdl.lang.subgraph import Subgraph
+from csdl.lang.operation import Operation
+from csdl.lang.implicit_operation import ImplicitOperation
+from csdl.lang.standard_operation import StandardOperation
+from csdl.rep.variable_node import VariableNode
 from csdl.operations.combined import combined
 from csdl.utils.check_property import check_property
-from typing import List, Union, Dict
+from typing import List
 from copy import copy
-from warnings import warn
 import numpy as np
+from networkx import DiGraph
 
 
 def remove_op_from_dag(op: Operation):
@@ -120,13 +122,8 @@ def topological_sort(
     return sorted_nodes
 
 
-from csdl.operations.print_var import print_var
-
-
 def modified_topological_sort(
-    registered_nodes: List[Output],
-    subgraphs: List[Subgraph] = [],
-) -> List[Node]:
+    registered_nodes: List[Output], ) -> List[Node]:
     """
     Perform a topological sort on the Directed Acyclic Graph (DAG).
     If any cycles are detected when traversing the graph,
@@ -151,7 +148,7 @@ def modified_topological_sort(
         ``Group._root``, and the last will be an ``DocInput``,
         ``Concatenation``, ``ImplicitOutput``, or ``IndepVar``.
     """
-    sorted_nodes: List[Union[Node, print_var]] = []
+    sorted_nodes: List[Node] = []
     # set of all nodes with no incoming edge (outputs and subgraphs)
     stack = list(filter(lambda x: x.dependents == [], registered_nodes))
     while stack != []:
@@ -173,8 +170,65 @@ def modified_topological_sort(
     return sorted_nodes
 
 
+def modified_topological_sort_nx(
+    graph: DiGraph,
+    registered_outputs: List[VariableNode],
+) -> List[IRNode]:
+    """
+    Perform a topological sort on the Directed Acyclic Graph (DAG).
+    If any cycles are detected when traversing the graph,
+    ``topological_sort`` will not terminate, and it will cause a memory
+    overflow.
+
+    This version of a topological sort is modified so that a node will
+    not be added to the sorted list until the node has been visited as
+    many times as its in-degree; i.e. the number of dependents.
+
+    **Parameters**
+
+    node: Variable
+        The node to treat as "root". In ``csdl.model``,
+        ``Group._root`` is treated as the "root" node.
+
+    **Returns**
+
+    list[Variable]
+        List of ``Variable`` objects sorted from root to leaf. When
+        overriding ``csdl.Model.setup``, the first node will be
+        ``Group._root``, and the last will be an ``DocInput``,
+        ``Concatenation``, ``ImplicitOutput``, or ``IndepVar``.
+    """
+    sorted_nodes: List[IRNode] = []
+    stack: List[VariableNode] = registered_outputs
+    while stack != []:
+        v = stack.pop()
+        n_successors = graph.out_degree(v)
+        predecessors = list(graph.predecessors(v))
+        if n_successors == 0:
+            # registered outputs that have no dependent nodes
+            sorted_nodes.append(v)
+            for w in predecessors:
+                stack.append(w)
+        elif v.times_visited < n_successors:
+            # all other nodes
+            v.incr_times_visited()
+            if v.times_visited == n_successors:
+                for w in predecessors:
+                    stack.append(w)
+
+            if v.times_visited == n_successors:
+                sorted_nodes.append(v)
+    dangling_input_nodes: list[IRNode] = list(
+        set(
+            filter(
+                lambda x: isinstance(x.var, Input),
+                filter(lambda x: isinstance(x, VariableNode),
+                       graph.nodes()))) - set(sorted_nodes))
+    sorted_nodes.extend(dangling_input_nodes)
+    return list(reversed(sorted_nodes))
+
 # def remove_duplicate_nodes(nodes, registered_nodes):
-#     from csdl.core.input import Input
+#     from csdl.lang.input import Input
 #     removed_nodes = []
 #     n1_registered = False
 #     n2_registered = False
@@ -267,7 +321,7 @@ def max_out_degree(model) -> int:
 
 def is_tree(model) -> bool:
     """
-    check if IR is tree or DAG
+    check if GraphRepresentation is tree or DAG
     """
     for node in model.sorted_nodes:
         if len(node.dependents) > 1:

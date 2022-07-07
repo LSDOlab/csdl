@@ -1,10 +1,10 @@
 from typing import List
 
-from csdl.core.node import Node
-from csdl.core.variable import Variable
-from csdl.core.declared_variable import DeclaredVariable
-from csdl.core.output import Output
-from csdl.core.operation import Operation
+from csdl.lang.node import Node
+from csdl.lang.variable import Variable
+from csdl.lang.declared_variable import DeclaredVariable
+from csdl.lang.output import Output
+from csdl.lang.operation import Operation
 
 
 def isterminal(node: Node):
