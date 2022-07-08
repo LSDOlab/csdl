@@ -28,7 +28,8 @@ jobs:
           # install required packages -- not sure if all are required
           sudo apt-get update
           sudo apt-get -y install python3-pip git
-          pip3 install yapf pydoc-markdown
+          pip3 install yapf 
+          pipx install pydoc-markdown
           ls
           # install csdl
           pip3 install -e .
