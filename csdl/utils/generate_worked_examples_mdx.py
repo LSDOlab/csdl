@@ -37,12 +37,20 @@ def trimlines(l):
         _ = l.pop()
 
 
-do_not_run = [
+do_not_run = {
     '__pycache__',
     '__init__.py',
     'ex_dedup_simple.py',
     'ex_matmat_mat_vec_product.py',
-]
+    'ex_connections_nested_unpromoted_connections_variation1.py',
+    'ex_custom_quadratic_equation_implicit_array.py',
+    'ex_modopt_rosenbrock.py',
+    'ex_promotions_implicit2.py',
+    'ex_connections_connect_input_to_promoted_declared.py',
+    'ex_connections_connecting_unpromoted_names.py',
+    'ex_connections_nested_unpromoted_connections_variation2.py',
+    'ex_connections_nested_promoted_connections.py',
+}
 
 CSDLPATH = inspect.getfile(lang_pkg)[:-len('__init__.py')]
 # CSDLPATH = sys.argv[1]
@@ -51,8 +59,13 @@ test_cases_directory = CSDLPATH + '../docs/docs/worked_examples/'
 pathlib.Path(test_cases_directory).mkdir(parents=True, exist_ok=True)
 print('Cleaning examples in {}'.format(examples_directory))
 print('Clean examples will be in {}'.format(test_cases_directory))
+do_nothing = True
 for filename in os.listdir(examples_directory):
     print(filename)
+    # if filename == 'ex_connections_nested_promoted_connections.py':
+    #     do_nothing = False
+    # if do_nothing is True:
+    #     continue
     if filename not in do_not_run:
         if filename[-3:] == '.py':
             filestr = open(examples_directory + filename,
