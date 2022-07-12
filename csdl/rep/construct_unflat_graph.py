@@ -17,6 +17,7 @@ from csdl.utils.prepend_namespace import prepend_namespace
 from typing import List, Dict, Set
 from warnings import warn
 
+
 def _construct_graph_this_level(
     graph: DiGraph,
     nodes: Dict[str, VariableNode | OperationNode | ModelNode],
@@ -38,9 +39,24 @@ def _construct_graph_this_level(
             else:
                 nodes[node.name] = OperationNode(node)
     for predecessor in node.dependencies:
-        _construct_graph_this_level(graph, nodes, predecessor)
-        # adding redundant edge will not affect graph structure
-        graph.add_edge(nodes[predecessor.name], nodes[node.name])
+
+        # _construct_graph_this_level(graph, nodes, predecessor)
+        # # adding redundant edge will not affect graph structure
+        # graph.add_edge(nodes[predecessor.name], nodes[node.name])
+
+        if predecessor.name not in nodes:
+            _construct_graph_this_level(graph, nodes, predecessor)
+            # adding redundant edge will not affect graph structure
+            graph.add_edge(nodes[predecessor.name], nodes[node.name])
+        elif node.name not in nodes:
+            _construct_graph_this_level(graph, nodes, predecessor)
+            # adding redundant edge will not affect graph structure
+            graph.add_edge(nodes[predecessor.name], nodes[node.name])
+        elif not graph.has_edge(nodes[predecessor.name], nodes[node.name]):
+
+            _construct_graph_this_level(graph, nodes, predecessor)
+            # adding redundant edge will not affect graph structure
+            graph.add_edge(nodes[predecessor.name], nodes[node.name])
 
 
 def construct_graphs_all_models(
@@ -71,7 +87,6 @@ def construct_graphs_all_models(
                 s.submodel.subgraphs,
             )
 
-
     # add variables and operations to the graph for this model
 
     # add inputs to the graph for this model
@@ -91,7 +106,6 @@ def construct_graphs_all_models(
     return graph
 
 
-
 def find_cycles_among_models(
     graph: DiGraph,
     nodes: list[IRNode],
@@ -109,7 +123,6 @@ def find_cycles_among_models(
             cycles.append(path_as_set)
             return cycles
 
-
         # continue search according to DFS strategy, keep track of
         # path traversed
         path.append(node)
@@ -121,8 +134,6 @@ def find_cycles_among_models(
         )
         path.pop()
     return cycles
-
-
 
 
 def construct_unflat_graph(graph: DiGraph, namespace: str = '') -> DiGraph:
@@ -186,7 +197,7 @@ def construct_unflat_graph(graph: DiGraph, namespace: str = '') -> DiGraph:
     cycles: list[Set[IRNode]] = []
     for mn in model_nodes:
         cycles.extend(find_cycles_among_models(graph, [mn]))
-    if len(cycles)> 1:
+    if len(cycles) > 1:
         warn("Model {} forms at least one cycle between two or more submodels. Cycles present in the unflat graph will affect performance if using a CSDL compiler back end that uses the unflat graph representation. Cycles present are, {}.\nIf using a CSDL compiler back end that uses the flattened graph representation, disregard this warning.".format(namespace, cycles))
 
     return graph

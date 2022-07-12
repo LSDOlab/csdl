@@ -25,6 +25,7 @@ from collections import Counter
 from typing import Dict
 from warnings import warn
 
+
 class GraphWithMetadata:
 
     def __init__(self, graph: DiGraph):
@@ -32,7 +33,6 @@ class GraphWithMetadata:
         self.promoted_to_node = dict()
         self.unpromoted_to_node = dict()
         self.connected_tgt_nodes_to_source_nodes = dict()
-
 
 
 def gather_targets_by_promoted_name(
@@ -93,7 +93,7 @@ def isolate_unique_targets(
 
 
 def gather_variables_by_promoted_name(
-    vars: Dict[str, VariableNode], ) -> Dict[str, VariableNode]:
+        vars: Dict[str, VariableNode], ) -> Dict[str, VariableNode]:
     """
     Create key value pairs of unique source name to corresponding source
     node
@@ -168,6 +168,8 @@ def merge_graphs(
             # unpromoted name
             unpromoted_name = prepend_namespace(unpromoted_namespace,
                                                 v.name)
+            v.unpromoted_namespace = unpromoted_namespace
+
             # if variable has not been promoted,
             # variable namespace is unpromoted_namespace.
             # otherwise, variable namespace is the promoted namespace
@@ -178,12 +180,18 @@ def merge_graphs(
                 promoted_namespace = '.'.join(
                     promoted_name.rsplit('.')[:-1])
                 v.namespace = promoted_namespace
-            elif v.name[0] != '_':
+            elif v.var.name != v.var._id:
+                # elif v.name[0] != '_':
+
                 # promote all automatically named variables
                 # raise KeyError(f'{unpromoted_name} not found.')
-                previous_op = list(graph.predecessors(v))[0].op
+                pred_list = list(graph.predecessors(v))
+                if len(pred_list) == 0:
+                    raise KeyError(f'{unpromoted_name} not found. Currently processing model {mn.name}.')
+
+                previous_op = pred_list[0].op
                 if not isinstance(previous_op, CustomOperation):
-                    raise KeyError(f'{unpromoted_name} not found.')
+                    raise KeyError(f'{unpromoted_name} not found. Currently processing model {mn.name}.')
     return graph
 
 
@@ -372,8 +380,6 @@ def construct_flat_graph(
     )
     merge_automatically_connected_nodes(graph)
     # merge connections within flat graph
-
-
 
     graph_meta = merge_connections(
         GraphWithMetadata(graph),

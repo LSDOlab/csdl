@@ -8,6 +8,7 @@ class ExampleMatrix(Model):
     :param var: M1
     :param var: axes_reordered_matrix
     """
+
     def define(self):
 
         # Declare mat as an input matrix with shape = (4, 2)
@@ -26,6 +27,7 @@ class ExampleTensor(Model):
     :param var: T1
     :param var: axes_reordered_tensor
     """
+
     def define(self):
 
         # Declare tens as an input tensor with shape = (4, 3, 2, 5)

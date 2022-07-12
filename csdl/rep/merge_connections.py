@@ -11,6 +11,9 @@ from csdl.lang.output import Output
 from csdl.lang.declared_variable import DeclaredVariable
 from csdl.lang.variable import Variable
 from csdl.lang.custom_operation import CustomOperation
+import numpy as np
+import warnings
+
 
 def find_unique_node(
     container: 'GraphWithMetadata',
@@ -66,14 +69,20 @@ def merge_connections(
         if not isinstance(var_node, VariableNode):
             continue
 
+        var_node.connected_to = set()
+        num_pred = len(list(container.graph.predecessors(var_node)))
+
+        if num_pred > 1:
+            raise KeyError(f'variable {var_node.name} has multiple predecessors')
+
         # ignore if node name starts with an underscore
-        if var_node.var.name[0] == '_':
+        if var_node.var.name == var_node.var._id:
+            # if var_node.var.name[0] == '_':
             continue
 
         # Each promoted name maps to a unique variable
         promoted_name = prepend_namespace(var_node.namespace,
                                           var_node.name)
-        promoted_to_node[promoted_name] = var_node
 
         # Error for devs, promoted names in graph should be in
         # promoted_to_unpromoted
@@ -101,6 +110,8 @@ def merge_connections(
                 )
             else:
                 continue
+
+        promoted_to_node[promoted_name] = var_node
 
         if promoted_name in promoted_to_unpromoted.keys():
             for unpromoted_name in promoted_to_unpromoted[
@@ -166,6 +177,7 @@ def merge_connections(
             )
         # check target type
         if not isinstance(tgt_node.var, (DeclaredVariable, Variable)):
+            print(tgt_node, tgt_node.var)
             raise ValueError(
                 f'connection target \'{tgt_name}\' is not a declared variable.'
             )
@@ -180,9 +192,15 @@ def merge_connections(
                 )
         # check shapes
         if src_node.var.shape != tgt_node.var.shape:
-            raise ValueError(
-                f'connection source \'{src_name}\' shape is not equal to connection target \'{tgt_name}\' shape. {src_node.var.shape} != {tgt_node.var.shape}'
-            )
+
+            # backend can reshape if the sizes are the same. otherwise, raise an error.
+            if np.prod(src_node.var.shape) != np.prod(tgt_node.var.shape):
+                raise ValueError(f'connection source \'{src_name}\' size is not equal to connection target \'{tgt_name}\' size. {src_node.var.shape} != {tgt_node.var.shape}.')
+            else:
+                warnings.warn(f'connection source \'{src_name}\' shape is not equal to connection target \'{tgt_name}\' shape. {src_node.var.shape} != {tgt_node.var.shape}.')
+            # raise ValueError(
+            #     f'connection source \'{src_name}\' shape is not equal to connection target \'{tgt_name}\' shape. {src_node.var.shape} != {tgt_node.var.shape}'
+            # )
 
         # 4) Merge nodes
         contracted_nodes(
@@ -196,5 +214,8 @@ def merge_connections(
         # 5) Update mapping of connected targets --> source
         container.connected_tgt_nodes_to_source_nodes[
             tgt_node] = src_node
+
+        # For each connection source, add target variable node
+        src_node.connected_to.add(tgt_node)
 
     return container

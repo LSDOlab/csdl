@@ -7,9 +7,9 @@ class QuadraticFunction(Model):
 
     def define(self):
         shape = self.parameters['shape']
-        a = self.declare_variable('a', shape=shape)
-        b = self.declare_variable('b', shape=shape)
-        c = self.declare_variable('c', shape=shape)
+        a = self.declare_variable('a', shape=shape) # 1
+        b = self.declare_variable('b', shape=shape) # -4 
+        c = self.declare_variable('c', shape=shape) # 3
         x = self.declare_variable('x', shape=shape)
         y = a * x**2 + b * x + c
         self.register_output('y', y)
