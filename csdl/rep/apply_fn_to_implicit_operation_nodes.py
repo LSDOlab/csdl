@@ -14,14 +14,11 @@ def apply_fn_to_implicit_operation_nodes(
     fn: Callable,
 ):
     implicit_operation_nodes: list[
-        OperationNode] = get_implicit_operation_nodes(
-            get_operation_nodes(rep.flat_graph))
+        OperationNode] = get_implicit_operation_nodes(rep.flat_graph)
     for implicit in implicit_operation_nodes:
-        if isinstance(implicit.op,
-                      (ImplicitOperation, BracketedSearchOperation)):
-            implicit.rep = GraphRepresentation(
-                implicit.op._model)
+        if isinstance(implicit.op, ImplicitOperation):
+            implicit.op.rep = GraphRepresentation(implicit.op._model)
             apply_fn_to_implicit_operation_nodes(
-                implicit.rep,
+                implicit.op.rep,
                 fn,
             )
