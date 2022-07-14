@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple, Set, Union
 
 import numpy as np
 
@@ -73,12 +73,12 @@ class Concatenation(Output):
     # TODO: broadcast: expand arrays
     def __setitem__(
         self,
-        key: int | slice | Tuple[slice],
+        key: Union[int, slice, Tuple[slice]],
         var: Variable,
     ):
         # will generate a list [of lists] of ints, and then convert to
         # ndarray
-        tgt_indices: List[int] | List[List[int]] | np.ndarray = []
+        tgt_indices: Union[List[int], List[List[int]], np.ndarray] = []
 
         # n-d array assignment
         if isinstance(key, tuple):

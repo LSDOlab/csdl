@@ -14,13 +14,13 @@ from csdl.rep.implicit_operation_node import ImplicitOperationNode
 from csdl.rep.model_node import ModelNode
 from csdl.rep.get_nodes import get_model_nodes, get_src_nodes, get_tgt_nodes, get_var_nodes, get_operation_nodes, get_implicit_operation_nodes
 from csdl.utils.prepend_namespace import prepend_namespace
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Union, List
 from warnings import warn
 
 
 def _construct_graph_this_level(
     graph: DiGraph,
-    nodes: Dict[str, VariableNode | OperationNode | ModelNode],
+    nodes: Dict[str, Union[VariableNode, OperationNode, ModelNode]],
     node: Node,
 ):
     """
@@ -72,7 +72,7 @@ def construct_graphs_all_models(
     The intermediate representation graph and all graphs contained in a
     `ModelNode` are implemented as a networkx `DiGraph`.
     """
-    nodes: Dict[str, VariableNode | OperationNode | ModelNode] = dict()
+    nodes: Dict[str, Union[VariableNode, OperationNode, ModelNode]] = dict()
     graph = DiGraph()
 
     # add models to graph for this model
@@ -108,10 +108,10 @@ def construct_graphs_all_models(
 
 def find_cycles_among_models(
     graph: DiGraph,
-    nodes: list[IRNode],
-    path: list[IRNode] = [],
-    cycles: list[Set[IRNode]] = [],
-) -> list[Set[IRNode]]:
+    nodes: List[IRNode],
+    path: List[IRNode] = [],
+    cycles: List[Set[IRNode]] = [],
+) -> List[Set[IRNode]]:
     for node in nodes:
         path_as_set = set()
         # if name in path, store new cycle; this is not the most general
@@ -145,7 +145,7 @@ def construct_unflat_graph(graph: DiGraph, namespace: str = '') -> DiGraph:
     The intermediate representation graph and all graphs contained in a
     `ModelNode` are implemented as a networkx `DiGraph`.
     """
-    model_nodes: list[ModelNode] = get_model_nodes(graph)
+    model_nodes: List[ModelNode] = get_model_nodes(graph)
     for mn in model_nodes:
         _ = construct_unflat_graph(mn.graph, namespace=prepend_namespace(namespace, mn.namespace))
     var_nodes = get_var_nodes(graph)
@@ -194,7 +194,7 @@ def construct_unflat_graph(graph: DiGraph, namespace: str = '') -> DiGraph:
                             graph.add_edge(mn1, mn2)
 
     # TODO: ensure that redundant cycles are not recorded
-    cycles: list[Set[IRNode]] = []
+    cycles: List[Set[IRNode]] = []
     for mn in model_nodes:
         cycles.extend(find_cycles_among_models(graph, [mn]))
     if len(cycles) > 1:

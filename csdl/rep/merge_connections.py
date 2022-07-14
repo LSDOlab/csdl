@@ -1,4 +1,4 @@
-from typing import Tuple, Set, Dict
+from typing import Tuple, Set, Dict, List
 from networkx import DiGraph, draw, contracted_nodes
 try:
     from csdl.rep.construct_flat_graph import GraphWithMetadata
@@ -41,7 +41,7 @@ def find_unique_node(
 
 def merge_connections(
     container: 'GraphWithMetadata',
-    connections: list[Tuple[str, str, str]],
+    connections: List[Tuple[str, str, str]],
     promoted_to_unpromoted: Dict[str, Set[str]],
     unpromoted_to_promoted: Dict[str, str],
 ) -> 'GraphWithMetadata':

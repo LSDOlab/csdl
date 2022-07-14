@@ -536,8 +536,8 @@ class Model:
     def add(
         self,
         submodel: 'Model',
-        name: str | None = None,
-        promotes: List[str] | None = None,
+        name: Union[str, None] = None,
+        promotes: Union[List[str], None] = None,
     ) -> 'Model':
         """
         Add a submodel to the `Model`.
@@ -584,7 +584,7 @@ class Model:
 
     def _bracketed_search(
         self,
-        states: OrderedDict[str, Dict[str, Any]],
+        states: Dict[str, Dict[str, Any]],
         residuals: List[str],
         implicit_model: 'Model',
         brackets: Dict[str,
@@ -781,15 +781,15 @@ class Model:
 
     def _implicit_operation(
         self,
-        states: OrderedDict[str, Dict[str, Any]],
+        states: Dict[str, Dict[str, Any]],
         *arguments: Variable,
         residuals: List[str],
         model: 'Model',
         nonlinear_solver: NonlinearSolver,
-        linear_solver: LinearSolver | None = None,
+        linear_solver: Union[LinearSolver, None] = None,
         expose: List[str] = [],
-        defaults: Dict[str, int | float | np.ndarray] = dict(),
-    ) -> Output | Tuple[Output, ...]:
+        defaults: Dict[str, Union[int, float, np.ndarray]] = dict(),
+    ) -> Union[Output, Tuple[Output, ...]]:
         """
         Create an implicit operation whose residuals are defined by a
         `Model`.
@@ -975,7 +975,7 @@ class Model:
         arguments: Tuple[Variable, ...],
         state_names: List[str],
         residual_names: List[str],
-        expose: list[str] = [],
+        expose: List[str] = [],
     ) -> Tuple[Dict[str, Output], Dict[str, DeclaredVariable], Dict[
             str, List[DeclaredVariable]], Dict[
                 str, List[DeclaredVariable]], Set[str],
@@ -1153,11 +1153,11 @@ class Model:
     def _return_implicit_outputs(
         self,
         model: 'Model',
-        op: ImplicitOperation | BracketedSearchOperation,
+        op: Union[ImplicitOperation, BracketedSearchOperation],
         residuals: List[str],
         expose: List[str],
-        states: OrderedDict[str, Dict[str, Any]],
-    ) -> Output | Tuple[Output, ...]:
+        states: Dict[str, Dict[str, Any]],
+    ) -> Union[Output, Tuple[Output, ...]]:
         # create outputs of operation, establish dependencies on
         # operation, and register outputs
         outs: List[Output] = []
@@ -1220,7 +1220,7 @@ class Model:
     @contextmanager
     def create_submodel(self,
                         name: str,
-                        promotes: Union[list[str], None] = None):
+                        promotes: Union[List[str], None] = None):
         """
         Create a `Model` object and add as a submodel, promoting all
         inputs and outputs.

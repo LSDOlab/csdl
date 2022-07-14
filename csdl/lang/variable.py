@@ -1,5 +1,5 @@
 from numbers import Number
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 
@@ -31,7 +31,7 @@ class Variable(Node):
         name: str,
         val: np.ndarray = np.array([1.0]),
         shape=(1, ),
-        units: str | None = None,
+        units: Union[str, None] = None,
         desc: str = '',
         tags=None,
         shape_by_conn=False,
@@ -303,7 +303,7 @@ class Variable(Node):
 
     def __getitem__(
         self,
-        key: int | slice | Tuple[slice],
+        key: Union[int, slice, Tuple[slice]],
     ):
         from csdl.operations.decompose import decompose
         from csdl.lang.output import Output

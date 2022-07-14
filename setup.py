@@ -5,7 +5,7 @@ setup(
     packages=[
         'csdl',
     ],
-    python_requires='>=3.10',
+    python_requires='>=3.8',
     install_requires=[
         'numpy',
         'pint',

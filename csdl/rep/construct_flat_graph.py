@@ -22,7 +22,7 @@ from networkx import DiGraph, compose, contracted_nodes
 from csdl.rep.variable_node import VariableNode
 from copy import copy
 from collections import Counter
-from typing import Dict
+from typing import Dict, Union, List
 from warnings import warn
 
 
@@ -37,7 +37,7 @@ class GraphWithMetadata:
 
 def gather_targets_by_promoted_name(
     ungrouped_tgts: Dict[str, VariableNode],
-    promotes: Set[str] | None,
+    promotes: Union[Set[str], None],
     namespace: str,
 ) -> Dict[str, Set[VariableNode]]:
     """
@@ -130,7 +130,7 @@ def merge_graphs(
         )
 
         # all variables in child graph
-        child_vars: list[VariableNode] = get_var_nodes(mn.graph)
+        child_vars: List[VariableNode] = get_var_nodes(mn.graph)
 
         # assign namespace to each variable node
         # We are in model A adding model B, promotes = None
@@ -201,7 +201,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
     # merged yet as a result of promotions or connections
 
     # list of all variables in graph
-    vars: list[VariableNode] = get_var_nodes(graph)
+    vars: List[VariableNode] = get_var_nodes(graph)
 
     # map of source promoted names to source node object
     sources: Dict[str, VariableNode] = {
@@ -210,7 +210,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
     }
 
     # List of all target nodes in graph
-    targets: list[VariableNode] = get_tgt_nodes(vars)
+    targets: List[VariableNode] = get_tgt_nodes(vars)
 
     # Set of all unique target names in graph
     target_names: Set[str] = set(
@@ -276,7 +276,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
 # CONNECTIONS
 def validate_connections(
     promoted_to_declared_connections: Dict[Tuple[str, str],
-                                           list[Tuple[str, str, str]]],
+                                           List[Tuple[str, str, str]]],
     sources: Dict[str, VariableNode],
     targets: Dict[str, VariableNode],
 ):
@@ -322,7 +322,7 @@ def validate_connections(
 
 def report_duplicate_connections(
     promoted_to_declared_connections: Dict[Tuple[str, str],
-                                           list[Tuple[str, str,
+                                           List[Tuple[str, str,
                                                       str]]], ):
     if len(promoted_to_declared_connections) == 0:
         return ''
@@ -350,7 +350,7 @@ def report_duplicate_connections(
 
 def merge_user_connected_nodes(
     graph: DiGraph,
-    connections: list[Tuple[str, str]],
+    connections: List[Tuple[str, str]],
     src_nodes_map: Dict[str, VariableNode],
     tgt_nodes_map: Dict[str, VariableNode],
 ):

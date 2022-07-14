@@ -1,5 +1,5 @@
 from csdl.utils.gen_hex_name import gen_hex_name
-from typing import List, Any, NoReturn, Tuple
+from typing import List, Any, NoReturn, Tuple, Union
 
 # from csdl.std.binops import (ElementwiseAddition, ElementwiseMultiplication,
 # ElementwisePower, ElementwiseSubtraction)
@@ -33,7 +33,7 @@ class Node():
         self.times_visited = 0
         self._getitem_called = False
         self._decomp = None
-        self.abs_name: str | None = None
+        self.abs_name: Union[str, None] = None
         self.abs_prom_name: str = ""
 
         for k, v in kwargs.items():
@@ -143,7 +143,7 @@ class Node():
         """
         self.times_visited += 1
 
-    def get_dependency_index(self, candidate: 'Node') -> int | None:
+    def get_dependency_index(self, candidate: 'Node') -> Union[int, None]:
         """
         Get index of dependency in ``self.dependencies``. Used for
         removing indirect dependencies that woud otherwise affect the
@@ -182,7 +182,7 @@ class Node():
         if index < len(self.dependencies):
             self.dependencies.remove(self.dependencies[index])
 
-    def get_dependent_index(self, candidate: 'Node') -> int | None:
+    def get_dependent_index(self, candidate: 'Node') -> Union[int, None]:
         """
         Get index of dependency in ``self.dependencies``. Used for
         removing indirect dependencies that woud otherwise affect the

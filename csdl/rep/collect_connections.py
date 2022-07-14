@@ -1,11 +1,11 @@
 from csdl.utils.prepend_namespace import prepend_namespace
-from typing import Set, Dict, Tuple
+from typing import Set, Dict, Tuple, List
 
 
 def collect_connections(
     model: 'Model',
     namespace: str = '',
-) -> list[Tuple[str, str, str]]:
+) -> List[Tuple[str, str, str]]:
     '''
     Go through each model recursively and return connections.
 

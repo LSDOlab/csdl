@@ -33,7 +33,7 @@ def sort_nodes_nx(
     sorted_nodes = list(set(input_nodes) -
                         set(sorted_nodes)) + sorted_nodes
     if flat is False:
-        model_nodes: list[ModelNode] = get_model_nodes_from_graph(graph)
+        model_nodes: List[ModelNode] = get_model_nodes_from_graph(graph)
         for m in model_nodes:
             m.sorted_nodes = sort_nodes_nx(
                 DiGraph(m.graph),

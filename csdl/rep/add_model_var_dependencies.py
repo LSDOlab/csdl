@@ -11,7 +11,7 @@ try:
 except ImportError:
     pass
 
-from typing import Dict, List
+from typing import Dict, List, Union
 from csdl.utils.typehints import Shape
 from csdl.lang.node import Node
 from csdl.lang.subgraph import Subgraph
@@ -20,7 +20,7 @@ from csdl.lang.subgraph import Subgraph
 def detect_cycle(
     start: Subgraph,
     n: Node,
-    namespace: str | None = None,
+    namespace: Union[str, None] = None,
 ):
     for prev in start.dependencies:
         if prev is start:
@@ -33,7 +33,7 @@ def detect_cycle(
 
 def add_model_var_dependencies_due_to_promotions(
     model: 'Model',
-    namespace: str | None = None,
+    namespace: Union[str, None] = None,
 ):
     """
     After resolving promotions, establish dependency relationships
@@ -64,7 +64,7 @@ def add_model_var_dependencies_due_to_promotions(
                     )
 
         # verbose for strict type checking
-        io: List[Input | Output] = []
+        io: List[Union[Input, Output]] = []
         io.extend(model.registered_outputs)
         io.extend(model.inputs)
 

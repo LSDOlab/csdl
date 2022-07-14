@@ -7,7 +7,7 @@ from csdl.rep.ir_node import IRNode
 from csdl.rep.operation_node import OperationNode
 from csdl.rep.variable_node import VariableNode
 from networkx import DiGraph
-from typing import Set
+from typing import Set, List
 from csdl.utils.check_property import check_property
 from csdl.rep.get_registered_outputs_from_graph import get_registered_outputs_from_graph
 from csdl.rep.get_model_nodes_from_graph import get_model_nodes_from_graph
@@ -15,7 +15,7 @@ from csdl.rep.graph_representation import GraphRepresentation
 from csdl.rep.apply_fn_to_implicit_operation_nodes import apply_fn_to_implicit_operation_nodes
 
 
-def combinable(op: Operation, vars: list[VariableNode]):
+def combinable(op: Operation, vars: List[VariableNode]):
     if len(vars) != 1:
         return False
     if isinstance(op, StandardOperation):
@@ -119,7 +119,7 @@ def combine_operations_this_level(
             # each variable only has one predecessor, which is always an
             # operation
             op2: OperationNode = list(graph.predecessors(v23))[0]
-            vars2: list[VariableNode] = list(graph.predecessors(v23))
+            vars2: List[VariableNode] = list(graph.predecessors(v23))
             # an operation must meet criteria for being eligible to be
             # combined with a previous operation
             if combinable(op2.op, vars2):
@@ -137,7 +137,7 @@ def combine_operations_this_level(
                             # is always an operation
                             op1: OperationNode = list(
                                 graph.predecessors(v12))[0]
-                            vars1: list[VariableNode] = list(
+                            vars1: List[VariableNode] = list(
                                 graph.predecessors(v23))
                             # an operation must meet criteria for being
                             # eligible to be combined with a subsequent

@@ -6,15 +6,15 @@ from csdl.lang.declared_variable import DeclaredVariable
 from csdl.lang.input import Input
 from csdl.lang.output import Output
 from csdl.lang.subgraph import Subgraph
-from typing import Set, Dict, Tuple
+from typing import Set, Dict, Tuple, List, Union
 
 
 def find_src_node(
     model: 'Model',
-    node_name: list[str],
-) -> Input | Output | Subgraph:
+    node_name: List[str],
+) -> Union[Input, Output, Subgraph]:
     if len(node_name) == 1:
-        io: list[Input | Output] = []
+        io: List[Union[Input, Output]] = []
         io.extend(model.inputs)
         io.extend(model.registered_outputs)
         # This list has length <= 1
@@ -32,8 +32,8 @@ def find_src_node(
 
 def find_tgt_node(
     model: 'Model',
-    node_name: list[str],
-) -> DeclaredVariable | Subgraph:
+    node_name: List[str],
+) -> Union[DeclaredVariable, Subgraph]:
     if len(node_name) == 1:
         return list(
             filter(lambda x: x.name == node_name[0],
@@ -67,11 +67,11 @@ def add_dependencies_due_to_connections(model: 'Model'):
             else:
                 # src_path, tgt_path are not on the same branch and may
                 # represent a variable if e.g. len(src_path[i:]) == 1
-                src_node: Input | Output | Subgraph = find_src_node(
+                src_node: Union[Input, Output, Subgraph] = find_src_node(
                     model,
                     src_path[i:],
                 )
-                tgt_node: DeclaredVariable | Subgraph = find_tgt_node(
+                tgt_node: Union[DeclaredVariable, Subgraph] = find_tgt_node(
                     model,
                     tgt_path[i:],
                 )

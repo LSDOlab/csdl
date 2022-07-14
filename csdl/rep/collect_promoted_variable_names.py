@@ -93,7 +93,7 @@ def add_promotable_names(
 def collect_promoted_variable_names(
     model: 'Model',
     main: bool = True,
-    promotes: List[str] | None = None,
+    promotes:Union[List[str], None] = None,
 ) -> Tuple[Dict[str, Shape], Dict[str, Shape], Dict[str, Set[str]],
            Dict[str, Set[str]]]:
     """
@@ -164,7 +164,7 @@ def collect_promoted_variable_names(
         sinks_promoted_from_submodels.pop(c)
 
     # verbose for strict type checking
-    io: List[Input | Output] = []
+    io: List[Union[Input, Output]] = []
     io.extend(model.inputs)
     io.extend(model.registered_outputs)
     locally_defined_sources: Dict[str, Shape] = {

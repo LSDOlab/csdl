@@ -3,7 +3,7 @@ try:
 except ImportError:
     pass
 from networkx import DiGraph, adjacency_matrix, dag_longest_path_length
-from typing import List, Dict, Literal, Tuple, Any
+from typing import List, Dict, Literal, Tuple, Any, Union, List
 from csdl.lang.custom_explicit_operation import CustomExplicitOperation
 from csdl.lang.custom_implicit_operation import CustomImplicitOperation
 from networkx import DiGraph
@@ -59,7 +59,7 @@ def nouts(
         return graph.out_degree(op)
 
 
-def _var_sizes(variable_nodes: list[VariableNode], ) -> list[int]:
+def _var_sizes(variable_nodes: List[VariableNode], ) -> List[int]:
     """
     Compute the number of scalar values in each vectorized variable in
     `variable_nodes`
@@ -74,7 +74,7 @@ def _visualize_unflat(graph: DiGraph):
     variable/operation nodes and edges; will generate visualization for
     each model in the hierarchy
     """
-    model_nodes: list[ModelNode] = list(
+    model_nodes: List[ModelNode] = list(
         filter(lambda x: x is ModelNode, graph.nodes()))
     for mn in model_nodes:
         _visualize_unflat(mn.graph)
@@ -113,9 +113,9 @@ class GraphRepresentation:
         define_models_recursively(model)
         _, _, _, _ = resolve_promotions(model)
         generate_unpromoted_promoted_maps(model)
-        connections: list[Tuple[str, str,
+        connections: List[Tuple[str, str,
                                 str]] = collect_connections(model, )
-        self.connections: list[Tuple[str, str]] = [
+        self.connections: List[Tuple[str, str]] = [
             (a, b) for (a, b, _) in connections
         ]
         self.unpromoted_to_promoted: Dict[
@@ -204,7 +204,7 @@ class GraphRepresentation:
             model.subgraphs,
         )
 
-        all_vars: list[VariableNode] = get_var_nodes(first_graph)
+        all_vars: List[VariableNode] = get_var_nodes(first_graph)
         for v in all_vars:
             name = prepend_namespace(v.unpromoted_namespace, v.name)
             if name in self.promoted_to_unpromoted.keys():
@@ -230,7 +230,7 @@ class GraphRepresentation:
         All submodels in the hierarchy will contain `flat_graph = None`.
         """
         try:
-            self.flat_sorted_nodes: list[IRNode] = sort_nodes_nx(
+            self.flat_sorted_nodes: List[IRNode] = sort_nodes_nx(
                 self.flat_graph,
                 flat=True,
             )
@@ -261,7 +261,7 @@ class GraphRepresentation:
         Each model in the model hierarchy will contain an instance of
         `IntermediateRepresentation` with `unflat_graph: DiGraph`.
         """
-        self.unflat_sorted_nodes: list[IRNode] = sort_nodes_nx(
+        self.unflat_sorted_nodes: List[IRNode] = sort_nodes_nx(
             self.unflat_graph,
             flat=False,
         )
@@ -269,11 +269,11 @@ class GraphRepresentation:
         Nodes sorted in order of execution, using the unflattened graph
         """
 
-        self._variable_nodes: list[VariableNode] = get_var_nodes(
+        self._variable_nodes: List[VariableNode] = get_var_nodes(
             self.flat_graph)
-        self._operation_nodes: list[
+        self._operation_nodes: List[
             OperationNode] = get_operation_nodes(self.flat_graph)
-        self._std_operation_nodes: list[OperationNode] = [
+        self._std_operation_nodes: List[OperationNode] = [
             op for op in self._operation_nodes
             if not isinstance(op, (CustomExplicitOperation,
                                    CustomImplicitOperation))
@@ -330,7 +330,7 @@ class GraphRepresentation:
 
     def num_operation_nodes(
         self,
-        include: Dict[str, bool] | None = None,
+        include: Union[Dict[str, bool], None] = None,
         all: bool = True,
     ) -> int:
         """
@@ -580,7 +580,7 @@ class GraphRepresentation:
         Return all `CustomExplicitOperation` and
         `CustomImplicitOperation` nodes.
         """
-        custom_ops: list[OperationNode] = [
+        custom_ops: List[OperationNode] = [
             x for x in self._operation_nodes
             if isinstance(x.op, (CustomExplicitOperation,
                                  CustomImplicitOperation))
