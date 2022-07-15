@@ -218,7 +218,7 @@ def modified_topological_sort_nx(
 
             if v.times_visited == n_successors:
                 sorted_nodes.append(v)
-    dangling_input_nodes: list[IRNode] = list(
+    dangling_input_nodes: List[IRNode] = list(
         set(
             filter(
                 lambda x: isinstance(x.var, Input),

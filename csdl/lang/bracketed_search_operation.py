@@ -25,7 +25,7 @@ class BracketedSearchOperation(ImplicitOperation):
         # allow Output types for exposed intermediate variables
         res_out_map: Dict[str, DeclaredVariable],
         out_in_map: Dict[str, List[DeclaredVariable]],
-        exp_in_map: Dict[str, list[DeclaredVariable]],
+        exp_in_map: Dict[str, List[DeclaredVariable]],
         exposed_variables: Dict[str, Output],
         exposed_residuals: Set[str],
         *args,

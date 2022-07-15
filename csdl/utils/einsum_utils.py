@@ -1,9 +1,9 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 
 def compute_einsum_shape(
     operation_aslist: List[str],
-    in_shapes: Tuple[int] | List[Tuple[int]],
+    in_shapes: Union[Tuple[int], List[Tuple[int]]],
 ):
     out_shape = []
 

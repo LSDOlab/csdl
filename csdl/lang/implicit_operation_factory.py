@@ -21,8 +21,8 @@ class ImplicitOperationFactory(object):
         self.parent: 'Model' = parent
         self.model: 'Model' = model
         self.residuals: List[str] = []
-        self.nonlinear_solver: NonlinearSolver | None = None
-        self.linear_solver: LinearSolver | None = None
+        self.nonlinear_solver: Union[NonlinearSolver, None] = None
+        self.linear_solver: Union[LinearSolver, None] = None
         self.brackets: Dict[str, Tuple[Union[int, float, np.ndarray,
                                              Variable],
                                        Union[int, float, np.ndarray,
@@ -77,7 +77,7 @@ class ImplicitOperationFactory(object):
             self,
             *arguments: Variable,
             expose: List[str] = [],
-            defaults: Dict[str, int | float | np.ndarray] = dict(),
+            defaults: Dict[str, Union[int, float, np.ndarray]] = dict(),
     ):
         return self.apply(
             *arguments,
@@ -89,8 +89,8 @@ class ImplicitOperationFactory(object):
         self,
         *arguments: Variable,
         expose: List[str] = [],
-        defaults: Dict[str, int | float | np.ndarray] = dict(),
-    ) -> Output | Tuple[Output, ...]:
+        defaults: Dict[str, Union[int, float, np.ndarray]] = dict(),
+    ) -> Union[Output, Tuple[Output, ...]]:
         if len(self.brackets) > 0:
             return self.parent._bracketed_search(
                 self.states,

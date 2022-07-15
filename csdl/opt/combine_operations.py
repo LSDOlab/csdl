@@ -7,7 +7,7 @@ from csdl.rep.ir_node import IRNode
 from csdl.rep.operation_node import OperationNode
 from csdl.rep.variable_node import VariableNode
 from networkx import DiGraph
-from typing import Set
+from typing import Set, List
 from csdl.utils.check_property import check_property
 from csdl.rep.get_registered_outputs_from_graph import get_registered_outputs_from_graph
 from csdl.rep.get_nodes import get_operation_nodes
@@ -123,7 +123,7 @@ def combine_operations(rep: GraphRepresentation) -> GraphRepresentation:
 
 def combine_operations_hierarchical(
     graph: DiGraph,
-    registered_outputs: set[VariableNode],
+    registered_outputs: Set[VariableNode],
 ):
     model_nodes = get_model_nodes_from_graph(graph)
     for m in model_nodes:

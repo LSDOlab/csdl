@@ -4,9 +4,9 @@ from csdl.opt.remove_dead_code import remove_dead_code
 from csdl.opt.remove_duplicate_nodes import remove_duplicate_nodes
 from csdl.opt.run_all_optimizations import run_all_optimizations
 from csdl.rep.graph_representation import GraphRepresentation
-from typing import Callable
+from typing import Callable, List
 
-functions: list[Callable[
+functions: List[Callable[
     [GraphRepresentation], GraphRepresentation]] = [
         lambda x: x,
         remove_dead_code,

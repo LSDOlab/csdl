@@ -8,10 +8,10 @@ from csdl.lang.output import Output
 from csdl.lang.subgraph import Subgraph
 from csdl.utils.prepend_namespace import prepend_namespace
 from csdl.utils.find_promoted_name import find_promoted_name
-from typing import Set, Dict, Tuple
+from typing import Set, Dict, Tuple,Union, List
 
 
-def find_longest_varpath_in_set(s: Set[str]) -> list[str]:
+def find_longest_varpath_in_set(s: Set[str]) -> List[str]:
     varpaths = [st.rsplit('.') for st in s]
     return max(varpaths, key=len)
 
@@ -57,7 +57,7 @@ def check_source_name(
 
 def collect_promoted_source_names_lower_levels(
     model: 'Model',
-    promotes: list[str] | None = None,
+    promotes: Union[List[str], None] = None,
     namespace: str = '',
 ) -> Set[str]:
     promoted_names = set()
@@ -78,7 +78,7 @@ def collect_promoted_source_names_lower_levels(
 
 def collect_promoted_target_names_lower_levels(
     model: 'Model',
-    promotes: list[str] | None = None,
+    promotes: Union[List[str], None] = None,
     namespace: str = '',
 ) -> Set[str]:
     promoted_names = set()
@@ -120,13 +120,13 @@ def check_target_name(
 def collect_user_declared_connections(
     model: 'Model',
     namespace: str = '',
-) -> list[Tuple[str, str, str]]:
+) -> List[Tuple[str, str, str]]:
     """
     Collect connections declared by user and store connections using
     unique names only.
     Unique names are promoted variable names relative to main model.
     """
-    user_declared_connections_by_namespace: list[Tuple[str, str,
+    user_declared_connections_by_namespace: List[Tuple[str, str,
                                                        str]] = []
     for s in model.subgraphs:
         m = s.submodel
@@ -142,12 +142,12 @@ def collect_user_declared_connections(
 
 
 def map_promoted_to_declared_connections(
-    user_declared_connections_by_namespace: list[Tuple[str, str, str]],
+    user_declared_connections_by_namespace: List[Tuple[str, str, str]],
     promoted_to_unpromoted: Dict[str, Set[str]],
     unpromoted_to_promoted: Dict[str, str],
-) -> Dict[Tuple[str, str], list[Tuple[str, str, str]]]:
+) -> Dict[Tuple[str, str], List[Tuple[str, str, str]]]:
     # prepend namespace to connections declared by user
-    connections_full_path: list[Tuple[str, str]] = [
+    connections_full_path: List[Tuple[str, str]] = [
         (prepend_namespace(namespace,
                            src), prepend_namespace(namespace, tgt))
         for (src, tgt,
@@ -157,7 +157,7 @@ def map_promoted_to_declared_connections(
     # connections as declared by user and namespace in which connections
     # were declared
     promoted_to_declared_connections: Dict[Tuple[str, str],
-                                           list[Tuple[str, str,
+                                           List[Tuple[str, str,
                                                       str]]] = dict()
     for (a, b) in zip(connections_full_path,
                       user_declared_connections_by_namespace):

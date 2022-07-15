@@ -1,4 +1,6 @@
-from typing import Callable, Dict, Any, TypeVar, Set
+from typing import Callable, Dict, Any, TypeVar, Set, Union
+import numpy as np
+import warnings
 
 T = TypeVar('T', bound=Any)
 U = TypeVar('U', bound=Any)
@@ -7,7 +9,7 @@ U = TypeVar('U', bound=Any)
 def find_keys_with_matching_values(
     a: Dict[T, U],
     b: Dict[T, U],
-    error: Callable[[T, U, T, U], BaseException] | None = None,
+    error: Union[Callable[[T, U, T, U], BaseException], None] = None,
 ) -> Set[T]:
     """
     Find keys common to two dictionaries with matching values. Keys must
@@ -28,6 +30,9 @@ def find_keys_with_matching_values(
     # iterate over dictionary items with matching keys
     for (k1, v1), (k2, v2) in zip(c.items(), d.items()):
         if v1 == v2:
+            matching_keys.add(k1)
+        elif np.prod(v1) == np.prod(v2):
+            warnings.warn(f'{k1} and {k2} have different shapes but same size.')
             matching_keys.add(k1)
         elif error is not None:
             raise error(k1, v1, k2, v2)

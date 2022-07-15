@@ -14,12 +14,13 @@ from csdl.rep.implicit_operation_node import ImplicitOperationNode
 from csdl.rep.model_node import ModelNode
 from csdl.rep.get_nodes import get_model_nodes, get_src_nodes, get_tgt_nodes, get_var_nodes, get_operation_nodes, get_implicit_operation_nodes
 from csdl.utils.prepend_namespace import prepend_namespace
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Union, List
 from warnings import warn
+
 
 def _construct_graph_this_level(
     graph: DiGraph,
-    nodes: Dict[str, VariableNode | OperationNode | ModelNode],
+    nodes: Dict[str, Union[VariableNode, OperationNode, ModelNode]],
     node: Node,
 ):
     """
@@ -38,9 +39,24 @@ def _construct_graph_this_level(
             else:
                 nodes[node.name] = OperationNode(node)
     for predecessor in node.dependencies:
-        _construct_graph_this_level(graph, nodes, predecessor)
-        # adding redundant edge will not affect graph structure
-        graph.add_edge(nodes[predecessor.name], nodes[node.name])
+
+        # _construct_graph_this_level(graph, nodes, predecessor)
+        # # adding redundant edge will not affect graph structure
+        # graph.add_edge(nodes[predecessor.name], nodes[node.name])
+
+        if predecessor.name not in nodes:
+            _construct_graph_this_level(graph, nodes, predecessor)
+            # adding redundant edge will not affect graph structure
+            graph.add_edge(nodes[predecessor.name], nodes[node.name])
+        elif node.name not in nodes:
+            _construct_graph_this_level(graph, nodes, predecessor)
+            # adding redundant edge will not affect graph structure
+            graph.add_edge(nodes[predecessor.name], nodes[node.name])
+        elif not graph.has_edge(nodes[predecessor.name], nodes[node.name]):
+
+            _construct_graph_this_level(graph, nodes, predecessor)
+            # adding redundant edge will not affect graph structure
+            graph.add_edge(nodes[predecessor.name], nodes[node.name])
 
 
 def construct_graphs_all_models(
@@ -56,7 +72,7 @@ def construct_graphs_all_models(
     The intermediate representation graph and all graphs contained in a
     `ModelNode` are implemented as a networkx `DiGraph`.
     """
-    nodes: Dict[str, VariableNode | OperationNode | ModelNode] = dict()
+    nodes: Dict[str, Union[VariableNode, OperationNode, ModelNode]] = dict()
     graph = DiGraph()
 
     # add models to graph for this model
@@ -70,7 +86,6 @@ def construct_graphs_all_models(
                 s.submodel.registered_outputs,
                 s.submodel.subgraphs,
             )
-
 
     # add variables and operations to the graph for this model
 
@@ -91,13 +106,12 @@ def construct_graphs_all_models(
     return graph
 
 
-
 def find_cycles_among_models(
     graph: DiGraph,
-    nodes: list[IRNode],
-    path: list[IRNode] = [],
-    cycles: list[Set[IRNode]] = [],
-) -> list[Set[IRNode]]:
+    nodes: List[IRNode],
+    path: List[IRNode] = [],
+    cycles: List[Set[IRNode]] = [],
+) -> List[Set[IRNode]]:
     for node in nodes:
         path_as_set = set()
         # if name in path, store new cycle; this is not the most general
@@ -108,7 +122,6 @@ def find_cycles_among_models(
             path_as_set = set(path[path.index(node):])
             cycles.append(path_as_set)
             return cycles
-
 
         # continue search according to DFS strategy, keep track of
         # path traversed
@@ -123,8 +136,6 @@ def find_cycles_among_models(
     return cycles
 
 
-
-
 def construct_unflat_graph(graph: DiGraph, namespace: str = '') -> DiGraph:
     """
     Construct the intermediate representation as a graph with nodes
@@ -134,7 +145,7 @@ def construct_unflat_graph(graph: DiGraph, namespace: str = '') -> DiGraph:
     The intermediate representation graph and all graphs contained in a
     `ModelNode` are implemented as a networkx `DiGraph`.
     """
-    model_nodes: list[ModelNode] = get_model_nodes(graph)
+    model_nodes: List[ModelNode] = get_model_nodes(graph)
     for mn in model_nodes:
         _ = construct_unflat_graph(mn.graph, namespace=prepend_namespace(namespace, mn.namespace))
     var_nodes = get_var_nodes(graph)
@@ -183,10 +194,10 @@ def construct_unflat_graph(graph: DiGraph, namespace: str = '') -> DiGraph:
                             graph.add_edge(mn1, mn2)
 
     # TODO: ensure that redundant cycles are not recorded
-    cycles: list[Set[IRNode]] = []
+    cycles: List[Set[IRNode]] = []
     for mn in model_nodes:
         cycles.extend(find_cycles_among_models(graph, [mn]))
-    if len(cycles)> 1:
+    if len(cycles) > 1:
         warn("Model {} forms at least one cycle between two or more submodels. Cycles present in the unflat graph will affect performance if using a CSDL compiler back end that uses the unflat graph representation. Cycles present are, {}.\nIf using a CSDL compiler back end that uses the flattened graph representation, disregard this warning.".format(namespace, cycles))
 
     return graph

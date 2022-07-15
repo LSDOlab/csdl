@@ -10,46 +10,47 @@ from csdl.lang.input import Input
 from csdl.lang.output import Output
 from csdl.lang.declared_variable import DeclaredVariable
 from networkx import DiGraph
+from typing import List
 
 
-def get_var_nodes(graph: DiGraph) -> list[VariableNode]:
+def get_var_nodes(graph: DiGraph) -> List[VariableNode]:
     return list(
         filter(lambda x: isinstance(x, VariableNode), graph.nodes()))
 
 
-def get_tgt_nodes(var_nodes: list[VariableNode]) -> list[VariableNode]:
+def get_tgt_nodes(var_nodes: List[VariableNode]) -> List[VariableNode]:
     return list(
         filter(lambda x: isinstance(x.var, DeclaredVariable),
                var_nodes))
 
 
-def get_src_nodes(var_nodes: list[VariableNode]) -> list[VariableNode]:
+def get_src_nodes(var_nodes: List[VariableNode]) -> List[VariableNode]:
     return list(
         filter(lambda x: isinstance(x.var, (Input, Output)), var_nodes))
 
 
-def get_model_nodes(graph: DiGraph) -> list[ModelNode]:
+def get_model_nodes(graph: DiGraph) -> List[ModelNode]:
     return list(
         filter(lambda x: isinstance(x, ModelNode), graph.nodes()))
 
 
 def get_input_nodes(
-        var_nodes: list[VariableNode]) -> list[VariableNode]:
+        var_nodes: List[VariableNode]) -> List[VariableNode]:
     return list(filter(lambda x: isinstance(x.var, Input), var_nodes))
 
 
 def get_output_nodes(
-        var_nodes: list[VariableNode]) -> list[VariableNode]:
+        var_nodes: List[VariableNode]) -> List[VariableNode]:
     return list(filter(lambda x: isinstance(x.var, Output), var_nodes))
 
 
-def get_operation_nodes(graph: DiGraph) -> list[OperationNode]:
+def get_operation_nodes(graph: DiGraph) -> List[OperationNode]:
     return list(
         filter(lambda x: isinstance(x, OperationNode), graph.nodes()))
 
 
 def get_implicit_operation_nodes(
-        graph: DiGraph) -> list['ImplicitOperationNode']:
+        graph: DiGraph) -> List['ImplicitOperationNode']:
     return list(
         filter(lambda x: isinstance(x, ImplicitOperationNode),
                graph.nodes()))

@@ -1,11 +1,11 @@
-from typing import List
+from typing import List, Union
 import numpy as np
 
 
 def slice_to_list(
-    start: int | None,
-    stop: int | None,
-    step: int | None,
+    start: Union[int, None],
+    stop: Union[int, None],
+    step: Union[int, None],
     size: int = None,
 ) -> List[int]:
     if start is None and stop is None:

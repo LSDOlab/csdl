@@ -5,7 +5,7 @@ from csdl.lang.model import Model
 from csdl.lang.subgraph import Subgraph
 from csdl.lang.output import Output
 from csdl.utils.typehints import Shape
-from typing import Callable, Dict, List, Tuple, Any, TypeVar, Set
+from typing import Callable, Dict, List, Tuple, Any, TypeVar, Set, Union
 from copy import copy
 from networkx import DiGraph, simple_cycles
 
@@ -23,7 +23,7 @@ U = TypeVar('U', bound=Any)
 
 def collect_promoted_variable_paths(
     model: Model,
-    prefix: str | None,
+    prefix: Union[str , None],
 ) -> List[str]:
     """
     Collect promoted paths for all variables to check for valid

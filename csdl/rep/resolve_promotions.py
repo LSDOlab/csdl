@@ -11,7 +11,7 @@ from csdl.utils.typehints import Shape
 from csdl.utils.check_duplicate_keys import check_duplicate_keys
 from csdl.utils.find_names_with_matching_shapes import find_names_with_matching_shapes
 from csdl.utils.prepend_namespace import prepend_namespace
-from typing import List, Tuple, Dict, Set, Final, Literal
+from typing import List, Tuple, Dict, Set, Final, Literal, Union
 
 
 def validate_promotions_and_split(
@@ -21,7 +21,7 @@ def validate_promotions_and_split(
     local_namespace_target_shapes: Dict[str, Shape],
     namespace: str,
     model_type_name: str,
-    promotes: list[str] | None,
+    promotes: Union[List[str], None],
 ) -> Tuple[Dict[str, Set[str]], Dict[str, Set[str]]]:
     """
     validate user specified promotions and store maps from promoted to
@@ -57,13 +57,13 @@ def validate_promotions_and_split(
 
 def resolve_promotions(
     model: 'Model',
-    promotes: List[str] | None = None,
+    promotes: Union[List[str], None] = None,
     namespace: str = '',
 ) -> Tuple[Dict[str, Shape], Dict[str, Shape], Dict[
-        str, Input | Output], Dict[str, DeclaredVariable]]:
+        str, Union[Input, Output]], Dict[str, DeclaredVariable]]:
     promoted_sources_from_children_shapes: Dict[str, Shape] = dict()
     promoted_targets_from_children_shapes: Dict[str, Shape] = dict()
-    promoted_sources_from_children: Dict[str, Input | Output] = dict()
+    promoted_sources_from_children: Dict[str, Union[Input, Output]] = dict()
     promoted_targets_from_children: Dict[str, DeclaredVariable] = dict()
 
     for s in model.subgraphs:
@@ -132,7 +132,7 @@ def resolve_promotions(
 
     # also store variable objects themselves to establish dependency
     # relationships between variables and models in parent model
-    locally_defined_sources: Final[Dict[str, Input | Output]] = c
+    locally_defined_sources: Final[Dict[str, Union[Input, Output]]] = c
     locally_defined_targets: Final[Dict[str, DeclaredVariable]] = d
 
     # Rule: each source (input or output) name specified in this level

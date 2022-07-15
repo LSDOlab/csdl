@@ -26,7 +26,7 @@ def _remove_dead_code_nodes_from_graph(
     graph.remove_nodes_from(remove)
 
     if flat is False:
-        model_nodes: list[ModelNode] = get_model_nodes_from_graph(graph)
+        model_nodes: List[ModelNode] = get_model_nodes_from_graph(graph)
         for m in model_nodes:
             _remove_dead_code_nodes_from_graph(
                 m.graph,

@@ -11,7 +11,7 @@ try:
 except ImportError:
     pass
 
-from typing import Dict, List
+from typing import Dict, List, Union
 from csdl.utils.typehints import Shape
 from csdl.lang.node import Node
 from csdl.lang.subgraph import Subgraph
@@ -20,7 +20,7 @@ from csdl.lang.subgraph import Subgraph
 def detect_cycle(
     start: Subgraph,
     n: Node,
-    namespace: str | None = None,
+    namespace: Union[str, None] = None,
 ):
     for prev in start.dependencies:
         if prev is start:
