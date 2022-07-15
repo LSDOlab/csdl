@@ -95,7 +95,7 @@ def combine_operations(rep: GraphRepresentation) -> GraphRepresentation:
 
 def combine_operations_hierarchical(
     graph: DiGraph,
-    registered_outputs: set[VariableNode],
+    registered_outputs: Set[VariableNode],
 ):
     model_nodes = get_model_nodes_from_graph(graph)
     for m in model_nodes:
