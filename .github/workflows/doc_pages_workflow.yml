@@ -27,8 +27,12 @@ jobs:
         run: |
           # install required packages -- not sure if all are required
           sudo apt-get update
-          sudo apt-get -y install python3-pip git
-          pip3 install yapf pydoc-markdown
+          sudo apt-get -y install git
+          sudo apt-get -y install python3.10
+          sudo apt-get -y install python-pip
+          alias python="python3.10"
+          pip3 install yapf 
+          pipx install pydoc-markdown
           ls
           # install csdl
           pip3 install -e .
@@ -44,7 +48,7 @@ jobs:
           cat ../../docs/docs/lang_ref/model.mdx
           popd
           # generate markdown files containing worked examples
-          python3 ${here}/csdl/utils/generate_worked_examples_mdx.py ${here}
+          python ${here}/csdl/utils/generate_worked_examples_mdx.py ${here}
           echo "Worked Examples:"
           ls ${here}/docs/docs/worked_examples
           pushd docs

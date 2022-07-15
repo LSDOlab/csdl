@@ -283,6 +283,9 @@ class GraphRepresentation:
             self.flat_graph)
         for op in implicit_operation_nodes:
             op.rep = GraphRepresentation(op.op._model)
+        
+        # from csdl.opt.combine_operations import combine_operations
+        # combine_operations(self)
 
     def input_nodes(self) -> List[VariableNode]:
         """
@@ -625,6 +628,7 @@ class GraphRepresentation:
         self,
         markersize=None,
         implicit_models: bool = False,
+        title: str = '',
     ):
         """
         Visualize the adjacency matrix for the flattened graph
@@ -636,11 +640,13 @@ class GraphRepresentation:
             adjacency_matrix(self.flat_graph,
                              nodelist=self.flat_sorted_nodes))
         plt.spy(A, markersize=markersize)
+        if title != '':
+            plt.title(title)
         plt.show()
 
         if implicit_models is True:
             for op in get_implicit_operation_nodes(
-                    self._operation_nodes):
+                    self.flat_graph):
                 op.rep.visualize_adjacency_mtx(
                     markersize=markersize,
                     implicit_models=implicit_models,

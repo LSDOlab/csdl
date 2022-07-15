@@ -180,9 +180,8 @@ def merge_graphs(
                 promoted_namespace = '.'.join(
                     promoted_name.rsplit('.')[:-1])
                 v.namespace = promoted_namespace
-            elif v.var.name != v.var._id:
-                # elif v.name[0] != '_':
-
+            # elif v.name[0] != '_':
+            elif v.name != v.var._id:
                 # promote all automatically named variables
                 # raise KeyError(f'{unpromoted_name} not found.')
                 pred_list = list(graph.predecessors(v))
