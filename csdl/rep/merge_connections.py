@@ -69,7 +69,6 @@ def merge_connections(
         if not isinstance(var_node, VariableNode):
             continue
 
-        var_node.connected_to = set()
         num_pred = len(list(container.graph.predecessors(var_node)))
 
         if num_pred > 1:
@@ -177,7 +176,6 @@ def merge_connections(
             )
         # check target type
         if not isinstance(tgt_node.var, (DeclaredVariable, Variable)):
-            print(tgt_node, tgt_node.var)
             raise ValueError(
                 f'connection target \'{tgt_name}\' is not a declared variable.'
             )
