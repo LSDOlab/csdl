@@ -44,6 +44,7 @@ def custom(*args, op: CustomOperation):
         )
         outs.append(out)
 
+    op.outs = tuple(outs)
     if len(outs) == 1:
         return outs[0]
     else:

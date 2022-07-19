@@ -40,23 +40,140 @@ def _construct_graph_this_level(
                 nodes[node.name] = OperationNode(node)
     for predecessor in node.dependencies:
 
-        # _construct_graph_this_level(graph, nodes, predecessor)
-        # # adding redundant edge will not affect graph structure
-        # graph.add_edge(nodes[predecessor.name], nodes[node.name])
+        # Add edges between predecessor and node.
+        # Function is called iteratively on predecessors of a node
+        # and edges are added 'bottom up' from each registered output.
+
+        """ 
+        (x = reg.output)             
+          x       o       o       o
+                  .
+          x .......    
+
+          x       o ..... o       o
+                  .
+          x .......            
+
+          x       o ..... o ..... o
+                  .
+          x .......    
+
+          x       o ..... o <---- o
+                  .
+          x .......   
+
+          x       o <---- o <---- o
+                  .
+          x .......   
+
+          x       o <---- o <---- o
+                  |
+          x <------ 
+
+          x ..... o <---- o <---- o
+                  |
+          x <------ 
+
+          x <---- o <---- o <---- o
+                  |
+          x <------ 
+
+          """
+
+        # If an edge already exists between nodes, there
+        # is no need to traverse down it again as all
+        # downstream nodes have already been processed like the
+        # last figure.
+
+        # However, you get a weird edge case with multi-output
+        # operations that aren't registered outputs:
+
+        """ 
+        (x = reg.output)             
+          o       o       o       o
+                  .
+          x .......    
+
+          o       o ..... o       o
+                  .
+          x .......            
+
+          o       o ..... o ..... o
+                  .
+          x .......    
+
+          o       o ..... o <---- o
+                  .
+          x .......   
+
+          o       o <---- o <---- o
+                  .
+          x .......   
+
+          o       o <---- o <---- o
+                  |
+          x <------ 
+
+          """
+
+        # The last edge isn't added because the top left node isn't
+        # a registered output. This occurs when an operation outputs
+        # two variables but the user only uses one in their calculation.
+        # We can deal with this by manually
+        # adding edges for multi-output operations.
 
         if predecessor.name not in nodes:
             _construct_graph_this_level(graph, nodes, predecessor)
             # adding redundant edge will not affect graph structure
-            graph.add_edge(nodes[predecessor.name], nodes[node.name])
+            add_edge_to_graph(graph, nodes, predecessor.name, node.name)
         elif node.name not in nodes:
             _construct_graph_this_level(graph, nodes, predecessor)
             # adding redundant edge will not affect graph structure
-            graph.add_edge(nodes[predecessor.name], nodes[node.name])
+            add_edge_to_graph(graph, nodes, predecessor.name, node.name)
         elif not graph.has_edge(nodes[predecessor.name], nodes[node.name]):
 
             _construct_graph_this_level(graph, nodes, predecessor)
             # adding redundant edge will not affect graph structure
-            graph.add_edge(nodes[predecessor.name], nodes[node.name])
+            add_edge_to_graph(graph, nodes, predecessor.name, node.name)
+
+
+def add_edge_to_graph(
+    graph: DiGraph,
+    nodes: Dict[str, Union[VariableNode, OperationNode, ModelNode]],
+    predecessor_name: str,
+    node_name: str,
+):
+    """
+    given a node and it's predecessor, add the edge to graph.
+    """
+    predecessor_instance = nodes[predecessor_name]
+    graph.add_edge(predecessor_instance, nodes[node_name])
+
+
+
+    # edge case if node is a multi-output operation. as discussed in 
+    # def _construct_graph_this_level:
+
+    """
+        manually add this edge
+           /
+          /
+    o <==== o <---- o <---- o
+            |
+    x <------ 
+
+    """
+
+    if isinstance(predecessor_instance, OperationNode):
+        
+        # add edges for multi-output operations
+        if len(predecessor_instance.op.outs) > 1:
+            for successor in predecessor_instance.op.outs:
+                _construct_graph_this_level(
+                    graph,
+                    nodes,
+                    successor,
+                )
 
 
 def construct_graphs_all_models(

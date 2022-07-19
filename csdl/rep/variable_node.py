@@ -1,6 +1,6 @@
 from csdl.rep.ir_node import IRNode
 from csdl.lang.variable import Variable
-
+from typing import Set
 
 class VariableNode(IRNode):
 
@@ -11,3 +11,5 @@ class VariableNode(IRNode):
         self.unpromoted_namespace = ''
         self.tgt_namespace = []
         self.tgt_name = []
+
+        self.connected_to: Set[VariableNode] = set()
