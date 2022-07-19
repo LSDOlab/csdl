@@ -106,6 +106,9 @@ class Node():
 
     def add_fwd_edges(self):
         for dependency in self.dependencies:
+            if self in dependency.dependents:
+                continue
+
             dependency.add_dependent_node(self)
             dependency.add_fwd_edges()
 

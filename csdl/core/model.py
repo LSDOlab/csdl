@@ -123,6 +123,9 @@ class ImplicitOperationFactory(object):
 
 def build_symbol_table(symbol_table, node):
     for n in node.dependencies:
+        if n._id in symbol_table:
+            continue
+
         symbol_table[n._id] = n
         build_symbol_table(symbol_table, n)
 
@@ -140,6 +143,7 @@ def _run_front_end_and_middle_end(run_front_end: Callable) -> Callable:
     The user does not need to opt into running the middle end and cannot
     opt out of running the middle end.
     """
+
     def _run_middle_end(self):
         if self._defined is False:
             run_front_end(self)
