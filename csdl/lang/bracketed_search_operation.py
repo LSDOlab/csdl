@@ -57,3 +57,8 @@ class BracketedSearchOperation(ImplicitOperation):
                                              Variable]]] = brackets
         self.maxiter: int = maxiter
         self.tol: float = tol
+        for l,u in self.brackets.values():
+            if isinstance(l, Variable):
+                self.add_dependency_node(l)
+            if isinstance(u, Variable):
+                self.add_dependency_node(u)
