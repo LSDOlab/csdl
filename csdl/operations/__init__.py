@@ -11,6 +11,7 @@ from csdl.operations.arcsinh import arcsinh
 from csdl.operations.arccosh import arccosh
 from csdl.operations.arctanh import arctanh
 from csdl.operations.exp import exp
+from csdl.operations.exp_a import exp_a
 from csdl.operations.log import log
 from csdl.operations.log10 import log10
 from csdl.operations.cotan import cotan
