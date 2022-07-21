@@ -11,6 +11,7 @@ from csdl.std.arsinh import arsinh
 from csdl.std.arcosh import arcosh
 from csdl.std.artanh import artanh
 from csdl.std.exp import exp
+from csdl.std.exp_a import exp_a
 from csdl.std.log import log
 from csdl.std.log10 import log10
 from csdl.std.cotan import cotan
