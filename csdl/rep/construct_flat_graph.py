@@ -251,6 +251,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
     for k, tgts in redundant_targets.items():
         for tgt in tgts:
             if k in unique_targets.keys():
+                unique_targets[k].declared_to.add(tgt)
                 contracted_nodes(
                     graph,
                     unique_targets[k],
@@ -263,6 +264,8 @@ def merge_automatically_connected_nodes(graph: DiGraph):
     # # connections formed automatically by promotions
     for k, src in sources.items():
         if k in unique_targets.keys():
+            src.declared_to.add(unique_targets[k])
+            src.declared_to.update(unique_targets[k].declared_to)
             contracted_nodes(
                 graph,
                 src,

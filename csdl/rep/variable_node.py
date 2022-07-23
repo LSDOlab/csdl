@@ -12,4 +12,8 @@ class VariableNode(IRNode):
         self.tgt_namespace = []
         self.tgt_name = []
 
+        # set of VariableNodes that are merged due to connections
         self.connected_to: Set[VariableNode] = set()
+
+        # set of VariableNodes that are merged due to promotions
+        self.declared_to: Set[VariableNode] = set()
