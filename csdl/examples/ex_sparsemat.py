@@ -1,6 +1,6 @@
 from csdl import Model, GraphRepresentation
 import csdl
-from scipy.sparse import coo_array
+from scipy.sparse import coo_matrix
 import numpy as np
 
 
@@ -13,7 +13,7 @@ class ExampleMatMat(Model):
         row = np.array([0, 3, 1, 0])
         col = np.array([0, 3, 1, 2])
         data2 = np.array([1., 2., 0., 12.])
-        mat2 = coo_array((data2, (row, col)), shape=(4, 4)).tocsc()
+        mat2 = coo_matrix((data2, (row, col)), shape=(4, 4)).tocsc()
 
         actuating_points = csdl.sparsematmat(mat1, sparse_mat=mat2)
 
