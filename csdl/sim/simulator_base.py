@@ -104,9 +104,13 @@ class SimulatorBase:
         requests/sets. Use in __setitem__ and __getitem__
         """
         if key in self._promoted_to_unpromoted.keys():
+            print('using promoted key', key)
             return key
         if key in self._unpromoted_to_promoted.keys():
-            return self._unpromoted_to_promoted[key]
+            print('using unpromoted key', key)
+            k = self._unpromoted_to_promoted[key]
+            print('using promoted key', k)
+            return k
         raise KeyError(
             "{} not a user defined variable in this Simulator".format(
                 key))
