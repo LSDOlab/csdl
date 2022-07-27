@@ -23,6 +23,7 @@ from csdl.rep.collect_design_variables import collect_design_variables
 from csdl.rep.collect_constraints import collect_constraints
 from csdl.rep.find_objective import find_objective
 from csdl.utils.prepend_namespace import prepend_namespace
+from csdl.utils.find_promoted_name import find_promoted_name
 from networkx import DiGraph, ancestors, simple_cycles
 try:
     pass
@@ -99,6 +100,23 @@ def generate_unpromoted_promoted_maps(model: 'Model') -> Dict[str, str]:
     return model.unpromoted_to_promoted
 
 
+def structure_user_declared_connections(
+    connections: Dict[str, Tuple[dict, List[Tuple[str, str]]]],
+    model: 'Model',
+) -> Tuple[Dict[str, Tuple[dict, List[Tuple[str, str]]]], List[Tuple[
+        str, str]]]:
+    for s in model.subgraphs:
+        c = dict()
+        connections[s.name] = (c, s.submodel.user_declared_connections)
+
+        p, q = structure_user_declared_connections(c, s.submodel)
+
+        assert c is p
+        assert s.submodel.user_declared_connections is q
+
+    return connections, model.user_declared_connections
+
+
 class GraphRepresentation:
     """
     The intermediate representation of a CSDL Model, stored as a
@@ -109,15 +127,32 @@ class GraphRepresentation:
     encode hierarchy without the use of subgraph nodes.
     """
 
-    def __init__(self, model: 'Model'):
+    def __init__(self, model: 'Model', unflat: bool = True):
         define_models_recursively(model)
         _, _, _, _ = resolve_promotions(model)
         generate_unpromoted_promoted_maps(model)
         connections: List[Tuple[str, str,
                                 str]] = collect_connections(model, )
+        self.user_declared_connections: Tuple[
+            Dict[str, Tuple[dict, List[Tuple[str, str]]]],
+            List[Tuple[str,
+                       str]]] = structure_user_declared_connections(
+                           dict(), model)
         self.connections: List[Tuple[str, str]] = [
-            (a, b) for (a, b, _) in connections
+            (find_promoted_name(
+                prepend_namespace(c, a),
+                model.promoted_to_unpromoted,
+                model.unpromoted_to_promoted,
+            ),
+             find_promoted_name(
+                 prepend_namespace(c, b),
+                 model.promoted_to_unpromoted,
+                 model.unpromoted_to_promoted,
+             )) for (a, b, c) in connections
         ]
+        # remove duplicate connections
+        self.connections = list(dict.fromkeys(self.connections))
+
         self.unpromoted_to_promoted: Dict[
             str, str] = model.unpromoted_to_promoted
         self.promoted_to_unpromoted: Dict[
@@ -229,45 +264,33 @@ class GraphRepresentation:
         `IntermediateRepresentation` with `flat_graph: DiGraph`.
         All submodels in the hierarchy will contain `flat_graph = None`.
         """
-        try:
-            self.flat_sorted_nodes: List[IRNode] = sort_nodes_nx(
-                self.flat_graph,
-                flat=True,
-            )
-            n_nodes = len(self.flat_graph.nodes)
-            n_sorted_nodes = len(self.flat_sorted_nodes)
-            if n_nodes != n_sorted_nodes:
-                raise ValueError(
-                    "The number of nodes {} is not equal to the number of sorted nodes {}. this indicates a compiler error, not an error in the user's model."
-                    .format(n_nodes, n_sorted_nodes))
-        except:
-            cycles = list(simple_cycles(self.flat_graph))
-            # TODO: show secondary names of connected variables
-            # TODO: multiline error messages
-            raise KeyError(
-                "Promotions or connections are present that define cyclic relationships between variables. Cycles present are as follows:\n{}\nCycles are shown as lists of unique variable names that form a cycle. To represent cyclic relationships in CSDL, define an implicit operation. See documentation for more details on how to define implicit operations."
-                .format([[
-                    x.name for x in list(
-                        filter(lambda v: isinstance(v, VariableNode),
-                               cycle))
-                ] for cycle in cycles]))
+        self.flat_sorted_nodes: List[IRNode] = sort_nodes_nx(
+            self.flat_graph,
+            flat=True,
+        )
+        n_nodes = len(self.flat_graph.nodes)
+        n_sorted_nodes = len(self.flat_sorted_nodes)
+        if n_nodes != n_sorted_nodes:
+            raise ValueError(
+                "The number of nodes {} is not equal to the number of sorted nodes {}. this indicates a compiler error, not an error in the user's model."
+                .format(n_nodes, n_sorted_nodes))
         """
         Nodes sorted in order of execution, using the flattened graph
         """
-        self.unflat_graph: DiGraph = construct_unflat_graph(
-            first_graph, )
-        """
-        Directed graph representing model.
-        Each model in the model hierarchy will contain an instance of
-        `IntermediateRepresentation` with `unflat_graph: DiGraph`.
-        """
-        self.unflat_sorted_nodes: List[IRNode] = sort_nodes_nx(
-            self.unflat_graph,
-            flat=False,
-        )
-        """
-        Nodes sorted in order of execution, using the unflattened graph
-        """
+        if unflat is True:
+            self.unflat_graph: DiGraph = construct_unflat_graph(first_graph)
+            """
+            Directed graph representing model.
+            Each model in the model hierarchy will contain an instance of
+            `IntermediateRepresentation` with `unflat_graph: DiGraph`.
+            """
+            self.unflat_sorted_nodes: List[IRNode] = sort_nodes_nx(
+                self.unflat_graph,
+                flat=False,
+            )
+            """
+            Nodes sorted in order of execution, using the unflattened graph
+            """
 
         self._variable_nodes: List[VariableNode] = get_var_nodes(
             self.flat_graph)
@@ -283,7 +306,7 @@ class GraphRepresentation:
             self.flat_graph)
         for op in implicit_operation_nodes:
             op.rep = GraphRepresentation(op.op._model)
-        
+
         # from csdl.opt.combine_operations import combine_operations
         # combine_operations(self)
 
@@ -636,17 +659,15 @@ class GraphRepresentation:
         `True` will also visualize each model defining an implicit
         operation.
         """
-        A = csc_matrix(
-            adjacency_matrix(self.flat_graph,
-                             nodelist=self.flat_sorted_nodes))
+        A = adjacency_matrix(self.flat_graph,
+                             nodelist=self.flat_sorted_nodes)
         plt.spy(A, markersize=markersize)
         if title != '':
             plt.title(title)
         plt.show()
 
         if implicit_models is True:
-            for op in get_implicit_operation_nodes(
-                    self.flat_graph):
+            for op in get_implicit_operation_nodes(self.flat_graph):
                 op.rep.visualize_adjacency_mtx(
                     markersize=markersize,
                     implicit_models=implicit_models,

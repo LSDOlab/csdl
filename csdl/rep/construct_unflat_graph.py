@@ -14,7 +14,7 @@ from csdl.rep.implicit_operation_node import ImplicitOperationNode
 from csdl.rep.model_node import ModelNode
 from csdl.rep.get_nodes import get_model_nodes, get_src_nodes, get_tgt_nodes, get_var_nodes, get_operation_nodes, get_implicit_operation_nodes
 from csdl.utils.prepend_namespace import prepend_namespace
-from typing import List, Dict, Set, Union, List
+from typing import List, Dict, Set, Union, List, Tuple
 from warnings import warn
 
 
@@ -43,40 +43,39 @@ def _construct_graph_this_level(
         # Add edges between predecessor and node.
         # Function is called iteratively on predecessors of a node
         # and edges are added 'bottom up' from each registered output.
-
-        """ 
-        (x = reg.output)             
+        """
+        (x = reg.output)
           x       o       o       o
                   .
-          x .......    
+          x .......
 
           x       o ..... o       o
                   .
-          x .......            
+          x .......
 
           x       o ..... o ..... o
                   .
-          x .......    
+          x .......
 
           x       o ..... o <---- o
                   .
-          x .......   
+          x .......
 
           x       o <---- o <---- o
                   .
-          x .......   
+          x .......
 
           x       o <---- o <---- o
                   |
-          x <------ 
+          x <------
 
           x ..... o <---- o <---- o
                   |
-          x <------ 
+          x <------
 
           x <---- o <---- o <---- o
                   |
-          x <------ 
+          x <------
 
           """
 
@@ -87,32 +86,31 @@ def _construct_graph_this_level(
 
         # However, you get a weird edge case with multi-output
         # operations that aren't registered outputs:
-
-        """ 
-        (x = reg.output)             
+        """
+        (x = reg.output)
           o       o       o       o
                   .
-          x .......    
+          x .......
 
           o       o ..... o       o
                   .
-          x .......            
+          x .......
 
           o       o ..... o ..... o
                   .
-          x .......    
+          x .......
 
           o       o ..... o <---- o
                   .
-          x .......   
+          x .......
 
           o       o <---- o <---- o
                   .
-          x .......   
+          x .......
 
           o       o <---- o <---- o
                   |
-          x <------ 
+          x <------
 
           """
 
@@ -130,7 +128,8 @@ def _construct_graph_this_level(
             _construct_graph_this_level(graph, nodes, predecessor)
             # adding redundant edge will not affect graph structure
             add_edge_to_graph(graph, nodes, predecessor.name, node.name)
-        elif not graph.has_edge(nodes[predecessor.name], nodes[node.name]):
+        elif not graph.has_edge(nodes[predecessor.name],
+                                nodes[node.name]):
 
             _construct_graph_this_level(graph, nodes, predecessor)
             # adding redundant edge will not affect graph structure
@@ -149,23 +148,20 @@ def add_edge_to_graph(
     predecessor_instance = nodes[predecessor_name]
     graph.add_edge(predecessor_instance, nodes[node_name])
 
-
-
-    # edge case if node is a multi-output operation. as discussed in 
+    # edge case if node is a multi-output operation. as discussed in
     # def _construct_graph_this_level:
-
     """
         manually add this edge
            /
           /
     o <==== o <---- o <---- o
             |
-    x <------ 
+    x <------
 
     """
 
     if isinstance(predecessor_instance, OperationNode):
-        
+
         # add edges for multi-output operations
         if len(predecessor_instance.op.outs) > 1:
             for successor in predecessor_instance.op.outs:
@@ -189,7 +185,8 @@ def construct_graphs_all_models(
     The intermediate representation graph and all graphs contained in a
     `ModelNode` are implemented as a networkx `DiGraph`.
     """
-    nodes: Dict[str, Union[VariableNode, OperationNode, ModelNode]] = dict()
+    nodes: Dict[str, Union[VariableNode, OperationNode,
+                           ModelNode]] = dict()
     graph = DiGraph()
 
     # add models to graph for this model
@@ -253,7 +250,60 @@ def find_cycles_among_models(
     return cycles
 
 
-def construct_unflat_graph(graph: DiGraph, namespace: str = '') -> DiGraph:
+def model_has_target_for_source(mn: ModelNode, src_path: str) -> bool:
+    child_var_nodes = get_var_nodes(mn.graph)
+    child_tgt_nodes = get_tgt_nodes(child_var_nodes)
+    for tgt in child_tgt_nodes:
+        tgt_path = prepend_namespace(tgt.namespace, tgt.name)
+        if tgt_path == src_path:
+            return True
+    model_nodes: List[ModelNode] = get_model_nodes(mn.graph)
+    for child in model_nodes:
+        if model_has_target_for_source(child, src_path):
+            return True
+    return False
+
+
+def model_has_source_for_target(mn: ModelNode, tgt_path: str) -> bool:
+    child_var_nodes = get_var_nodes(mn.graph)
+    child_src_nodes = get_src_nodes(child_var_nodes)
+    for src in child_src_nodes:
+        src_path = prepend_namespace(src.namespace, src.name)
+        if src_path == tgt_path:
+            return True
+    model_nodes: List[ModelNode] = get_model_nodes(mn.graph)
+    for child in model_nodes:
+        if model_has_source_for_target(child, tgt_path):
+            return True
+    return False
+
+
+def add_source_model_edges(
+    model_nodes: List[ModelNode],
+    graph: DiGraph,
+    src: VariableNode,
+    src_path: str,
+):
+    for mn in model_nodes:
+        if model_has_target_for_source(mn, src_path):
+            graph.add_edge(src, mn)
+
+
+def add_model_target_edges(
+    model_nodes: List[ModelNode],
+    graph: DiGraph,
+    tgt: VariableNode,
+    tgt_path: str,
+):
+    for mn in model_nodes:
+        if model_has_source_for_target(mn, tgt_path):
+            graph.add_edge(mn, tgt)
+
+
+def construct_unflat_graph(
+    graph: DiGraph,
+    namespace: str = '',
+) -> DiGraph:
     """
     Construct the intermediate representation as a graph with nodes
     represented by `VariableNode`, `OperationNode`, and `ModelNode`
@@ -264,34 +314,23 @@ def construct_unflat_graph(graph: DiGraph, namespace: str = '') -> DiGraph:
     """
     model_nodes: List[ModelNode] = get_model_nodes(graph)
     for mn in model_nodes:
-        _ = construct_unflat_graph(mn.graph, namespace=prepend_namespace(namespace, mn.namespace))
+        _ = construct_unflat_graph(
+            mn.graph,
+            namespace=prepend_namespace(namespace, mn.namespace),
+        )
     var_nodes = get_var_nodes(graph)
 
     # src -> model
     src_nodes = get_src_nodes(var_nodes)
     for src in src_nodes:
         src_path = prepend_namespace(src.namespace, src.name)
-        for mn in model_nodes:
-            child_var_nodes = get_var_nodes(mn.graph)
-            child_tgt_nodes = get_tgt_nodes(child_var_nodes)
-            for tgt in child_tgt_nodes:
-                tgt_path = prepend_namespace(tgt.namespace, tgt.name)
-                if tgt_path == src_path:
-                    graph.add_edge(src, mn)
-                    break
+        add_source_model_edges(model_nodes, graph, src, src_path)
 
-    # tgt -> model
-    tgt_nodes = get_tgt_nodes(var_nodes)
+    # model -> tgt
+    tgt_nodes = get_src_nodes(var_nodes)
     for tgt in tgt_nodes:
         tgt_path = prepend_namespace(tgt.namespace, tgt.name)
-        for mn in model_nodes:
-            child_var_nodes = get_var_nodes(mn.graph)
-            child_src_nodes = get_src_nodes(child_var_nodes)
-            for src in child_src_nodes:
-                src_path = prepend_namespace(src.namespace, src.name)
-                if tgt_path == src_path:
-                    graph.add_edge(mn, tgt)
-                    break
+        add_model_target_edges(model_nodes, graph, tgt, tgt_path)
 
     # model -> model
     for mn1 in model_nodes:
@@ -304,17 +343,21 @@ def construct_unflat_graph(graph: DiGraph, namespace: str = '') -> DiGraph:
                 for src in src_nodes:
                     src_path = prepend_namespace(src.namespace,
                                                  src.name)
-                    for tgt in tgt_nodes:
-                        tgt_path = prepend_namespace(
-                            tgt.namespace, tgt.name)
-                        if tgt_path == src_path:
-                            graph.add_edge(mn1, mn2)
+                    if model_has_target_for_source(mn2, src_path):
+                        graph.add_edge(mn1, mn2)
+                for tgt in tgt_nodes:
+                    tgt_path = prepend_namespace(tgt.namespace,
+                                                 tgt.name)
+                    if model_has_source_for_target(mn1, tgt_path):
+                        graph.add_edge(mn1, mn2)
 
     # TODO: ensure that redundant cycles are not recorded
     cycles: List[Set[IRNode]] = []
     for mn in model_nodes:
         cycles.extend(find_cycles_among_models(graph, [mn]))
     if len(cycles) > 1:
-        warn("Model {} forms at least one cycle between two or more submodels. Cycles present in the unflat graph will affect performance if using a CSDL compiler back end that uses the unflat graph representation. Cycles present are, {}.\nIf using a CSDL compiler back end that uses the flattened graph representation, disregard this warning.".format(namespace, cycles))
+        warn(
+            "Model {} forms at least one cycle between two or more submodels. Cycles present in the unflat graph will affect performance if using a CSDL compiler back end that uses the unflat graph representation. Cycles present are, {}.\nIf using a CSDL compiler back end that uses the flattened graph representation, disregard this warning."
+            .format(namespace, cycles))
 
     return graph
