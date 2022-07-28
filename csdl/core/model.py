@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from typing import Callable, Tuple, List, Union, Dict
 from copy import deepcopy
+import warnings
 
 from csdl.utils.graph import (
     remove_indirect_dependencies,
@@ -74,6 +75,26 @@ class ImplicitOperationFactory(object):
         self.states.append(state)
         self.residuals.append(residual)
         if bracket is not None:
+            # WARNING: TEMPORARY FIX TO PREVENT ERRORS BEING THROWN
+            if isinstance(bracket[0], Variable):
+                bracket = (bracket[0].val, bracket[1])
+
+                warnings.warn('bracket contains CSDL variable. setting to default value.')
+
+            elif isinstance(bracket[0], np.ndarray):
+                if isinstance(bracket[0].flatten()[0], Variable):
+                    bracket = (bracket[0].flatten()[0].val, bracket[1])
+                    warnings.warn('bracket contains CSDL variable. setting to default value.')
+
+            # WARNING: TEMPORARY FIX TO PREVENT ERRORS BEING THROWN
+            if isinstance(bracket[1], Variable):
+                bracket = (bracket[0], bracket[1].val)
+                warnings.warn('bracket contains CSDL variable. setting to default value.')
+            elif isinstance(bracket[1], np.ndarray):
+                if isinstance(bracket[1].flatten()[0], Variable):
+                    bracket = (bracket[0], bracket[1].flatten()[0].val)
+                    warnings.warn('bracket contains CSDL variable. setting to default value.')
+
             self.brackets[state] = bracket
         self.implicit_metadata[state] = dict(
             val=check_default_val_type(val),
