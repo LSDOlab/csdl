@@ -98,6 +98,22 @@ def generate_unpromoted_promoted_maps(model: 'Model') -> Dict[str, str]:
         model.promoted_to_unpromoted)
     return model.unpromoted_to_promoted
 
+def structure_user_declared_connections(
+    connections: Dict[str, Tuple[dict, List[Tuple[str, str]]]],
+    model: 'Model',
+) -> Tuple[Dict[str, Tuple[dict, List[Tuple[str, str]]]], List[Tuple[
+        str, str]]]:
+    for s in model.subgraphs:
+        c = dict()
+        connections[s.name] = (c, s.submodel.user_declared_connections)
+
+        p, q = structure_user_declared_connections(c, s.submodel)
+
+        assert c is p
+        assert s.submodel.user_declared_connections is q
+
+    return connections, model.user_declared_connections
+
 
 class GraphRepresentation:
     """
@@ -115,9 +131,27 @@ class GraphRepresentation:
         generate_unpromoted_promoted_maps(model)
         connections: List[Tuple[str, str,
                                 str]] = collect_connections(model, )
-        self.connections: List[Tuple[str, str]] = [
-            (a, b) for (a, b, _) in connections
-        ]
+
+        self.user_declared_connections: Tuple[
+            Dict[str, Tuple[dict, List[Tuple[str, str]]]],
+            List[Tuple[str,
+                       str]]] = structure_user_declared_connections(
+                           dict(), model)
+        # self.connections: List[Tuple[str, str]] = [
+        #     (find_promoted_name(
+        #         prepend_namespace(c, a),
+        #         model.promoted_to_unpromoted,
+        #         model.unpromoted_to_promoted,
+        #     ),
+        #         find_promoted_name(
+        #         prepend_namespace(c, b),
+        #         model.promoted_to_unpromoted,
+        #         model.unpromoted_to_promoted,
+        #     )) for (a, b, c) in connections
+        # ]
+        # # remove duplicate connections
+        # self.connections = list(dict.fromkeys(self.connections))
+
         self.unpromoted_to_promoted: Dict[
             str, str] = model.unpromoted_to_promoted
         self.promoted_to_unpromoted: Dict[
