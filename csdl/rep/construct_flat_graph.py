@@ -121,7 +121,12 @@ def merge_graphs(
     # create a flattened copy of the graph for each model node
     graph.remove_nodes_from(child_model_nodes)
     for mn in copy(child_model_nodes):
-        graph = compose(graph, mn.graph)
+        
+        # compose is slower than manually adding edges
+        # graph = compose(graph, mn.graph)
+        graph.add_edges_from(mn.graph.edges())
+        graph.add_nodes_from(mn.graph.nodes())
+
         graph = merge_graphs(
             graph,
             promoted_to_unpromoted,
