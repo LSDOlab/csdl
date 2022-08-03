@@ -295,7 +295,7 @@ class Model:
             check_constraint_value_type(equals)
 
             if lower is not None and upper is not None:
-                if np.greater(lower, upper):
+                if np.greater(lower, upper).any():
                     raise ValueError(
                         "Lower bound is greater than upper bound:\n lower bound: {}\n upper bound: {}"
                         .format(lower, upper))
