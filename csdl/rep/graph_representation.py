@@ -184,6 +184,7 @@ class GraphRepresentation:
                 model,
                 model.promoted_to_unpromoted,
                 model.unpromoted_to_promoted,
+                design_variables=dict()
             )
         """
         Design variables of the optimization problem, if an optimization
