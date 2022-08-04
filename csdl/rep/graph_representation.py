@@ -204,6 +204,7 @@ class GraphRepresentation:
                                    model,
                                    model.promoted_to_unpromoted,
                                    model.unpromoted_to_promoted,
+                                   constraints=dict(),
                                )
         """
         Constraints of the optimization problem, if a constrained
