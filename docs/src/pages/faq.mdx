@@ -13,7 +13,7 @@ CSDL is an embedded domain specific language designed for solving
 Multidisciplinary Design Analysis and Optimization (MDAO) problems.
 CSDL enables complete separation between specifying a mathematical model
 and implementing a numerical simulation of a physical system.
-Separation between specification and implementation enables engineers to
+Separation between model definition and implementation enables engineers to
 operate at a high level of abstraction, without the need to implement
 low level algorithms, including derivative computation.
 CSDL is an obvious choice for optimization problems that benefit from
@@ -39,9 +39,9 @@ A summary of the license is also available
 
 ## Why use CSDL?
 
-CSDL is a powerful language that enables users to specify a mathematical
+CSDL is a powerful language that enables users to define a mathematical
 model of a physical system without regard for how to implement a
-simulation for that specification, or which architecture is used to run
+simulation for that model definition, or which architecture is used to run
 the simulation.
 CSDL is especially powerful in multidisciplinary design optimization
 where gradient-based approaches can be applied, due to their superior
@@ -50,7 +50,7 @@ Many modeling languages exist that excel at solving general nonlinear
 programs, but those languages are typically restricted to a single
 discipline, do not fully automate derivative computation, or cannot
 compute the derivatives required for optimization efficiently.
-This leads to overhead for the user to specify a model as a single
+This leads to overhead for the user to define a model as a single
 discipline, or implement derivative computation which may be difficult
 to maintain.
 CSDL automates derivative computation for individual operations and
@@ -59,25 +59,25 @@ Model disciplines are typically tightly coupled, presenting a challenge
 for derivative computation necessary for solving nonlinear programs
 (NLPs).
 
-CSDL enables users to specify mathematical models of physical systems in
+CSDL enables users to define mathematical models of physical systems in
 two ways: a functional style, and an object oriented style.
-The functional style of model specification is a style that is similar
+The functional style of model definition is a style that is similar
 to natural mathematical notation.
-The object oriented style of model specification enables hierarchical
+The object oriented style of model definition enables hierarchical
 composition of models.
 Both styles make code easier to read and intuitive to use for
 multidisciplinary design analysis and optimization applications.
 
 ## What is the goal of this project?
 
-The goal of CSDL is to separate model specification from simulation
+The goal of CSDL is to separate model definition from simulation
 implementation, eliminating overhead imposed on the model developer,
 with emphasis given to solving multidisciplinary design optimization
 problems.
 For example, CSDL automatically computes derivatives (necessary for
 gradient-based optimization) across multiple disciplines without any
 additional code from the user.
-Complete separation between model specification and simulation
+Complete separation between model definition and simulation
 implementation allows for the language to evolve to fit user needs
 with little or no additional overhead for the user.
 

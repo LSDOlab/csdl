@@ -5,7 +5,7 @@ title: Optimization
 ------------------------------------------------------------------------
 
 Up to this point in the tutorial, the focus has been on using CSDL to
-specify mathematical models for simulation.
+define mathematical models for simulation.
 Simulations are useful for engineering analysis, but CSDL goes a step
 further by automating derivative computation, making CSDL a great choice
 for solving optimization problems.
@@ -24,7 +24,7 @@ repeatedly to run a new simulation each time the optimizer updates the
 design variables.
 
 CSDL does not provide an optimizer, but the `SimulatorBase` class does
-specify the necessary interfaces for integrating a `Simulator` object
+define the necessary interfaces for integrating a `Simulator` object
 with external code.
 
 In the rest of this section, we'll cover how to define an general
@@ -68,11 +68,11 @@ hierarchy, so an instance of `Example` would be the main model, and
 object.
 The variable `'y'` is registered as an output.
 
-There are two methods that are not required to specify a model intended
+There are two methods that are not required to define a model intended
 for use in an analysis, but they are required to define an optimization
 problem.
 
-The first, `Model.add_design_variable` is required to specify which
+The first, `Model.add_design_variable` is required to define which
 inputs are allowed to change from one simulation to the next during
 optimization.
 The idea is that some external code will interact with the `Simulator`

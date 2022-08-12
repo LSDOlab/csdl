@@ -237,7 +237,7 @@ This may change with future versions of CSDL, but either way, this is
 Connections are not allowed between models if the connection would form
 a cycle.
 This is to maintain the DAG structure of a `Model`.
-If your model specification includes a cycle, you will need to create a
+If your model definition includes a cycle, you will need to create a
 `Model` that computes the difference between the source (the first
 argument in `Model.connect`) and the sink (the second argument in
 `Model.connect`) and use that `Model` to define an implicit operation.

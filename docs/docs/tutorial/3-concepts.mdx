@@ -21,14 +21,14 @@ presented in this section.
 A CSDL model is a _mathematical specification_ of a physical system.
 The majority of user code is located in the definition of a user
 defined class that inherits from the `Model` class.
-Users can supply a mathematical specification using two styles of model
+Users can supply a mathematical definition using two styles of model
 composition corresponding to two different programming language
 paradigms.
 Users can use a functional programming style, which resembles
 mathematical notation to define a model as a composition of functions,
 or an object oriented programming style to define a model as a
 hierarchical composition of models.
-Users are also free to define a model specification using a mix of the
+Users are also free to define a model using a mix of the
 functional and object oriented paradigms.
 
 Model specifications are defined within the user defined
@@ -39,7 +39,7 @@ from csdl import Model
 
 class Example(Model):
     def define(self):
-        # mathematical specification goes here
+        # mathematical definition goes here
 ```
 
 The functional programming style can be seen in
@@ -126,9 +126,9 @@ shapes of the operands compatible.
 :::
 
 As mentioned in [Model](#model), CSDL users can use a functional or
-object oriented style to define a model specification.
+object oriented style to define a model.
 Defining variables in terms of other variables, or as functions of
-variables, is how users define a model specification using the
+variables, is how users define a model using the
 functional programming style.
 The simplest user defined models will use only the functional
 programming style, as there is only one `Model` in the model hierarchy.
@@ -186,10 +186,10 @@ performance of generated code.
 ## Simulator
 
 The previous subsections describe (at a high level) how users define a
-model specification using the CSDL language.
+model definition using the CSDL language.
 The `csdl` package provides classes that represent all of the concepts
 presented up to this point.
-The model specification is contained within a single top level, or
+The model definition is contained within a single top level, or
 "main" model, represented by a user defined subclass of `Model`.
 
 The `Model` class, however, contains only a _specification_, not an

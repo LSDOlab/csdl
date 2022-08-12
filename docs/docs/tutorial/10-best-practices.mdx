@@ -324,7 +324,7 @@ there's no risk of confusing what `Airfoil` means in a given context.
 
 ## Use Python ints, floats, and NumPy arays wherever possible, until you need derivatives
 
-Python objects used to define a model specification are compile time
+Python objects used to define a model are compile time
 constants; they are always hardcoded values in the final program (if
 they are present at all).
 This provides a performance boost over using CSDL variables because the
@@ -332,7 +332,7 @@ history of operations for computing compile time constants (e.g.
 `2*np.pi`) is not part of the intermediate representation, so no
 additional code is generated in the final program.
 
-Defining a model specification using entirely Python ints, floats, and
+Defining a model definition using entirely Python ints, floats, and
 NumPy arrays however, not only results in a simulation without access to
 derivatives, but this results in no program being generated from CSDL
 code at all.

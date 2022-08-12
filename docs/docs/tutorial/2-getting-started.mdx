@@ -27,7 +27,7 @@ import csdl
 
 class Example(Model):
     def define(self):
-        # model specification (not blank)
+        # model definition (not blank)
         # ...
 
 from csdl_om import Simulator
@@ -52,7 +52,7 @@ that these two classes play in this example, and the role that `Model`
 and `Simulator` play in all programs written in CSDL.
 
 The `Example` class is a user defined class, where the user supplies a
-mathematical specification of the model we are interested in simulating.
+mathematical definition of the model we are interested in simulating.
 The `Example` class is not capable of running a full simulation or
 computing derivatives for use in solving an optimiztion problem -- it is
 simply a description of the physical system.
@@ -70,7 +70,7 @@ representation, and a back end, which generates executable code.
 The `csdl` package implements the front end and middle end in the
 `Model` class, while a separate package implements the back end in the
 `Simulator` class.
-This creates a clean separation between model specification and
+This creates a clean separation between model definition and
 simulation implementation.
 This separation is central to creating a language where users can
 operate at the highest level of abstraction possible.
@@ -86,11 +86,11 @@ the `Simulator` class
 _is not required to be implemented in any language in particular_.
 :::
 
-Now, let's look at how to specify models in CSDL.
+Now, let's look at how to define models in CSDL.
 
-## Model Specification
+## Model Definition
 
-To specify a model, create a new class that inherits from `Model`.
+To define a model, create a new class that inherits from `Model`.
 The `Model` class is the base class for all classes where a
 mathematical model of a system is specified.
 The `Model.define` method is where the mathematical model is
@@ -179,7 +179,7 @@ The indices from multiple assignments must not overlap.
 ## Simulation Implementation
 
 To construct a simulation implementation from the mathematical
-specification defined in `Example`, we need to construct an object of
+definition in `Example`, we need to construct an object of
 the `Simulator` class, which comes from a package separate from `csdl`;
 in this case, `csdl_om`.
 The `Simulator` class constructor always requires an instance of the
