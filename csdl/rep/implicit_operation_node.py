@@ -13,3 +13,4 @@ class ImplicitOperationNode(OperationNode):
         super().__init__(op)
         self.op: ImplicitOperation = op
         self.rep: GraphRepresentation = op.rep
+        self.cost: int = 0

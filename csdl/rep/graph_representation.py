@@ -2,13 +2,15 @@ try:
     from csdl.lang.model import Model
 except ImportError:
     pass
-from networkx import DiGraph, adjacency_matrix, dag_longest_path_length
+import enum
+from networkx import DiGraph, adjacency_matrix, dag_longest_path, dag_longest_path_length
 from typing import List, Dict, Literal, Tuple, Any, Union, List
 from csdl.lang.custom_explicit_operation import CustomExplicitOperation
 from csdl.lang.custom_implicit_operation import CustomImplicitOperation
 from networkx import DiGraph
 from csdl.rep.ir_node import IRNode
 from csdl.rep.operation_node import OperationNode
+from csdl.rep.implicit_operation_node import ImplicitOperationNode
 from csdl.rep.model_node import ModelNode
 from csdl.rep.construct_unflat_graph import construct_unflat_graph, construct_graphs_all_models
 from csdl.rep.construct_flat_graph import construct_flat_graph
@@ -22,6 +24,8 @@ from csdl.rep.collect_connections import collect_connections
 from csdl.rep.collect_design_variables import collect_design_variables
 from csdl.rep.collect_constraints import collect_constraints
 from csdl.rep.find_objective import find_objective
+from csdl.rep.create_graph_with_operations_as_edges import create_graph_with_operations_as_edges
+from csdl.lang.bracketed_search_operation import BracketedSearchOperation
 from csdl.utils.prepend_namespace import prepend_namespace
 from csdl.utils.find_promoted_name import find_promoted_name
 from networkx import DiGraph, ancestors, simple_cycles
@@ -116,6 +120,34 @@ def structure_user_declared_connections(
     return connections, model.user_declared_connections
 
 
+def size(x: IRNode):
+    if isinstance(x, VariableNode):
+        return np.prod(x.var.shape)
+    return 0
+
+
+def compute_mem(
+    A: csc_matrix,
+    sorted_nodes: list[IRNode],
+    k: int,
+    vectorized=True,
+):
+    if isinstance(sorted_nodes[k], VariableNode):
+        return 0
+    rows, _ = A.nonzero()
+    rows = set(np.unique(rows))
+    a: int = 0
+    for i, v in enumerate(sorted_nodes[:k]):
+        if isinstance(v, VariableNode):
+            if i in rows:
+                a += np.prod(v.var.shape)
+
+    b: int = sum(
+        size(v) * A[k, i + k] for i, v in enumerate(sorted_nodes[k:]))
+
+    return a + b
+
+
 class GraphRepresentation:
     """
     The intermediate representation of a CSDL Model, stored as a
@@ -127,6 +159,7 @@ class GraphRepresentation:
     """
 
     def __init__(self, model: 'Model', unflat: bool = True):
+        self.name = type(model).__name__
         define_models_recursively(model)
         _, _, _, _ = resolve_promotions(model)
         generate_unpromoted_promoted_maps(model)
@@ -279,7 +312,8 @@ class GraphRepresentation:
         Nodes sorted in order of execution, using the flattened graph
         """
         if unflat is True:
-            self.unflat_graph: DiGraph = construct_unflat_graph(first_graph)
+            self.unflat_graph: DiGraph = construct_unflat_graph(
+                first_graph)
             """
             Directed graph representing model.
             Each model in the model hierarchy will contain an instance of
@@ -299,9 +333,15 @@ class GraphRepresentation:
             OperationNode] = get_operation_nodes(self.flat_graph)
         self._std_operation_nodes: List[OperationNode] = [
             op for op in self._operation_nodes
-            if not isinstance(op, (CustomExplicitOperation,
-                                   CustomImplicitOperation))
+            if not isinstance(op.op, (CustomExplicitOperation,
+                                      CustomImplicitOperation))
         ]
+        self.A = adjacency_matrix(self.flat_graph,
+                                  nodelist=self.flat_sorted_nodes)
+        self._density = self.A.nnz / np.prod(self.A.shape)
+        self._longest_path = dag_longest_path(self.flat_graph)
+        self._mem = 0  #self.compute_best_case_memory_footprint()
+        self._critical_path_length = self.compute_critical_path_length()
 
         implicit_operation_nodes = get_implicit_operation_nodes(
             self.flat_graph)
@@ -310,6 +350,116 @@ class GraphRepresentation:
 
         # from csdl.opt.combine_operations import combine_operations
         # combine_operations(self)
+
+    def __str__(self):
+        return f"""
+GraphRepresentation of model {self.name} Stats:
+
+Scalar Variables (System Level):
+
+Scalar Inputs: {self.num_scalar_inputs()}
+Scalar Outputs: {self.num_scalar_outputs()}
+Total Scalar Variables: {self.num_scalar_variables()}
+
+Vectorized Variables (System Level):
+
+Input Arrays: {self.num_input_nodes()}
+Output Arrays: {self.num_output_nodes()}
+Total Variable Arrays: {self.num_variable_nodes()}
+
+Vectorized Operations (System Level):
+
+Total Vectorized Operations: {self.num_operation_nodes()}
+Number of Implicit Operations: {self.num_implicit_operation_nodes()}
+Average Number of Array Arguments/Operation: {self.avg_arguments_per_operation()}
+Maximum Number of Array Arguments/Operation: {self.max_arguments_per_operation()}
+Average Number of Array Outputs/Operation: {self.avg_outputs_per_operation()}
+Maximum Number of Array Outputs/Operation: {self.max_outputs_per_operation()}
+
+Standard Vectorized Operations (System Level):
+
+Average Number of Array Arguments/Operation: {self.avg_arguments_per_operation(ignore_custom=True)}
+Maximum Number of Array Arguments/Operation: {self.max_arguments_per_operation(ignore_custom=True)}
+Average Number of Array Outputs/Operation: {self.avg_outputs_per_operation(ignore_custom=True)}
+Maximum Number of Array Outputs/Operation: {self.max_outputs_per_operation(ignore_custom=True)}
+
+Adjacency Matrix of Graph Representation (System Level):
+
+Density: {self.density()}
+Sparsity: {self.sparsity()}.
+Total Nodes: {self.num_variable_nodes() + self.num_operation_nodes()}
+Total Edges: {self.A.nnz}
+
+Runtime Time and Space Complexity:
+
+Longest Sequence of Operations to Evaluate (Critical Path): {self.critical_path_length()}
+Max Number of Operations to Evaluate: {self.serial_cost()}
+Percent Reduction in Computation Time with Full Parallelization: {100*(1 - self.critical_path_length()/self.serial_cost())}
+  - NOTE: This assumes all explicit operations take the same amount of time to compute
+"""
+
+    def compute_best_case_memory_footprint(
+        self,
+        vectorized=True,
+    ):
+        explicit = max(
+            compute_mem(self.A,
+                        self.flat_sorted_nodes,
+                        k,
+                        vectorized=vectorized)
+            for k in range(len(self.flat_sorted_nodes)))
+        x = [
+            x.rep.compute_best_case_memory_footprint(
+                vectorized=vectorized) for x in [
+                    x for x in self.flat_sorted_nodes
+                    if isinstance(x, OperationNode)
+                ] if isinstance(x, (ImplicitOperationNode))
+        ]
+        if len(x) == 0:
+            self._mem = explicit
+        else:
+            self._mem = max(explicit, max(x))
+        return self._mem
+
+    def longest_path(self) -> List[IRNode]:
+        return self._longest_path
+
+    def serial_cost(self) -> int:
+        implicit_ops: List[ImplicitOperationNode] = [
+            x for x in self.flat_sorted_nodes
+            if isinstance(x, ImplicitOperationNode)
+        ]
+        for op in implicit_ops:
+            maxiter = op.op.maxiter if isinstance(
+                op.op, BracketedSearchOperation
+            ) else op.op.nonlinear_solver.options['maxiter']
+            op.cost = op.rep.serial_cost() * maxiter
+            print('cost', op.cost)
+        explicit_ops = [
+            x for x in self.flat_sorted_nodes
+            if isinstance(x, OperationNode)
+            and not isinstance(x, ImplicitOperationNode)
+        ]
+        a = len(explicit_ops)
+        b = sum([op.cost for op in implicit_ops])
+        print(a, b)
+        return a + b
+
+    def compute_critical_path_length(self) -> int:
+        implicit_ops: List[ImplicitOperationNode] = [
+            x for x in self.flat_sorted_nodes
+            if isinstance(x, ImplicitOperationNode)
+        ]
+        if len(implicit_ops) == 0:
+            return len([
+                x for x in self._longest_path
+                if isinstance(x, OperationNode)
+            ])
+        g = create_graph_with_operations_as_edges(self.flat_graph)
+        return dag_longest_path_length(g)
+
+    def critical_path_length(self) -> int:
+        return self._critical_path_length
 
     def input_nodes(self) -> List[VariableNode]:
         """
@@ -340,20 +490,55 @@ class GraphRepresentation:
         """
         return self._variable_nodes
 
-    def num_inputs(self) -> int:
+    def num_input_nodes(self) -> int:
         """
         Total number of inputs; equivalent to `len(IntermediateRepresentation.input_nodes())`.
         """
-        raise NotImplementedError
+        return len(self.input_nodes())
 
-    def num_outputs(self, vectorized: bool = False) -> int:
+    def num_output_nodes(self) -> int:
         """
-        Total number of outputs; equivalent to `len(IntermediateRepresentation.output_nodes())`.
+        Total number of output arrays
         """
-        if vectorized is True:
-            return len(self.output_nodes())
-        else:
-            return np.sum(_var_sizes(self.output_nodes()))
+        return len(self.output_nodes())
+
+    def num_scalar_outputs(self) -> int:
+        return np.sum(_var_sizes(self.output_nodes()))
+
+    def num_scalar_inputs(self) -> int:
+        return np.sum(_var_sizes(self.input_nodes()))
+
+    def num_scalar_variables(self) -> int:
+        g: List[ImplicitOperationNode] = [
+            o for o in self.flat_sorted_nodes
+            if isinstance(o, ImplicitOperationNode)
+        ]
+        a = sum([o.rep.num_scalar_variables()
+                 for o in g]) if len(g) > 0 else 0
+        b = np.sum(_var_sizes(self.variable_nodes()))
+        return a + b
+
+    def num_implicit_operation_nodes(
+        self,
+        include: Union[Dict[str, bool], None] = None,
+        all: bool = True,
+    ) -> int:
+        """
+        include
+        : properties that operations must have to be included
+
+        all
+        : whether each operation must have all properties (True) specified in
+        `include` or at least one property (False); default is True
+
+        Properties to specify:
+        - nonlinear
+        - linear
+        """
+        return len([
+            x for x in self.operation_nodes()
+            if isinstance(x, ImplicitOperationNode)
+        ])
 
     def num_operation_nodes(
         self,
@@ -382,21 +567,6 @@ class GraphRepresentation:
         """
         return len(self.variable_nodes())
 
-    def predict_memory_footprint(
-        self,
-        mode: Literal['fwd', 'rev'],
-    ) -> int:
-        """
-        Total number of scalar values in model, including variables from
-        ImplicitOperation nodes, and residuals required for solving
-        implicit operations.
-        """
-        if mode == 'rev':
-            return np.sum(_var_sizes(list(self._variable_nodes)))
-        elif mode == 'fwd':
-            # need upper triangular adjacency matrix
-            return 0
-
     def predict_computation_time(self, parallel: bool = False) -> int:
         """
         Predict computation time to evaluate the model. If parallel is
@@ -413,7 +583,6 @@ class GraphRepresentation:
     def avg_arguments_per_operation(
         self,
         ignore_custom: bool = False,
-        vectorized: bool = False,
     ) -> float:
         """
         Compute average number of arguments per operation in the model.
@@ -421,12 +590,23 @@ class GraphRepresentation:
         not used to compute the average.
         """
         ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
-        nargs_per_op = [
-            nargs(self.flat_graph, op, vectorized) for op in ops
-        ]
+        nargs_per_op = [nargs(self.flat_graph, op, True) for op in ops]
         return float(np.sum(nargs_per_op)) / float(len(nargs_per_op))
 
     def avg_outputs_per_operation(
+        self,
+        ignore_custom: bool = False,
+    ) -> float:
+        """
+        Compute average number of arguments per operation in the model.
+        If `ignore_custom` is `False`, then `CustomOperation` nodes are
+        not used to compute the average.
+        """
+        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
+        nouts_per_op = [nouts(self.flat_graph, op, True) for op in ops]
+        return float(np.sum(nouts_per_op)) / float(len(nouts_per_op))
+
+    def avg_num_uses_of_variables(
         self,
         ignore_custom: bool = False,
         vectorized: bool = False,
@@ -458,7 +638,6 @@ class GraphRepresentation:
     def max_arguments_per_operation(
         self,
         ignore_custom: bool = False,
-        vectorized: bool = False,
     ) -> int:
         """
         Compute maximum number of arguments per operation in the model.
@@ -467,8 +646,7 @@ class GraphRepresentation:
         least 1.
         """
         ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
-        return np.max(
-            [nargs(self.flat_graph, op, vectorized) for op in ops])
+        return np.max([nargs(self.flat_graph, op, True) for op in ops])
 
     def min_outputs_per_operation(
         self,
@@ -486,7 +664,6 @@ class GraphRepresentation:
     def max_outputs_per_operation(
         self,
         ignore_custom: bool = False,
-        vectorized: bool = False,
     ) -> int:
         """
         Compute maximum number of arguments per operation in the model.
@@ -495,8 +672,7 @@ class GraphRepresentation:
         least 1.
         """
         ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
-        return np.max(
-            [nouts(self.flat_graph, op, vectorized) for op in ops])
+        return np.max([nouts(self.flat_graph, op, True) for op in ops])
 
     def responses(
         self,
@@ -648,6 +824,12 @@ class GraphRepresentation:
 
         return optypes
 
+    def density(self):
+        return self._density
+
+    def sparsity(self):
+        return 1 - self._density
+
     def visualize_adjacency_mtx(
         self,
         markersize=None,
@@ -660,12 +842,18 @@ class GraphRepresentation:
         `True` will also visualize each model defining an implicit
         operation.
         """
-        A = adjacency_matrix(self.flat_graph,
-                             nodelist=self.flat_sorted_nodes)
-        plt.spy(A, markersize=markersize)
+        plt.spy(self.A, markersize=markersize)
+        ax = plt.gca()
         if title != '':
             plt.title(title)
+        t = len(self.flat_sorted_nodes)
+        ax.set_xticks([0, t])
+        ax.set_yticks([0, t])
         plt.show()
+
+        for i, op in enumerate(self.flat_graph):
+            if isinstance(op, ImplicitOperationNode):
+                print(i)
 
         if implicit_models is True:
             for op in get_implicit_operation_nodes(self.flat_graph):
