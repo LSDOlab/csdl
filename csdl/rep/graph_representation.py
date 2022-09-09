@@ -2,7 +2,7 @@ try:
     from csdl.lang.model import Model
 except ImportError:
     pass
-from networkx import DiGraph, adjacency_matrix, dag_longest_path_length, ancestors, descendants
+from networkx import DiGraph, adjacency_matrix, dag_longest_path_length, ancestors, descendants, topological_sort
 from typing import List, Dict, Literal, Tuple, Any, Union, List
 from csdl.lang.custom_explicit_operation import CustomExplicitOperation
 from csdl.lang.custom_implicit_operation import CustomImplicitOperation
@@ -22,6 +22,7 @@ from csdl.rep.collect_connections import collect_connections
 from csdl.rep.collect_design_variables import collect_design_variables
 from csdl.rep.collect_constraints import collect_constraints
 from csdl.rep.find_objective import find_objective
+from csdl.rep.apply_reduced_uq import apply_reduced_uq
 from csdl.utils.prepend_namespace import prepend_namespace
 from networkx import DiGraph, simple_cycles
 try:
@@ -126,7 +127,7 @@ class GraphRepresentation:
     encode hierarchy without the use of subgraph nodes.
     """
 
-    def __init__(self, model: 'Model'):
+    def __init__(self, model: 'Model', rvs: Dict = {}):
         define_models_recursively(model)
         _, _, _, _ = resolve_promotions(model)
         generate_unpromoted_promoted_maps(model)
@@ -256,10 +257,46 @@ class GraphRepresentation:
             self.promoted_to_unpromoted,
             self.unpromoted_to_promoted,
         )
+
         self.flat_graph: DiGraph = graph_meta.graph
         self.connected_tgt_nodes_to_source_nodes = graph_meta.connected_tgt_nodes_to_source_nodes
         self.promoted_to_node = graph_meta.promoted_to_node
         self.unpromoted_to_node = graph_meta.unpromoted_to_node
+
+        # INSERT UQ HERE:
+        # if no UQ propagation, no need to transform graph
+        if rvs:
+            # currently only works with 1 variable.
+            if len(rvs.keys()) > 1:
+                raise NotImplementedError('uq currently only works with 1 variable.')
+
+            # get dependency information
+            dep_data = self.dependency_data(rvs.keys(), return_format='dictionary')
+
+            rvs_with_node = {}
+            for j, rv_name in enumerate(rvs):
+                # find variable node of strings in variable argument
+                if rv_name in self.promoted_to_node:
+                    rv = self.promoted_to_node[rv_name]
+                elif rv_name in self.unpromoted_to_promoted:
+                    rv = self.unpromoted_to_promoted[self.promoted_to_node[rv_name]]
+                else:
+                    raise KeyError(f'cannot find variable {rv_name}')
+                rvs_with_node[rv] = rvs[rv_name]
+
+            # modify graph based on dependency
+            graph_meta = apply_reduced_uq(
+                graph_meta,
+                rvs_with_node,
+                dep_data,
+            )
+
+            self.flat_graph: DiGraph = graph_meta.graph
+            self.connected_tgt_nodes_to_source_nodes = graph_meta.connected_tgt_nodes_to_source_nodes
+            self.promoted_to_node = graph_meta.promoted_to_node
+            self.unpromoted_to_node = graph_meta.unpromoted_to_node
+
+            # exit()
         """
         Flattened directed acyclic graph representing main model.
         Only the main model will contain an instance of
@@ -550,12 +587,12 @@ class GraphRepresentation:
         """
         return dependence matrix in array format or dictionary format.
 
-        if 'numpy' return_format, returns dependence_data (2D numpy array) where
+        if 'array' return_format, returns dependence_data (2D numpy array) where
         dependence_data [i,j] is zero if the ith variable/operation in 
         the model does not depend on the jth variable in 'variables'. 
 
         if 'dictionary' return_format, returns dependence_data (dictionary) where
-        dependence_data[<variable>][<node>] is True if <node> depends on <variable>
+        dependence_data[<node>][<variable>] is True if <node> depends on <variable>
         and False otherwise.
 
         **Parameters**
@@ -575,7 +612,7 @@ class GraphRepresentation:
 
         # list of nodes in the graph to check.
         node_list = []
-        for node in self.flat_sorted_nodes:
+        for node in topological_sort(self.flat_graph):
             if isinstance(self.flat_graph.nodes[node], OperationNode):
                 if include_operations:
                     node_list.append(node)
@@ -600,22 +637,24 @@ class GraphRepresentation:
             else:
                 raise KeyError(f'cannot find variable {rv_name}')
 
-            if return_format == 'dictionary':
-                dependence_data[rv_name] = {}
-
             # all nodes that are descendants to rv
-            rv_descendants = descendants(self.flat_graph,rv)
+            rv_descendants = descendants(self.flat_graph, rv)
             for i, node in enumerate(node_list):
-                if node in rv_descendants:
+
+                if return_format == 'dictionary':
+                    if node not in dependence_data:
+                        dependence_data[node] = {}
+
+                if (node in rv_descendants) or (node is rv):
                     if return_format == 'array':
                         dependence_data[i, j] = 1
                     else:
-                        dependence_data[rv_name][node] = True
+                        dependence_data[node][rv] = True
                 else:
                     if return_format == 'array':
                         dependence_data[i, j] = 0
                     else:
-                        dependence_data[rv_name][node] = False
+                        dependence_data[node][rv] = False
         return dependence_data
 
     def influences(
@@ -768,11 +807,18 @@ class GraphRepresentation:
                 )
 
     def visualize_graph(self):
-        draw_networkx(self.flat_graph,
-                      labels={
-                          n: prepend_namespace(n.namespace, n.name)
-                          for n in self.flat_graph.nodes()
-                      })
+        from networkx import draw, kamada_kawai_layout
+        draw(self.flat_graph,
+             pos=kamada_kawai_layout(self.flat_graph),
+             labels={
+                 n: prepend_namespace(n.namespace, n.name)
+                 for n in self.flat_graph.nodes()
+             })
+        # draw_networkx(self.flat_graph,
+        #               labels={
+        #                   n: prepend_namespace(n.namespace, n.name)
+        #                   for n in self.flat_graph.nodes()
+        #               })
         plt.show()
 
     # TODO: add implicit models option
