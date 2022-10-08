@@ -36,10 +36,6 @@ class Node():
         self.abs_name: Union[str, None] = None
         self.abs_prom_name: str = ""
 
-        for k, v in kwargs.items():
-            if k == 'name':
-                self.name = v
-
     def __iadd__(self, other: Any) -> NoReturn:
         raise NotImplementedError(
             "In place special methods not implemented for CSDL Node. To modify the value of a variable iteratively, use `Model.implicit_operation`."
