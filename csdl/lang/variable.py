@@ -217,7 +217,7 @@ class Variable(Node):
         from csdl.operations.linear_combination import linear_combination
         from csdl.lang.output import Output
         if isinstance(other, (int, float)):
-            op = linear_combination(self, constant=other, coeffs=1)
+            op = linear_combination(self, constant=other, coeffs=-1)
         elif isinstance(other, np.ndarray):
             raise NotImplementedError(
                 "Subtraction from NumPy ndarray not yet implemented."
