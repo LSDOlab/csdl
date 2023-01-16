@@ -1,10 +1,9 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='csdl',
-    packages=[
-        'csdl',
-    ],
+    packages=find_packages(),
+    #packages=['csdl'],
     python_requires='>=3.8',
     install_requires=[
         'numpy',
