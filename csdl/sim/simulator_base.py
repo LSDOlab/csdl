@@ -2,7 +2,7 @@ from csdl.rep.graph_representation import GraphRepresentation
 import numpy as np
 from warnings import warn
 from collections import OrderedDict
-from typing import Dict, Set, Any, Union
+from typing import Dict, Set, Any, Union, List, Tuple
 
 
 class _ReprClass(object):
@@ -83,6 +83,28 @@ class SimulatorBase:
         """
         self.executable: Any = None
 
+    def keys(self) -> Set[str]:
+        """
+        Return names of promoted names of all model inputs,
+        outputs, and unconnected declared variables in the model.
+        Keys do not contain names of unconnected declared variables.
+        Recommended implementation is to use
+        `GraphRepresentation.keys()` method to store copy of keys at
+        construction, whether or not `GraphRepresentation` object used
+        to construct `Simulator` object is discarded after the
+        `Simulator` object is constructed.
+        """
+        raise NotImplementedError
+
+    def items(self) -> List[Tuple[str, str]]:
+        """
+        Return key-value pairs of promoted names of all model inputs,
+        outputs, and unconnected declared variables in the model.
+        Key-value pairs do not contain names of unconnected declared
+        variables.
+        """
+        raise NotImplementedError
+
     def __getitem__(self, key) -> np.ndarray:
         """
         Method to get variable values before or after a simulation run
@@ -96,7 +118,6 @@ class SimulatorBase:
         Method to set values for variables by name
         """
         self.executable[self._find_promoted_name(key)] = val
-
 
     def _find_promoted_name(self, key: str) -> str:
         """
@@ -126,7 +147,7 @@ class SimulatorBase:
     def compute_total_derivatives(
         self,
         return_format='array',
-    ) -> Union[OrderedDict , np.ndarray]:
+    ) -> Union[OrderedDict, np.ndarray]:
         """
         Method to compute total derivatives (objective gradient and
         constraint jacobian)
@@ -227,7 +248,7 @@ class SimulatorBase:
     def constraints(
         self,
         return_format='array',
-    ) -> Union[OrderedDict , np.ndarray]:
+    ) -> Union[OrderedDict, np.ndarray]:
         """
         Method to provide optimizer with constraints
 

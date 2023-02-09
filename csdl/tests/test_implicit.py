@@ -91,7 +91,7 @@ def test_implicit_multiple_residuals(backend):
 
     result = sim.check_partials(out_stream=None,
                                 compact_print=True,
-                                method='fd')
+                                method='cs')
     sim.assert_check_partials(result, atol=1.e-6, rtol=1.e-6)
 
 

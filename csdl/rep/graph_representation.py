@@ -3,6 +3,7 @@ try:
 except ImportError:
     pass
 import enum
+from tkinter.font import families
 from networkx import DiGraph, adjacency_matrix, dag_longest_path, dag_longest_path_length
 from typing import List, Dict, Literal, Tuple, Any, Union, List
 from csdl.lang.custom_explicit_operation import CustomExplicitOperation
@@ -37,6 +38,13 @@ from csdl.lang.define_models_recursively import define_models_recursively
 from scipy.sparse import csc_matrix
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rc
+
+rc('text', usetex=True)
+rc('font', family='serif')
+
+from copy import copy
+
 from networkx import draw_networkx
 
 from csdl.rep.get_nodes import get_implicit_operation_nodes, get_input_nodes, get_operation_nodes, get_output_nodes, get_var_nodes
@@ -48,7 +56,7 @@ def nargs(
     vectorized: bool,
 ) -> int:
     if vectorized is False:
-        return np.sum(_var_sizes(graph.predecessors(op)))
+        return np.sum(_var_sizes(list(graph.predecessors(op))))
     else:
         return graph.in_degree(op)
 
@@ -57,11 +65,20 @@ def nouts(
     graph: DiGraph,
     op: OperationNode,
     vectorized: bool,
+    implicit: bool = False,
 ) -> int:
+    n = 0
+    if implicit is True:
+        n += sum([
+            nouts(op.graph, oop, vectorized=vectorized) for oop in list(
+                filter(lambda x: isinstance(x, ImplicitOperationNode),
+                       graph.nodes()))
+        ])
     if vectorized is False:
-        return np.sum(_var_sizes(graph.successors(op)))
+        n += np.sum(_var_sizes(list(graph.successors(op))))
     else:
-        return graph.out_degree(op)
+        n += graph.out_degree(op)
+    return n
 
 
 def _var_sizes(variable_nodes: List[VariableNode], ) -> List[int]:
@@ -126,7 +143,7 @@ def size(x: IRNode):
     return 0
 
 
-def compute_mem(
+def compute_mem_beta_tmp(
     A: csc_matrix,
     sorted_nodes: list[IRNode],
     k: int,
@@ -140,6 +157,55 @@ def compute_mem(
     for i, v in enumerate(sorted_nodes[:k]):
         if isinstance(v, VariableNode):
             if i in rows:
+                a += 1
+
+    b: int = sum(
+        size(v) * A[k, i + k] for i, v in enumerate(sorted_nodes[k:]))
+
+    return a + b
+
+
+def compute_mem_beta_tmp(
+    A: csc_matrix,
+    sorted_nodes: list[IRNode],
+    k: int,
+):
+    if isinstance(sorted_nodes[k], VariableNode):
+        return 0
+    rows, cols = A.nonzero()
+    rows = set(np.unique(np.where(k <= cols, rows, -1))) - {-1}
+    a: int = 0
+    for i, v in enumerate(sorted_nodes[:k]):
+        if isinstance(v, VariableNode):
+            # this variable depends on current (j==k) or later operation
+            # (j>k)
+            if i in rows:
+                a += 1
+
+    b: int = sum(
+        size(v) * A[k, i + k] for i, v in enumerate(sorted_nodes[k:]))
+
+    return a + b
+
+
+def compute_mem(
+    A: csc_matrix,
+    sorted_nodes: list[IRNode],
+    k: int,
+):
+    if isinstance(sorted_nodes[k], VariableNode):
+        return 0
+    rows, cols = A.nonzero()
+    rows = set(np.unique(np.where(k <= cols, rows, -1))) - {-1}
+    a: int = 0
+    for i, v in enumerate(sorted_nodes[:k]):
+        if isinstance(v, VariableNode):
+            # this variable depends on current (j==k) or later operation
+            # (j>k), or is an input/output of the model
+            # TODO: exclude registered outputs that are not residuals or
+            # exposed variables
+            if v.var._id != v.var.name or i in rows:
+                # if i in rows:
                 a += np.prod(v.var.shape)
 
     b: int = sum(
@@ -157,6 +223,16 @@ class GraphRepresentation:
     hierarchy. An intermediate representation may also be flattened to
     encode hierarchy without the use of subgraph nodes.
     """
+
+    def keys(self) -> Set[str]:
+        return set(self.promoted_to_unpromoted.keys()).union({
+            a
+            for (a, _) in self.connections
+        }).union({b
+                  for (_, b) in self.connections})
+
+    def items(self) -> List[Tuple[str, str]]:
+        [(key, self[key]) for key in self.keys()]
 
     def __init__(self, model: 'Model', unflat: bool = True):
         self.name = type(model).__name__
@@ -249,7 +325,9 @@ class GraphRepresentation:
         unpromoted_name_sets = list(
             self.promoted_to_unpromoted.values())
         all_unpromoted_names = reduce(
-            lambda x, y: x + y, [list(s) for s in unpromoted_name_sets])
+            lambda x, y: x + y,
+            [list(s) for s in unpromoted_name_sets
+             ])  #if len(unpromoted_name_sets) > 0 else []
         c = Counter(all_unpromoted_names)
         duplicate_unpromoted_names = [
             item for item, count in c.items() if count > 1
@@ -336,12 +414,16 @@ class GraphRepresentation:
             if not isinstance(op.op, (CustomExplicitOperation,
                                       CustomImplicitOperation))
         ]
-        self.A = adjacency_matrix(self.flat_graph,
-                                  nodelist=self.flat_sorted_nodes)
-        self._density = self.A.nnz / np.prod(self.A.shape)
-        self._longest_path = dag_longest_path(self.flat_graph)
+        self.A = adjacency_matrix(
+            self.flat_graph, nodelist=self.flat_sorted_nodes) if len(
+                self.flat_graph.nodes) > 0 else None
+        self._density = self.A.nnz / np.prod(self.A.shape) if len(
+            self.flat_graph.nodes) > 0 else None
+        self._longest_path = dag_longest_path(
+            self.flat_graph) if len(self.flat_graph.nodes) > 0 else None
         self._mem = 0  #self.compute_best_case_memory_footprint()
-        self._critical_path_length = self.compute_critical_path_length()
+        # self._critical_path_length = self.compute_critical_path_length(
+        # ) if len(self.flat_graph.nodes) > 0 else None
 
         implicit_operation_nodes = get_implicit_operation_nodes(
             self.flat_graph)
@@ -351,7 +433,7 @@ class GraphRepresentation:
         # from csdl.opt.combine_operations import combine_operations
         # combine_operations(self)
 
-    def __str__(self):
+    def print_stats(self):
         return f"""
 GraphRepresentation of model {self.name} Stats:
 
@@ -398,28 +480,91 @@ Percent Reduction in Computation Time with Full Parallelization: {100*(1 - self.
   - NOTE: This assumes all explicit operations take the same amount of time to compute
 """
 
-    def compute_best_case_memory_footprint(
-        self,
-        vectorized=True,
-    ):
+    def variable_nodes_tmp(self,
+                           implicit: bool = False
+                           ) -> List[VariableNode]:
+        return get_var_nodes(self.flat_graph, implicit=implicit)
+
+    def get_variable_sizes(self) -> List[int]:
+        """
+        Collect the sizes of variables in a model.
+        This includes all variables within nested implicit operations as
+        well as the explicitly defined variables.
+        """
+        variables = self.variable_nodes_tmp(implicit=True)
+        return [size(x) for x in variables]
+
+    def variable_size_distribution(self):
+        """
+        Collect the sizes of variables as well as the number of
+        variables of each size in a model.
+        This includes all variables within nested implicit operations as
+        well as the explicitly defined variables.
+        """
+        unique, frequency = np.unique(
+            self.get_variable_sizes(),
+            return_counts=True,
+        )
+        return unique, frequency
+
+    def compute_best_case_beta_tmp(self):
+        """
+        Compute the minimum necessary memory footprint required for
+        simulating the model as measured by total number of scalar
+        values allocated at run time at the point during program
+        execution where the maximum number of values are allocated
+        """
         explicit = max(
-            compute_mem(self.A,
-                        self.flat_sorted_nodes,
-                        k,
-                        vectorized=vectorized)
-            for k in range(len(self.flat_sorted_nodes)))
+            compute_mem_beta_tmp(
+                self.A,
+                self.flat_sorted_nodes,
+                k,
+            ) for k in range(len(self.flat_sorted_nodes)))
         x = [
-            x.rep.compute_best_case_memory_footprint(
-                vectorized=vectorized) for x in [
-                    x for x in self.flat_sorted_nodes
-                    if isinstance(x, OperationNode)
-                ] if isinstance(x, (ImplicitOperationNode))
+            x.rep.compute_best_case_beta_tmp() for x in [
+                x for x in self.flat_sorted_nodes
+                if isinstance(x, OperationNode)
+            ] if isinstance(x, (ImplicitOperationNode))
         ]
         if len(x) == 0:
             self._mem = explicit
         else:
             self._mem = max(explicit, max(x))
         return self._mem
+
+    def compute_memory_footprint_over_time_tmp(
+        self,
+        implicit: bool = True,
+    ) -> Tuple[int, List[int]]:
+        n_ops = 0
+        mem_series = []
+        for k, node in enumerate(self.flat_sorted_nodes):
+            if isinstance(node, ImplicitOperationNode):
+                if implicit is True:
+                    n, m = node.rep.compute_memory_footprint_over_time_tmp(
+                        implicit=implicit)
+                    n_ops += n
+                    mem_series.extend(m)
+            if isinstance(node, OperationNode):
+                mem_series.append(
+                    compute_mem(
+                        self.A,
+                        self.flat_sorted_nodes,
+                        k,
+                    ))
+                n_ops += 1
+        return (n_ops, mem_series)
+
+    def compute_best_case_memory_footprint(self):
+        """
+        Compute the minimum necessary memory footprint required for
+        simulating the model as measured by total number of scalar
+        values allocated at run time at the point during program
+        execution where the maximum number of values are allocated
+        """
+        _, m = self.compute_memory_footprint_over_time_tmp(
+            implicit=True)
+        return max(m)
 
     def longest_path(self) -> List[IRNode]:
         return self._longest_path
@@ -580,8 +725,34 @@ Percent Reduction in Computation Time with Full Parallelization: {100*(1 - self.
         else:
             return self.num_variable_nodes()
 
+    def total_num_arguments(
+        self,
+        implicit=True,
+        vectorized: bool = True,
+        ignore_custom: bool = False,
+    ) -> Tuple[int, int]:
+        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
+        n = len(ops)
+        total = np.sum([
+            nargs(self.flat_graph, op, vectorized=vectorized)
+            for op in ops
+        ])
+        if implicit is True:
+            for op in ops:
+                if isinstance(op, ImplicitOperationNode):
+                    nn, tt = op.rep.total_num_arguments(
+                        vectorized=vectorized,
+                        implicit=implicit,
+                        ignore_custom=ignore_custom,
+                    )
+                    total += tt
+                    n += nn
+        return n, total
+
     def avg_arguments_per_operation(
         self,
+        implicit=True,
+        vectorized: bool = True,
         ignore_custom: bool = False,
     ) -> float:
         """
@@ -589,38 +760,53 @@ Percent Reduction in Computation Time with Full Parallelization: {100*(1 - self.
         If `ignore_custom` is `False`, then `CustomOperation` nodes are
         not used to compute the average.
         """
-        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
-        nargs_per_op = [nargs(self.flat_graph, op, True) for op in ops]
-        return float(np.sum(nargs_per_op)) / float(len(nargs_per_op))
+        n, total = self.total_num_arguments(
+            implicit=implicit,
+            vectorized=vectorized,
+            ignore_custom=ignore_custom,
+        )
+        return float(np.sum(total)) / float(n)
 
-    def avg_outputs_per_operation(
+    def outputs_per_operation(
         self,
-        ignore_custom: bool = False,
-    ) -> float:
+        implicit: bool = False,
+    ) -> List[int]:
         """
         Compute average number of arguments per operation in the model.
         If `ignore_custom` is `False`, then `CustomOperation` nodes are
         not used to compute the average.
         """
-        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
-        nouts_per_op = [nouts(self.flat_graph, op, True) for op in ops]
-        return float(np.sum(nouts_per_op)) / float(len(nouts_per_op))
-
-    def avg_num_uses_of_variables(
-        self,
-        ignore_custom: bool = False,
-        vectorized: bool = False,
-    ) -> float:
-        """
-        Compute average number of arguments per operation in the model.
-        If `ignore_custom` is `False`, then `CustomOperation` nodes are
-        not used to compute the average.
-        """
-        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
-        nouts_per_op = [
-            nouts(self.flat_graph, op, vectorized) for op in ops
+        s = [
+            self.flat_graph.out_degree(op)
+            for op in self.flat_graph.nodes
+            if isinstance(op, OperationNode)
         ]
-        return float(np.sum(nouts_per_op)) / float(len(nouts_per_op))
+        if implicit is True:
+            for op in self.flat_graph.nodes:
+                if isinstance(op, ImplicitOperationNode):
+                    s.extend(op.rep.outputs_per_operation())
+
+        return s
+
+    def num_uses_of_variables(
+        self,
+        implicit: bool = False,
+    ) -> List[int]:
+        """
+        Compute average number of arguments per operation in the model.
+        If `ignore_custom` is `False`, then `CustomOperation` nodes are
+        not used to compute the average.
+        """
+        s = [
+            self.flat_graph.out_degree(v) for v in self.flat_graph.nodes
+            if isinstance(v, VariableNode)
+        ]
+        if implicit is True:
+            for op in self.flat_graph.nodes:
+                if isinstance(op, ImplicitOperationNode):
+                    s.extend(op.rep.num_uses_of_variables())
+
+        return s
 
     def min_arguments_per_operation(
         self,
@@ -637,16 +823,88 @@ Percent Reduction in Computation Time with Full Parallelization: {100*(1 - self.
 
     def max_arguments_per_operation(
         self,
+        vectorized: bool = True,
         ignore_custom: bool = False,
+        implicit: bool = True,
     ) -> int:
         """
         Compute maximum number of arguments per operation in the model.
         If `ignore_custom` is `False`, then `CustomOperation` nodes are
-        not used to compute the maximum. If Result will always be at
-        least 1.
+        not used to compute the maximum.
         """
-        ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
-        return np.max([nargs(self.flat_graph, op, True) for op in ops])
+        if implicit is False:
+            ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
+            return np.max(
+                [nargs(self.flat_graph, op, True) for op in ops])
+        ops = get_operation_nodes(self.flat_graph, implicit=False)
+        m = np.max([nargs(self.flat_graph, op, True) for op in ops])
+        implicit_operations: List[ImplicitOperationNode] = list(
+            filter(lambda x: isinstance(x, ImplicitOperationNode), ops))
+        for op in implicit_operations:
+            m = max(
+                m,
+                op.rep.max_arguments_per_operation(
+                    vectorized=vectorized,
+                    ignore_custom=ignore_custom,
+                    implicit=implicit,
+                ))
+        return m
+
+    def total_arguments_per_operation(
+        self,
+        vectorized: bool = True,
+        ignore_custom: bool = False,
+        implicit: bool = True,
+    ) -> int:
+        """
+        Compute average number of arguments per operation in the model.
+        If `ignore_custom` is `False`, then `CustomOperation` nodes are
+        not used to compute the maximum.
+        """
+        if implicit is False:
+            ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
+            return np.sum(
+                [nargs(self.flat_graph, op, True) for op in ops])
+        ops = get_operation_nodes(self.flat_graph, implicit=False)
+        m = np.sum([nargs(self.flat_graph, op, True) for op in ops])
+        implicit_operations: List[ImplicitOperationNode] = list(
+            filter(lambda x: isinstance(x, ImplicitOperationNode), ops))
+        for op in implicit_operations:
+            m += op.rep.total_arguments_per_operation(
+                vectorized=vectorized,
+                ignore_custom=ignore_custom,
+                implicit=implicit,
+            )
+        return m
+
+    # def avg_arguments_per_operation(
+    #     self,
+    #     vectorized: bool = True,
+    #     ignore_custom: bool = False,
+    #     implicit: bool = True,
+    # ) -> int:
+    #     """
+    #     Compute average number of arguments per operation in the model.
+    #     If `ignore_custom` is `False`, then `CustomOperation` nodes are
+    #     not used to compute the maximum.
+    #     """
+    #     if implicit is False:
+    #         ops = self._operation_nodes if ignore_custom is False else self._std_operation_nodes
+    #         return np.average(
+    #             [nargs(self.flat_graph, op, True) for op in ops])
+    #     ops = get_operation_nodes(self.flat_graph, implicit=False)
+    #     n = len(ops)
+    #     m = np.sum([nargs(self.flat_graph, op, True) for op in ops])
+    #     implicit_operations: List[ImplicitOperationNode] = list(
+    #         filter(lambda x: isinstance(x, ImplicitOperationNode), ops))
+    #     for op in implicit_operations:
+    #         m += op.rep.total_arguments_per_operation(
+    #             vectorized=vectorized,
+    #             ignore_custom=ignore_custom,
+    #             implicit=implicit,
+    #         )
+    #         n += op.rep.num_operation_nodes()
+    #     return m / n
 
     def min_outputs_per_operation(
         self,
@@ -749,9 +1007,10 @@ Percent Reduction in Computation Time with Full Parallelization: {100*(1 - self.
             VariableNode] = get_registered_outputs_from_graph(g)
         map_output_to_inputs: Dict[str, Set[str]] = dict()
         for r in registered_outputs:
-            map_output_to_inputs[r.var.abs_prom_name] = set(
+            r_name = prepend_namespace(r.namespace, r.name)
+            map_output_to_inputs[r_name] = set(
                 filter(
-                    lambda x: x.var.abs_prom_name,
+                    lambda x: prepend_namespace(x.namespace, x.name),
                     filter(lambda x: g.in_degree(x) == 0,
                            ancestors(g, r)),
                 ))
@@ -760,9 +1019,11 @@ Percent Reduction in Computation Time with Full Parallelization: {100*(1 - self.
             for leaf in set(
                     filter(lambda x: g.in_degree(x) == 0,
                            ancestors(g, r))):
-                if str(leaf) not in map_input_to_outputs.keys():
-                    map_input_to_outputs[str(leaf)] = set()
-                map_input_to_outputs[str(leaf)].add(r.var.abs_prom_name)
+                leaf_name = prepend_namespace(leaf.namespace, leaf.name)
+                r_name = prepend_namespace(r.namespace, r.name)
+                if leaf_name not in map_input_to_outputs.keys():
+                    map_input_to_outputs[leaf_name] = set()
+                map_input_to_outputs[leaf_name].add(r_name)
         return map_output_to_inputs, map_input_to_outputs
 
     def linear_constraints(self) -> Dict[str, List[str]]:
@@ -862,14 +1123,107 @@ Percent Reduction in Computation Time with Full Parallelization: {100*(1 - self.
                     implicit_models=implicit_models,
                 )
 
-    def visualize_graph(self):
+    def visualize_graph(self, draw_implicit=False):
         draw_networkx(self.flat_graph,
                       labels={
                           n: prepend_namespace(n.namespace, n.name)
                           for n in self.flat_graph.nodes()
                       })
         plt.show()
+        if draw_implicit is True:
+            nodes_to_draw = [n for n in self.flat_graph.nodes() if isinstance(n, ImplicitOperationNode)]
+            for n in nodes_to_draw:
+                n.rep.visualize_graph(draw_implicit=True)
 
-    # TODO: add implicit models option
-    def visualize_unflat_graph(self):
-        _visualize_unflat(self.unflat_graph)
+    def nout_vars(
+        self,
+        vectorized: bool,
+        implicit: bool = False,
+    ) -> int:
+        n = 0
+        if implicit is True:
+            n += sum([
+                op.rep.nout_vars(implicit=True, vectorized=vectorized)
+                for op in filter(
+                    lambda x: isinstance(x, ImplicitOperationNode),
+                    self.flat_graph.nodes(),
+                )
+            ])
+        if vectorized is False:
+            n += np.sum([
+                size(v) for v in self.flat_graph.nodes
+                if isinstance(v, VariableNode)
+                and self.flat_graph.in_degree(v) > 0
+            ])
+        else:
+            n += len([
+                v for v in self.flat_graph.nodes
+                if isinstance(v, VariableNode)
+                and self.flat_graph.in_degree(v) > 0
+            ])
+        return n
+
+    def nin_vars(
+        self,
+        vectorized: bool,
+        implicit: bool = False,
+    ) -> int:
+        n = 0
+        if implicit is True:
+            n += sum([
+                op.rep.nout_vars(implicit=True, vectorized=vectorized)
+                for op in filter(
+                    lambda x: isinstance(x, ImplicitOperationNode),
+                    self.flat_graph.nodes(),
+                )
+            ])
+        if vectorized is False:
+            n += np.sum([
+                size(v) for v in self.flat_graph.nodes
+                if isinstance(v, VariableNode)
+                and self.flat_graph.in_degree(v) == 0
+            ])
+        else:
+            n += len([
+                v for v in self.flat_graph.nodes
+                if isinstance(v, VariableNode)
+                and self.flat_graph.in_degree(v) == 0
+            ])
+        return n
+
+    def avg_var_uses_per_var(
+        self,
+        implicit: bool = False,
+    ) -> int:
+        n = 0
+        if implicit is True:
+            n += sum([
+                op.rep.avg_var_uses_per_var(implicit=True)
+                for op in filter(
+                    lambda x: isinstance(x, ImplicitOperationNode),
+                    self.flat_graph.nodes(),
+                )
+            ])
+        n += np.sum([
+            graph.out_degree(v) for v in self.flat_graph.nodes
+            if isinstance(v, VariableNode)
+        ])
+        return n
+
+    def avg_outs_per_op(
+        self,
+        implicit: bool = False,
+    ) -> int:
+        n = 0
+        if implicit is True:
+            n += sum([
+                op.rep.avg_outs_per_op(implicit=True) for op in filter(
+                    lambda x: isinstance(x, ImplicitOperationNode),
+                    self.flat_graph.nodes(),
+                )
+            ])
+        n += np.sum([
+            graph.out_degree(op) for op in self.flat_graph.nodes
+            if isinstance(op, OperationNode)
+        ])
+        return n

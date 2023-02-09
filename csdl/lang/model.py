@@ -568,10 +568,15 @@ class Model:
         if name in [s.name for s in self.subgraphs]:
             raise KeyError(
                 "Cannot add model with duplicate name {}".format(name))
-        if type(submodel) is Model:
-            warn(
-                "Model named {} is not a subclass of Model. This is likely due to defining a model inline. It is recommended to define a new subclass when defining a submodel to maximiize code reuse."
-                .format(name))
+        if issubclass(Model, type(submodel)):
+            if name is None:
+                warn(
+                    "In Model of type {}, unnamed Model is not a subclass of Model. This is likely due to defining a model inline. It is recommended to define a new subclass when defining a submodel to maximiize code reuse."
+                    .format(type(self)))
+            else:
+                warn(
+                    "In Model of type {}, Model named {} is not a subclass of Model. This is likely due to defining a model inline. It is recommended to define a new subclass when defining a submodel to maximiize code reuse."
+                    .format(type(self), name))
 
         subgraph = Subgraph(
             name,
@@ -1011,6 +1016,22 @@ class Model:
                 KeyError(
                     "Invalid name {} for exposing an intermediate variable in composite residual. Exposing intermediate variables with unpromoted names is not supported."
                     .format(name))
+
+        # FIXME: Declared variables that have been promoted and not
+        # connected should be valid arguments and states; this
+        # information (promotions and connections) is unavailable until
+        # after a GraphRepresentation for the model defining residuals
+        # is constructed; in order to raise errors as early as possible,
+        # the GraphRepresentation of the internal model must be
+        # constructed during the call to define for the outer model;
+        # i.e. models are defined from top to bottom, but wherever an
+        # implicit operation is encountered, the GraphRepresentation for
+        # that internal model must be constructed before the outer model
+        # is defined, so nested implicit models will have their
+        # GraphRepresentation objects constructed from bottom to top;
+        # the GraphRepresentation constructor will then be called by the
+        # explicit models only after all the nested implicit models'
+        # GraphRepresentation objects have already been constructed
 
         # check that name and shape of each argument matches name and
         # shape of a declared variable in internal model, and transfer

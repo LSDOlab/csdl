@@ -34,7 +34,6 @@ class Node():
         self._getitem_called = False
         self._decomp = None
         self.abs_name: Union[str, None] = None
-        self.abs_prom_name: str = ""
 
     def __iadd__(self, other: Any) -> NoReturn:
         raise NotImplementedError(
