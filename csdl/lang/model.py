@@ -465,7 +465,7 @@ class Model:
             An object to use in expressions
         """
         c = Concatenation(
-            name,
+            name=name,
             val=check_default_val_type(val),
             shape=shape,
             units=units,

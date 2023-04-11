@@ -41,10 +41,7 @@ class Variable(Node):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        if name is None:
-            self.name: str = self._id
-        else:
-            self.name: str = name
+        self.name: str = self._id if name is None else  name
         self.shape, self.val = get_shape_val(shape, val)
         self.units = units
         self.desc = desc

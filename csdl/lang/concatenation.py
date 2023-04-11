@@ -7,6 +7,7 @@ from csdl.lang.output import Output
 from csdl.utils.get_shape_val import get_shape_val
 from csdl.utils.slice_to_list import slice_to_list
 from csdl.operations.indexed_passthrough import indexed_passthrough
+from csdl.utils.check_default_val_type import check_default_val_type
 
 
 class Concatenation(Output):
@@ -16,7 +17,7 @@ class Concatenation(Output):
 
     def __init__(
         self,
-        name,
+        name: str = None,
         val=1.0,
         shape: Tuple[int] = (1, ),
         units=None,
@@ -45,8 +46,10 @@ class Concatenation(Output):
         val: Number or ndarray
             Initial value of variable to compute explicitly
         """
-        super().__init__(name, *args, **kwargs)
-        self.shape, self.val = get_shape_val(shape, val)
+        super().__init__(self._id if name is None else name, *args,
+                         **kwargs)
+        self.shape, self.val = get_shape_val(
+            shape, check_default_val_type(val))
         self.units = units
         self.res_units = res_units
         self.desc = desc
