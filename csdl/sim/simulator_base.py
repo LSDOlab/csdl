@@ -24,6 +24,28 @@ class _ReprClass(object):
             The string to be returned by __repr__
         """
         self._repr_string = repr_string
+        
+    def keys(self) -> Set[str]:
+        """
+        Return names of promoted names of all model inputs,
+        outputs, and unconnected declared variables in the model.
+        Keys do not contain names of unconnected declared variables.
+        Recommended implementation is to use
+        `GraphRepresentation.keys()` method to store copy of keys at
+        construction, whether or not `GraphRepresentation` object used
+        to construct `Simulator` object is discarded after the
+        `Simulator` object is constructed.
+        """
+        raise NotImplementedError
+
+    def items(self) -> List[Tuple[str, str]]:
+        """
+        Return key-value pairs of promoted names of all model inputs,
+        outputs, and unconnected declared variables in the model.
+        Key-value pairs do not contain names of unconnected declared
+        variables.
+        """
+        raise NotImplementedError
 
     def __repr__(self):
         """
