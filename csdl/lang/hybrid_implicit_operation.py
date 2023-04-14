@@ -16,7 +16,7 @@ class M(Model):
 
     def initialize(self):
         self.parameters.declare('model', types=(Model))
-        self.parameters.declare('expose', types=(str))
+        self.parameters.declare('input_data', types=(dict))
         self.parameters.declare('out_res_map', types=(dict))
         self.parameters.declare('nonlinear_solver',
                                 types=(NonlinearSolver))
@@ -24,21 +24,20 @@ class M(Model):
 
     def define(self):
         model = self.parameters['model']
-        expose = self.parameters['expose']
+        input_data = self.parameters['input_data']
         out_res_map = self.parameters['out_res_map']
         nonlinear_solver = self.parameters['nonlinear_solver']
         linear_solver = self.parameters['linear_solver']
         op = self.create_implicit_operation(model)
         for output, residual in out_res_map.items():
-            # TODO: set initial guess
             op.declare_state(output, residual=residual)
         op.nonlinear_solver = nonlinear_solver
         op.linear_solver = linear_solver
         inputs = [
-            self.declare_variable(input_name, shape=input_shape) for
-            input_name, input_shape in zip(input_names, input_shapes)
+            self.declare_variable(input_name, shape=input_shape)
+            for input_name, input_shape in input_data.items()
         ]
-        outputs = op.apply(*inputs, expose=expose)
+        outputs = op.apply(*inputs)
 
 
 class HybridImplicitOperation(CustomExplicitOperation):
@@ -92,21 +91,9 @@ class HybridImplicitOperation(CustomExplicitOperation):
 
         self.name: str = name
         self.mode: str = mode
+        self.model: 'Model' = model
 
-        # TODO: make backend an argument for apply
-        exec(f'from {backend} import Simulator')
-        if mode == 'explicit':
-            self.sim = Simulator(self.rep)
-        elif mode == 'implicit':
-            # TODO: apply middle end optimizations to `rep`
-            rep = GraphRepresentation(
-                M(
-                    model=model,
-                    out_res_map=out_res_map,
-                    nonlinear_solver=nonlinear_solver,
-                    linear_solver=linear_solver,
-                ), )
-            self.sim = Simulator(rep)
+        self._build_internal_simulator()
 
         # inputs are always inputs
         self.input_data: Set[Tuple[str, Tuple[int, ...]]] = set()
@@ -131,13 +118,29 @@ class HybridImplicitOperation(CustomExplicitOperation):
             # computing residuals explicitly
             for n, v in self.exposed_variables.items():
                 self.output_data.add((n, v.shape))
-                
+
             # residuals are outputs when computing residuals
             # explicitly
             self.residual_data: Set[Tuple[str, Tuple[int, ...]]] = set()
             for residual in out_res_map.values():
                 pair = (residual.name, residual.shape)
                 self.output_data.add(pair)
+
+    def _build_internal_simulator(self):
+        exec(f'from {self.backend} import Simulator')
+        if self.mode == 'explicit':
+            self.sim = Simulator(self.rep)
+        elif self.mode == 'implicit':
+            # TODO: apply middle end optimizations to `rep`
+            rep = GraphRepresentation(
+                M(
+                    model=self.model,
+                    input_data=self.input_data,
+                    out_res_map=self.out_res_map,
+                    nonlinear_solver=self.nonlinear_solver,
+                    linear_solver=self.linear_solver,
+                ), )
+            self.sim = Simulator(rep)
 
     def define(self):
         self.totals = dict()
