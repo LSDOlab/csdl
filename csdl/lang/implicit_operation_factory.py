@@ -1,4 +1,4 @@
-from typing import Tuple, List, Dict, Union
+from typing import Tuple, List, Dict, Union, Optional
 from csdl.lang.output import Output
 
 # from csdl.lang.intermediate_representation import IntermediateRepresentation
@@ -17,7 +17,8 @@ from collections import OrderedDict
 
 class ImplicitOperationFactory(object):
 
-    def __init__(self, parent: 'Model', model: 'Model'):
+    def __init__(self, parent: 'Model', model: 'Model', name: Optional[str]):
+        self.name: Optional[str] = name
         self.parent: 'Model' = parent
         self.model: 'Model' = model
         self.residuals: List[str] = []
@@ -90,8 +91,14 @@ class ImplicitOperationFactory(object):
         *arguments: Variable,
         expose: List[str] = [],
         defaults: Dict[str, Union[int, float, np.ndarray]] = dict(),
+        hybrid: bool = False,
+        backend: str = '',
     ) -> Union[Output, Tuple[Output, ...]]:
         if len(self.brackets) > 0:
+            if hybrid == True:
+                raise NotImplementedError(
+                    "Bracketed search not implemented for hybrid implicit operations"
+                )
             return self.parent._bracketed_search(
                 self.states,
                 self.residuals,
@@ -101,13 +108,33 @@ class ImplicitOperationFactory(object):
                 expose=expose,
             )
         else:
-            return self.parent._implicit_operation(
-                self.states,
-                *arguments,
-                residuals=self.residuals,
-                model=self.model,
-                nonlinear_solver=self.nonlinear_solver,
-                linear_solver=self.linear_solver,
-                expose=expose,
-                defaults=defaults,
-            )
+            if hybrid == True:
+                if self.name is None:
+                    raise ValueError('Name is required for hybrid implicit operations')
+                if not isinstance(backend, str) or len(backend) == 0:
+                    raise ValueError(
+                        'Argument `backend` must be a string specifying a Python package that provides a compiler back end.'
+                    )
+                return self.parent._hybrid_implicit_operation(
+                    self.states,
+                    self.name,
+                    *arguments,
+                    residuals=self.residuals,
+                    model=self.model,
+                    nonlinear_solver=self.nonlinear_solver,
+                    linear_solver=self.linear_solver,
+                    expose=expose,
+                    defaults=defaults,
+                    backend=backend,
+                )
+            else:
+                return self.parent._implicit_operation(
+                    self.states,
+                    *arguments,
+                    residuals=self.residuals,
+                    model=self.model,
+                    nonlinear_solver=self.nonlinear_solver,
+                    linear_solver=self.linear_solver,
+                    expose=expose,
+                    defaults=defaults,
+                )
