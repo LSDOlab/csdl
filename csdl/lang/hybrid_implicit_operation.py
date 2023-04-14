@@ -101,27 +101,43 @@ class HybridImplicitOperation(CustomExplicitOperation):
             # TODO: apply middle end optimizations to `rep`
             rep = GraphRepresentation(
                 M(
-                    model=deepcopy(model),
-                    expose=list(exposed_variables.keys()),
+                    model=model,
                     out_res_map=out_res_map,
                     nonlinear_solver=nonlinear_solver,
                     linear_solver=linear_solver,
                 ), )
             self.sim = Simulator(rep)
 
+        # inputs are always inputs
         self.input_data: Set[Tuple[str, Tuple[int, ...]]] = set()
         for inputs in out_in_map.values():
             for inp in inputs:
                 pair = (inp.name, inp.shape)
                 self.input_data.add(pair)
         self.output_data: Set[Tuple[str, Tuple[int, ...]]] = set()
-        for output in res_out_map.values():
-            pair = (output.name, output.shape)
-            self.output_data.add(pair)
-        self.residual_data: Set[Tuple[str, Tuple[int, ...]]] = set()
-        for residual in out_res_map.values():
-            pair = (residual.name, residual.shape)
-            self.output_data.add(pair)
+        if self.mode == 'implicit':
+            # implicit outputs are outputs when converging residuals
+            for output in res_out_map.values():
+                pair = (output.name, output.shape)
+                self.output_data.add(pair)
+        if self.mode == 'explicit':
+            # implicit outputs are inputs when computing residuals
+            # explicitly
+            for output in res_out_map.values():
+                pair = (output.name, output.shape)
+                self.input_data.add(pair)
+
+            # exposed explicit outputs are included in ouputs when
+            # computing residuals explicitly
+            for n, v in self.exposed_variables.items():
+                self.output_data.add((n, v.shape))
+                
+            # residuals are outputs when computing residuals
+            # explicitly
+            self.residual_data: Set[Tuple[str, Tuple[int, ...]]] = set()
+            for residual in out_res_map.values():
+                pair = (residual.name, residual.shape)
+                self.output_data.add(pair)
 
     def define(self):
         self.totals = dict()
