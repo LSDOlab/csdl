@@ -962,11 +962,11 @@ class Model:
             out_res_map,
             res_out_map,
             out_in_map,
-            exp_in_map,
-            exposed_variables,
-            exposed_residuals,
+            dict(),
+            dict(),
+            set(),
             *arguments,
-            expose=expose,
+            expose=[],
             defaults=new_default_values,
             nonlinear_solver=nonlinear_solver,
             linear_solver=linear_solver,
@@ -994,18 +994,25 @@ class Model:
             *arguments,
             expose=expose,
             defaults=new_default_values,
-            nonlinear_solver=nonlinear_solver,
-            linear_solver=linear_solver,
+            nonlinear_solver=None,
+            linear_solver=None,
             backend=backend,
         )
 
-        implicit_outputs = custom(*arguments, op=implicit_op)
-        explicit_outputs = custom(*arguments, op=explicit_op)
+        # these are the implicit states
+        hybrid_states = custom(*arguments, op=implicit_op)
+        args: Tuple[Variable, ...] = arguments if isinstance(
+            arguments, tuple) else (arguments, )
+        outs: Tuple[Output, ...] = hybrid_states if isinstance(
+            hybrid_states, tuple) else (hybrid_states, )
 
-        a = tuple(list(implicit_outputs) + list(explicit_outputs))
-        if len(a) == 1:
-            return a[0]
-        return tuple(a)
+        # these are the residuals and exposed variables
+        explicit_outputs = custom(*(list(args) + list(outs)),
+                                  op=explicit_op)
+
+        a = list(explicit_outputs) if isinstance(
+            explicit_outputs, tuple) else list((explicit_outputs, ))
+        return tuple(list(args) + a)
 
     def _implicit_operation(
         self,
@@ -1455,7 +1462,9 @@ class Model:
         else:
             return outs[0]
 
-    def create_implicit_operation(self, model: 'Model', name: str = None):
+    def create_implicit_operation(self,
+                                  model: 'Model',
+                                  name: str = None):
         return ImplicitOperationFactory(self, model, name)
 
     def __enter__(self):
