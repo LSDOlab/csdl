@@ -42,22 +42,25 @@ def _to_array(
         x = np.array(x)
     return x
 
-def construct_hybrid_variable_nodes(arguments, implicit_op, explicit_op):
+
+def construct_hybrid_variable_nodes(arguments, implicit_op,
+                                    explicit_op):
+    # returns (in order): hybrid states, residuals, exposed variables
+
     # these are the implicit states
     hybrid_states = custom(*arguments, op=implicit_op)
-    args: Tuple[Variable, ...] = arguments if isinstance(
-        arguments, tuple) else (arguments, )
     outs: Tuple[Output, ...] = hybrid_states if isinstance(
         hybrid_states, tuple) else (hybrid_states, )
 
     # these are the residuals and exposed variables
-    explicit_outputs = custom(*(list(args) + list(outs)),
-                            op=explicit_op)
+    explicit_outputs = custom(
+        *list(outs),
+        op=explicit_op,
+    )
 
     a = list(explicit_outputs) if isinstance(
         explicit_outputs, tuple) else list((explicit_outputs, ))
-    return tuple(list(args) + a)
-
+    return tuple(list(outs) + a)
 
 
 class Model:
@@ -816,7 +819,8 @@ class Model:
             # TODO: add tol
         )
 
-        return construct_hybrid_variable_nodes(arguments, implicit_op, explicit_op)
+        return construct_hybrid_variable_nodes(arguments, implicit_op,
+                                               explicit_op)
 
     def _bracketed_search(
         self,
@@ -1229,7 +1233,9 @@ class Model:
             backend=backend,
         )
 
-        return construct_hybrid_variable_nodes(arguments, implicit_op, explicit_op)
+        return construct_hybrid_variable_nodes(arguments, implicit_op,
+                                               explicit_op)
+
     def _implicit_operation(
         self,
         states: Dict[str, Dict[str, Any]],
