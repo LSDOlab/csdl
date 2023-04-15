@@ -96,17 +96,25 @@ class ImplicitOperationFactory(object):
     ) -> Union[Output, Tuple[Output, ...]]:
         if len(self.brackets) > 0:
             if hybrid == True:
-                raise NotImplementedError(
-                    "Bracketed search not implemented for hybrid implicit operations"
+                return self.parent._hybrid_bracketed_search(
+                    self.states,
+                    self.name,
+                    self.residuals,
+                    self.model,
+                    self.brackets,
+                    *arguments,
+                    expose=expose,
+                    backend=backend,
                 )
-            return self.parent._bracketed_search(
-                self.states,
-                self.residuals,
-                self.model,
-                self.brackets,
-                *arguments,
-                expose=expose,
-            )
+            else:
+                return self.parent._bracketed_search(
+                    self.states,
+                    self.residuals,
+                    self.model,
+                    self.brackets,
+                    *arguments,
+                    expose=expose,
+                )
         else:
             if hybrid == True:
                 if self.name is None:
