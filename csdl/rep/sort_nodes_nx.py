@@ -9,8 +9,9 @@ from networkx import DiGraph, topological_sort
 
 from csdl.rep.get_nodes import get_input_nodes, get_var_nodes
 from csdl.utils.prepend_namespace import prepend_namespace
-from networkx import draw_networkx
+from networkx import draw_networkx, draw
 from networkx import DiGraph, ancestors, simple_cycles
+import matplotlib.pyplot as plt
 
 
 def put_inputs_first(graph: DiGraph, sorted_nodes: List[IRNode]):
@@ -45,6 +46,13 @@ def sort_nodes_nx(
             cycles = list(simple_cycles(graph))
             # TODO: show secondary names of connected variables
             # TODO: multiline error messages
+            draw_networkx(graph,
+                      labels={
+                          n: prepend_namespace(n.namespace, n.name)
+                          for n in graph.nodes()
+                      })
+            plt.show()
+            exit()
             raise KeyError(
                 "Promotions or connections are present that define cyclic relationships between variables. Cycles present are as follows:\n{}\nCycles are shown as lists of unique variable names that form a cycle. To represent cyclic relationships in CSDL, define an implicit operation. See documentation for more details on how to define implicit operations."
                 .format([[

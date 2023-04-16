@@ -31,7 +31,6 @@ def custom(*args, op: CustomOperation):
                 .format(arg.name, arg.shape,
                         op.input_meta[arg.name]['shape']))
         # need to update metadata for arg based on op.input_meta or vice versa?
-        op.add_dependency_node(arg)
         op.input_meta[arg.name]['val'] *= 0
         op.input_meta[arg.name]['val'] += arg.val
     outs = []
