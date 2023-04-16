@@ -1197,10 +1197,7 @@ class Model:
         # returns (in order): hybrid states, residuals, exposed variables
 
         # these are the implicit states
-        print('implicit op dependencies')
-        print([x.name for x in implicit_op.dependencies])
         hybrid_states = custom(*arguments, op=implicit_op)
-        print([x.name for x in implicit_op.dependencies])
         outs: Tuple[Output, ...] = hybrid_states if isinstance(
             hybrid_states, tuple) else (hybrid_states, )
         for out in outs:
@@ -1227,14 +1224,10 @@ class Model:
         )
 
         # these are the residuals and exposed variables
-        print([x.name for x in list(arguments) + list(outs)])
-        print('explicit op dependencies')
-        print([x.name for x in explicit_op.dependencies])
         explicit_outputs = custom(
             *(list(arguments) + list(outs)),
             op=explicit_op,
         )
-        print([x.name for x in explicit_op.dependencies])
         for out in explicit_outputs:
             self.register_output(out.name, out)
 
@@ -1814,7 +1807,7 @@ class HybridImplicitOperation(CustomExplicitOperation):
         self.defaults = defaults
         self.exposed_variables: Dict[str, Output] = exposed_variables
 
-        self.name: str = name
+        self.name: str = mode + '_' + name
         self.mode: str = mode
         self.model: 'Model' = model
         self.backend: str = backend
@@ -1852,13 +1845,6 @@ class HybridImplicitOperation(CustomExplicitOperation):
             for n, v in self.exposed_variables.items():
                 self.output_data.append((n, v.shape))
 
-        # print('DATA')
-        # print(self.mode)
-        # print('inputs')
-        # print([k[0] for k in self.input_data])
-        # print('outputs')
-        # print([k[0] for k in self.output_data])
-
         self._build_internal_simulator()
 
     def _build_internal_simulator(self):
@@ -1886,12 +1872,6 @@ class HybridImplicitOperation(CustomExplicitOperation):
         if self.mode == 'explicit':
             self.declare_derivatives('*', '*')
 
-        # print('META')
-        # print(self.mode)
-        # print('inputs')
-        # print(self.input_meta.keys())
-        # print('outputs')
-        # print(self.output_meta.keys())
 
     def compute(self, inputs, outputs):
         for name in self.input_meta.keys():
