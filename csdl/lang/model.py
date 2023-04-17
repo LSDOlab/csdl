@@ -802,7 +802,7 @@ class Model:
             exp_in_map,
             exposed_variables,
             exposed_residuals,
-            *arguments,
+            *(list(arguments) + list(outs)),
             expose=expose,
             brackets=new_brackets,
             backend=backend,
@@ -1924,8 +1924,12 @@ class HybridImplicitOperation(CustomExplicitOperation):
     def residuals(self):
         return self.residuals
 
-    def set_tolerance(self, tol: float):
-        self.nonlinear_solver.options['atol'] = tol
+    def set_tolerance_and_guess(self, name:str, guess:np.ndarray, tol: float):
+        # self.nonlinear_solver.options['atol'] = tol
+        if self.mode == 'implicit':
+            self.sim.set_implicit_guess_and_tol(name, guess, tol)
+        else:
+            raise ValueError('Tolerances and initial guesses can be set only for the implicit part of hybrid operations')
 
 
 class N(Model):
@@ -1934,7 +1938,7 @@ class N(Model):
         self.parameters.declare('model', types=(Model))
         self.parameters.declare('input_data', types=(list))
         self.parameters.declare('out_res_map', types=(dict))
-        self.parameters.declare('linear_solver', types=(LinearSolver))
+        self.parameters.declare('linear_solver', types=(LinearSolver, type(None)))  # TODO: Add linear solver for implicit bracketed ops and hybrid bracketed
         self.parameters.declare('brackets', types=(dict))
 
     def define(self):
@@ -1946,7 +1950,7 @@ class N(Model):
         op = self.create_implicit_operation(model)
         for output, residual in out_res_map.items():
             op.declare_state(output,
-                             residual=residual,
+                             residual=residual.name,
                              bracket=brackets[output])
         op.linear_solver = linear_solver
         inputs = [
@@ -1983,6 +1987,9 @@ class HybridBracketedSearchOperation(HybridImplicitOperation):
         tol: float = 1e-7,
         **kwargs,
     ):
+        self.brackets: Dict[str, Tuple[Union[np.ndarray, Variable],
+                                       Union[np.ndarray,
+                                             Variable]]] = brackets
         super().__init__(
             mode,
             name,
@@ -2002,9 +2009,7 @@ class HybridBracketedSearchOperation(HybridImplicitOperation):
         for _, v in out_in_map.items():
             in_vars = in_vars.union(set(v))
         self._model = model
-        self.brackets: Dict[str, Tuple[Union[np.ndarray, Variable],
-                                       Union[np.ndarray,
-                                             Variable]]] = brackets
+        
         self.maxiter: int = maxiter
         self.tol: float = tol
         for l, u in self.brackets.values():
@@ -2014,9 +2019,11 @@ class HybridBracketedSearchOperation(HybridImplicitOperation):
                 self.add_dependency_node(u)
 
     def _build_internal_simulator(self):
-        exec(f'from {self.backend} import Simulator')
+        # exec(f'from {self.backend} import Simulator')
+        backend = importlib.import_module(self.backend)
+        
         if self.mode == 'explicit':
-            self.sim = Simulator(self.rep)
+            self.sim = backend.Simulator(self.rep)
         elif self.mode == 'implicit':
             # TODO: apply middle end optimizations to `rep`
             rep = GraphRepresentation(
@@ -2027,7 +2034,7 @@ class HybridBracketedSearchOperation(HybridImplicitOperation):
                     linear_solver=self.linear_solver,
                     brackets=self.brackets,
                 ), )
-            self.sim = Simulator(rep)
+            self.sim = backend.Simulator(rep)
 
 
 def construct_hybrid_variable_nodes(
