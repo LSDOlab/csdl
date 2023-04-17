@@ -1,5 +1,5 @@
 from csdl.rep.graph_representation import GraphRepresentation
-from csdl.lang.hybrid_implicit_operation import HybridImplicitOperation
+from csdl.lang.model import HybridImplicitOperation
 from typing import List, Dict, Union
 import numpy as np
 
@@ -8,15 +8,30 @@ import numpy as np
 # This function only needs to be called once at compile time
 def collect_hybrid_implicit_operations(
     rep: GraphRepresentation,
-    mode: str = '',
 ) -> Dict[str, HybridImplicitOperation]:
     operations = rep.operation_nodes()
     hybrid_operations: List[HybridImplicitOperation] = list(
-        filter(lambda x: isinstance(x, HybridImplicitOperation),
+        filter(lambda x: isinstance(x.op, HybridImplicitOperation),
                operations))
-    d = {h.name: h for h in hybrid_operations}
-    if mode == 'implicit' or mode == 'explicit':
-        return {k: v for k, v in d.items() if v.mode == mode}
+
+    d = {}
+    for h in hybrid_operations:
+        d[h.name] = {}
+        d[h.name]['operation_node'] = h
+        d[h.name]['mode'] = h.op.mode
+        d[h.name]['states_to_res'] = {}
+        for kk,vv in h.op.out_res_map.items():
+            d[h.name]['states_to_res'][kk] = vv.name
+
+    # d = {h.name: h for h in hybrid_operations}
+    # if mode == 'implicit' or mode == 'explicit':
+    #     for k,v in d.items():
+    #         if v.op.mode == mode:
+                
+    #  d = {k: v for k, v in d.items() if v.op.mode == mode}
+    # for k,v in d.items():
+    #     for kk,vv in v.op.out_res_map.items():
+    #         print(kk, vv.name)
     return d
 
 
