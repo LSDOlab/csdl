@@ -1812,6 +1812,7 @@ class HybridImplicitOperation(CustomExplicitOperation):
         #     in_vars = in_vars.union(set(v))
         self.nargs = len(in_vars)
         super().__init__(*args, **kwargs)
+        self.dependencies = []
         self._model: Model = model
         self.res_out_map: Dict[str, DeclaredVariable] = res_out_map
         self.out_res_map: Dict[str, Output] = out_res_map
@@ -2035,26 +2036,3 @@ class HybridBracketedSearchOperation(HybridImplicitOperation):
                     brackets=self.brackets,
                 ), )
             self.sim = backend.Simulator(rep)
-
-
-def construct_hybrid_variable_nodes(
-    implicit_op: HybridImplicitOperation,
-    explicit_op: HybridImplicitOperation,
-    *arguments: Variable,
-):
-    # returns (in order): hybrid states, residuals, exposed variables
-
-    # these are the implicit states
-    hybrid_states = custom(*arguments, op=implicit_op)
-    outs: Tuple[Output, ...] = hybrid_states if isinstance(
-        hybrid_states, tuple) else (hybrid_states, )
-
-    # these are the residuals and exposed variables
-    explicit_outputs = custom(
-        *(list(arguments) + list(outs)),
-        op=explicit_op,
-    )
-
-    a = list(explicit_outputs) if isinstance(
-        explicit_outputs, tuple) else list((explicit_outputs, ))
-    return tuple(list(outs) + a)
