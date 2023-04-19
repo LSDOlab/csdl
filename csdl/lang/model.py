@@ -1091,9 +1091,10 @@ class Model:
             # duplicates
             in_vars = list(
                 set(collect_terminals(
-                    [],
+                    set(),
                     residual,
                     residual,
+                    set(),
                 )))
 
             if state_name in state_names and state_name not in [
@@ -1119,9 +1120,10 @@ class Model:
             in_vars = list(
                 set(
                     collect_terminals(
-                        [],
+                        set(),
                         registered_outputs_map[exposed_name],
                         registered_outputs_map[exposed_name],
+                        set(),
                     )))
 
             # Only the arguments specified in the parent model and

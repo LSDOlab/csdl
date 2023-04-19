@@ -159,6 +159,7 @@ class GraphRepresentation:
     """
 
     def __init__(self, model: 'Model', unflat: bool = True):
+        self.model_TEMP = model
         self.name = type(model).__name__
         define_models_recursively(model)
         _, _, _, _ = resolve_promotions(model)
