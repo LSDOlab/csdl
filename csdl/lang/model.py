@@ -766,11 +766,11 @@ class Model:
             out_res_map,
             res_out_map,
             out_in_map,
-            exp_in_map,
-            exposed_variables,
-            exposed_residuals,
+            dict(),
+            dict(),
+            set(),
             *arguments,
-            expose=expose,
+            expose=[],
             brackets=new_brackets,
             backend=backend,
             # TODO: add tol
@@ -783,9 +783,21 @@ class Model:
         # python_csdl_backend will need this explicit operation
 
         # returns (in order): hybrid states, residuals, exposed variables
+        print(arguments)
+        arguments_implicit = []
+        for arg in arguments:
+            arguments_implicit.append(arg)
+        for bracket in new_brackets.values():
+            if isinstance(bracket[0], Variable):
+                arguments_implicit.append(bracket[0])
+            if isinstance(bracket[1], Variable):
+                arguments_implicit.append(bracket[1])
+        arguments_implicit = tuple(arguments_implicit)
+        # exit()
+        # arguments_implicit
 
         # these are the implicit states
-        hybrid_states = custom(*arguments, op=implicit_op)
+        hybrid_states = custom(*arguments_implicit, op=implicit_op)
         outs: Tuple[Output, ...] = hybrid_states if isinstance(
             hybrid_states, tuple) else (hybrid_states, )
         for out in outs:
@@ -814,12 +826,13 @@ class Model:
             *(list(arguments) + list(outs)),
             op=explicit_op,
         )
-        for out in explicit_outputs:
+
+        exp_outs = explicit_outputs if isinstance(
+            explicit_outputs, tuple) else (explicit_outputs, )
+        for out in exp_outs:
             self.register_output(out.name, out)
 
-        a = list(explicit_outputs) if isinstance(
-            explicit_outputs, tuple) else list((explicit_outputs, ))
-        return tuple(list(outs) + a)
+        return tuple(list(outs) + list(exp_outs))
 
     def _bracketed_search(
         self,
@@ -1187,6 +1200,7 @@ class Model:
 
         # create operation to solve residuals, establish dependencies on
         # arguments
+        # NEED BRACKETS
         implicit_op = HybridImplicitOperation(
             'implicit',
             name,
@@ -1246,12 +1260,15 @@ class Model:
             *(list(arguments) + list(outs)),
             op=explicit_op,
         )
-        for out in explicit_outputs:
+        exp_outs: Tuple[Output, ...] = explicit_outputs if isinstance(
+            explicit_outputs , tuple) else (explicit_outputs, )
+        for out in exp_outs:
+            print(out.name)
             self.register_output(out.name, out)
 
-        a = list(explicit_outputs) if isinstance(
-            explicit_outputs, tuple) else list((explicit_outputs, ))
-        return tuple(list(outs) + a)
+        # a = list(explicit_outputs) if isinstance(
+        #     explicit_outputs, tuple) else list((explicit_outputs, ))
+        return tuple(list(outs) + list(exp_outs))
 
     def _implicit_operation(
         self,
@@ -1869,7 +1886,7 @@ class HybridImplicitOperation(CustomExplicitOperation):
     def _build_internal_simulator(self):
         backend = importlib.import_module(self.backend)
         if self.mode == 'explicit':
-            self.sim = backend.Simulator(self.rep)
+            self.sim = backend.Simulator(self.rep, display_scripts = 1, analytics = 1)
         elif self.mode == 'implicit':
             # TODO: apply middle end optimizations to `rep`
             rep = GraphRepresentation(
@@ -1885,7 +1902,32 @@ class HybridImplicitOperation(CustomExplicitOperation):
     def define(self):
         for (n, s) in self.input_data:
             self.add_input(n, shape=s)
+
+        if self.mode == 'implicit':
+
+            # If there are CSDL variables as brackets, we need them to be inputs into the custom explicit operation.
+            if isinstance(self, HybridBracketedSearchOperation):
+                for bracket in self.brackets.values():
+                    if isinstance(bracket[0], Variable):
+                        self.add_input(bracket[0].name, shape = bracket[0].shape, val = bracket[0].val)
+                        # print('HBS INPUT', bracket[0].name, bracket[0].val)
+                    if isinstance(bracket[1], Variable):
+                        self.add_input(bracket[1].name, shape = bracket[1].shape, val = bracket[1].val)
+                        # print('HBS INPUT', bracket[1].name, bracket[1].val)
+                        # print(bracket[1].val)
+                    
+                    # exit('sdkjfnskjn')
+                
+            # new_brackets = dict()
+            # for k,v in brackets.items():
+            #     new_bracket = list(v)
+            #     if isinstance(v[0], Variable):
+            #         new_bracket[0] = self.declare_variable(v[0].name, shape=v[0].shape, val=v[0].val)
+            #     if isinstance(v[1], Variable):
+            #         new_bracket[1] = self.declare_variable(v[1].name, shape=v[1].shape, val=v[1].val)
+            #     new_brackets[k] = tuple(new_bracket)
         for (n, s) in self.output_data:
+            print(self.mode, n,s)
             self.add_output(n, shape=s)
 
         if self.mode == 'explicit':
@@ -1894,6 +1936,20 @@ class HybridImplicitOperation(CustomExplicitOperation):
     def compute(self, inputs, outputs):
         for name in self.input_meta.keys():
             self.sim[name] = inputs[name]
+
+
+        if self.mode == 'implicit':
+            # If there are CSDL variables as brackets, we need them to be inputs into the custom explicit operation.
+            if isinstance(self, HybridBracketedSearchOperation):
+                for bracket in self.brackets.values():
+                    if isinstance(bracket[0], Variable):
+                        self.sim[bracket[0].name] = inputs[bracket[0].name]
+                        # self.add_input(bracket[0].name, shape = bracket[0].shape, val = bracket[0].val)
+                        print(bracket[0].name, inputs[bracket[0].name])
+                    if isinstance(bracket[1], Variable):
+                        self.sim[bracket[1].name] = inputs[bracket[1].name]
+                        print(bracket[1].name, inputs[bracket[1].name])
+                        # self.add_input(bracket[1].name, shape = bracket[1].shape, val = bracket[1].val)
 
         self.sim.run()
 
@@ -1904,6 +1960,8 @@ class HybridImplicitOperation(CustomExplicitOperation):
         if self.mode == 'explicit':
             input_names: List[str] = list(self.input_meta.keys())
             output_names: List[str] = list(self.output_meta.keys())
+
+
 
             self.totals = self.sim.compute_totals(output_names,
                                                   input_names)
@@ -1948,11 +2006,23 @@ class N(Model):
         out_res_map = self.parameters['out_res_map']
         linear_solver = self.parameters['linear_solver']
         brackets = self.parameters['brackets']
+
+        new_brackets = dict()
+        # NEWCHANGE
+        for k,v in brackets.items():
+            new_bracket = list(v)
+            if isinstance(v[0], Variable):
+                new_bracket[0] = self.declare_variable(v[0].name, shape=v[0].shape, val=v[0].val)
+                print(v[0].val)
+            if isinstance(v[1], Variable):
+                new_bracket[1] = self.declare_variable(v[1].name, shape=v[1].shape, val=v[1].val)
+                print(v[1].val)
+            new_brackets[k] = tuple(new_bracket)
         op = self.create_implicit_operation(model)
         for output, residual in out_res_map.items():
             op.declare_state(output,
                              residual=residual.name,
-                             bracket=brackets[output])
+                             bracket=new_brackets[output])
         op.linear_solver = linear_solver
         inputs = [
             self.declare_variable(input_name, shape=input_shape)
@@ -2010,14 +2080,17 @@ class HybridBracketedSearchOperation(HybridImplicitOperation):
         for _, v in out_in_map.items():
             in_vars = in_vars.union(set(v))
         self._model = model
-        
+        # self.brackets: Dict[str, Tuple[Union[np.ndarray, Variable],
+        #                                Union[np.ndarray,
+        #                                      Variable]]] = brackets
         self.maxiter: int = maxiter
         self.tol: float = tol
-        for l, u in self.brackets.values():
-            if isinstance(l, Variable):
-                self.add_dependency_node(l)
-            if isinstance(u, Variable):
-                self.add_dependency_node(u)
+        # if mode == 'implicit':
+        #     for l, u in self.brackets.values():
+        #         if isinstance(l, Variable):
+        #             self.add_dependency_node(l)
+        #         if isinstance(u, Variable):
+        #             self.add_dependency_node(u)
 
     def _build_internal_simulator(self):
         # exec(f'from {self.backend} import Simulator')
@@ -2035,4 +2108,5 @@ class HybridBracketedSearchOperation(HybridImplicitOperation):
                     linear_solver=self.linear_solver,
                     brackets=self.brackets,
                 ), )
+            # rep.visualize_graph()
             self.sim = backend.Simulator(rep)
