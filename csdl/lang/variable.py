@@ -151,11 +151,11 @@ class Variable(Node):
             op = power_combination(self, other, coeff=1, powers=[1, -1])
         elif isinstance(other, (Number, np.ndarray)):
             # TODO: check for near-zero values too
-            if other == 0 or (isinstance(other, np.ndarray)
-                              and np.any(other)):
-                raise ZeroDivisionError(
-                    "Dividing by zero-valued compile time constant is guaranteed to cause a divide by zero error at runtime"
-                )
+            # if other == 0 or (isinstance(other, np.ndarray)
+            #                   and np.any(other)):
+            #     raise ZeroDivisionError(
+            #         "Dividing by zero-valued compile time constant is guaranteed to cause a divide by zero error at runtime"
+            #     )
             op = power_combination(self, coeff=1 / other, powers=1)
         else:
             raise TypeError(
