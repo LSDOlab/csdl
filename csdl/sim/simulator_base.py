@@ -104,17 +104,16 @@ class SimulatorBase:
         requests/sets. Use in __setitem__ and __getitem__
         """
         if key in self._promoted_to_unpromoted.keys():
-            print('using promoted key', key)
+            # print('using promoted key', key)
             return key
         if key in self._unpromoted_to_promoted.keys():
-            print('using unpromoted key', key)
+            # print('using unpromoted key', key)
             k = self._unpromoted_to_promoted[key]
-            print('using promoted key', k)
+            # print('using promoted key', k)
             return k
         raise KeyError(
             "{} not a user defined variable in this Simulator".format(
                 key))
-
     def run(self):
         """
         Method to run a simulation once. This method should be

@@ -1,5 +1,5 @@
 from csdl.lang.variable import Variable
-
+from csdl.utils.get_shape_val import get_shape_val
 
 class DeclaredVariable(Variable):
     """
@@ -38,3 +38,5 @@ class DeclaredVariable(Variable):
         )
         self.src_indices = src_indices
         self.flat_src_indices = flat_src_indices
+        self.shape, self.val = get_shape_val(shape, val)
+

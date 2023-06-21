@@ -136,6 +136,8 @@ class Concatenation(Output):
                            " in assignment to elements in " +
                            self.name + ". Consider using csdl.expand")
         self._tgt_indices[var.name] = (var.shape, tgt_indices)
+        if not hasattr(var, 'val'):
+            var.val = np.ones(var.shape)
         self._tgt_vals[var.name] = var.val
 
         # Check for overlapping indices

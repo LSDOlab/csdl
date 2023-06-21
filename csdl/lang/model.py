@@ -184,7 +184,7 @@ class Model:
         op = print_var(var)
         out = Output(
             var.name + '_print',
-            val=var.val,
+            # val=var.val,
             shape=var.shape,
             units=var.units,
             desc=var.desc,
@@ -531,6 +531,8 @@ class Model:
 
             var.name = name
             self.registered_outputs.append(var)
+        if not hasattr(var, 'val'):
+            var.val = np.ones(var.shape)
         return var
 
     def add(
@@ -1029,6 +1031,9 @@ class Model:
                 raise ValueError(
                     "The argumet {} has shape {}, which does not match the shape {} of the declared variable of the model used to define an implicit operation"
                     .format(arg.name, arg.shape, var.shape))
+            # arg.val = np.ones(arg.shape)
+            if not hasattr(arg, 'val'):
+                arg.val = np.ones(arg.shape)
             var.val = arg.val
 
         # check that name of each state matches name of a declared
@@ -1185,6 +1190,9 @@ class Model:
         se = set(expose)
         ex = filter(lambda x: x.name in se, model.registered_outputs)
         for e in ex:
+            if not hasattr(e, 'val'):
+                e.val = np.ones(e.shape)
+
             out = Output(
                 e.name,
                 val=e.val,

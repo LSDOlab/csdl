@@ -1,4 +1,5 @@
 from csdl.lang.variable import Variable
+from csdl.utils.get_shape_val import get_shape_val
 
 
 class Input(Variable):
@@ -37,3 +38,9 @@ class Input(Variable):
             *args,
             **kwargs,
         )
+
+        self.shape, self.val = get_shape_val(shape, val)
+        # if name == 'mtx':
+        #     import numpy as np
+        #     print(np.linalg.norm(self.val))
+        #     exit()

@@ -2,6 +2,7 @@ from csdl.lang.variable import Variable
 from csdl.lang.operation import Operation
 from typing import List, Tuple
 import numpy as np
+from csdl.utils.get_shape_val import get_shape_val
 
 class Output(Variable):
     """
@@ -41,6 +42,7 @@ class Output(Variable):
             *args,
             **kwargs,
         )
+        # self.shape, self.val = get_shape_val(shape, val)
         self.res_units = res_units
         self.lower = lower
         self.upper = upper

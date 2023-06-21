@@ -3,7 +3,7 @@ from csdl.lang.variable import Variable
 from csdl.lang.output import Output
 from collections import OrderedDict
 from csdl.utils.gen_hex_name import gen_hex_name
-
+import numpy as np
 
 def custom(*args, op: CustomOperation):
     op.define()
@@ -33,6 +33,9 @@ def custom(*args, op: CustomOperation):
         # need to update metadata for arg based on op.input_meta or vice versa?
         op.add_dependency_node(arg)
         op.input_meta[arg.name]['val'] *= 0
+        
+        if not hasattr(arg, 'val'):
+            arg.val = np.ones(arg.shape)
         op.input_meta[arg.name]['val'] += arg.val
     outs = []
     # KLUDGE: keep names simple for now

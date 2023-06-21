@@ -45,7 +45,7 @@ class Variable(Node):
             self.name: str = self._id
         else:
             self.name: str = name
-        self.shape, self.val = get_shape_val(shape, val)
+        self.shape, _ = get_shape_val(shape, val)
         self.units = units
         self.desc = desc
         self.tags = tags
@@ -147,10 +147,10 @@ class Variable(Node):
         from csdl.lang.output import Output
         if isinstance(other, Variable):
             # TODO: check for near-zero values too
-            if np.any(other.val == 0):
-                raise ZeroDivisionError(
-                    "Dividing by default zero-valued Variable is guaranteed to cause a divide by zero error at runtime"
-                )
+            # if np.any(other.val == 0):
+            #     raise ZeroDivisionError(
+            #         "Dividing by default zero-valued Variable is guaranteed to cause a divide by zero error at runtime"
+            #     )
             op = power_combination(self, other, coeff=1, powers=[1, -1])
         elif isinstance(other, (Number, np.ndarray)):
             # TODO: check for near-zero values too
@@ -376,9 +376,13 @@ class Variable(Node):
 
         # Create and store expression to return
         # TODO: clean up _decomp member names
+        if not hasattr(self, 'val'):
+            self.val = np.ones(self.shape)
+        # self.val = np.ones(self.shape)
         val = self.val[tuple(
             [slice(s[0], s[1], s[2]) for s in list(key)])]
         out = Output(None, op=self._decomp, shape=val.shape, val=val)
+        out.val = val
         outs = list(self._decomp.outs)
         outs.append(out)
         self._decomp.outs = tuple(outs)
