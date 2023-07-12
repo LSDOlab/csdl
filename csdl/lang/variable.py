@@ -276,10 +276,10 @@ class Variable(Node):
                 "Dividing NumPy ndarray by Variable object not yet supported."
                 "Instead, change \'a/b\' to \'b*a**(-1)\'")
         # TODO: check for near-zero values too
-        if np.any(self.val == 0):
-            raise ZeroDivisionError(
-                "Dividing by default zero-valued Variable is guaranteed to cause a divide by zero error at runtime"
-            )
+        # if np.any(self.val == 0):
+        #     raise ZeroDivisionError(
+        #         "Dividing by default zero-valued Variable is guaranteed to cause a divide by zero error at runtime"
+        #     )
         if isinstance(other, Number):
             # TODO: check for near-zero values too
             if other == 0 or (isinstance(other, np.ndarray)

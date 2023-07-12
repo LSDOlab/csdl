@@ -45,6 +45,7 @@ def custom(*args, op: CustomOperation):
             **meta,
             op=op,
         )
+        out.val = np.ones(op.output_meta[name]['shape'])
         outs.append(out)
 
     op.outs = tuple(outs)
