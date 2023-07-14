@@ -3,6 +3,7 @@ from re import X
 from typing import Any, Dict, List, Set, Tuple, Union
 from copy import copy
 from csdl.utils.typehints import Shape
+from csdl.utils.get_shape_val import get_shape_val
 
 from csdl.rep.graph_representation import GraphRepresentation
 from csdl.lang.implicit_operation import ImplicitOperation
@@ -1183,6 +1184,7 @@ class Model:
                 **states[s],
                 op=op,
             )
+            out.shape, out.val = get_shape_val(internal_var.shape, states[s]['val'])
             self.register_output(s, out)
             outs.append(out)
 
