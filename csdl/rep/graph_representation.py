@@ -312,21 +312,21 @@ class GraphRepresentation:
         """
         Nodes sorted in order of execution, using the flattened graph
         """
-        if unflat is True:
-            self.unflat_graph: DiGraph = construct_unflat_graph(
-                first_graph)
-            """
-            Directed graph representing model.
-            Each model in the model hierarchy will contain an instance of
-            `IntermediateRepresentation` with `unflat_graph: DiGraph`.
-            """
-            self.unflat_sorted_nodes: List[IRNode] = sort_nodes_nx(
-                self.unflat_graph,
-                flat=False,
-            )
-            """
-            Nodes sorted in order of execution, using the unflattened graph
-            """
+        # if unflat is True:
+        #     self.unflat_graph: DiGraph = construct_unflat_graph(
+        #         first_graph)
+        #     """
+        #     Directed graph representing model.
+        #     Each model in the model hierarchy will contain an instance of
+        #     `IntermediateRepresentation` with `unflat_graph: DiGraph`.
+        #     """
+        #     self.unflat_sorted_nodes: List[IRNode] = sort_nodes_nx(
+        #         self.unflat_graph,
+        #         flat=False,
+        #     )
+        #     """
+        #     Nodes sorted in order of execution, using the unflattened graph
+        #     """
 
         self._variable_nodes: List[VariableNode] = get_var_nodes(
             self.flat_graph)
