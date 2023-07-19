@@ -30,7 +30,7 @@ def sum(*summands: Variable, axes=None):
         if len(axes) > l:
             raise ValueError("To many axes specified")
         for ax in axes:
-            if ax > m:
+            if ax > l:
                 raise ValueError(
                     "axes {} and greater in axes {} are out of bounds for array of dimension {}"
                     .format(ax, axes, l))
