@@ -49,5 +49,5 @@ def define_models_recursively(model: 'Model', name: str = ''):
                 if output.defined is False:
                     raise ValueError(
                         "Output not defined for {}. When defining a concatenation, at least one index must be defined in terms of another CSDL Variable"
-                        .format(repr(output)))
+                        .format(output.name))
         model.defined = True
