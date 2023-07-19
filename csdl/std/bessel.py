@@ -1,7 +1,8 @@
 import csdl.operations as ops
 from csdl.lang.variable import Variable
 from csdl.lang.output import Output
-
+from numbers import Number
+import numpy as np
 
 def bessel(
         var:Variable,
@@ -30,8 +31,11 @@ def bessel(
     # check if arguments are integers
     if kind not in [1,2]:
         raise TypeError(f"Bessel argument \'kind\' (input {var.name}) must be the integer 1 or 2. {kind} given.")
-    if not isinstance(order, int):
-        raise TypeError(f"Bessel \'order\' (input {var.name}) must be an integer. {order} given.")
+    if not isinstance(order, (Number, np.ndarray)):
+        raise TypeError(f"Bessel \'order\' (input {var.name}) must be a integer/float or number array. {order} given.")
+    if isinstance(order, np.ndarray):
+        if var.shape != order.shape:
+            raise TypeError(f"Bessel \'order\' (input {var.name}) must be the same shape as the input variable. order shape {order.shape} given, {var.shape} expected.")
     op = ops.bessel(var, kind=kind, order=order)
     op.outs = (Output(
         None,
