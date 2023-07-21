@@ -8,3 +8,4 @@ class expand(StandardOperation):
         self.nargs = 1
         super().__init__(*args, **kwargs)
         self.literals['expand_indices'] = expand_indices
+        self.properties['linear'] = True

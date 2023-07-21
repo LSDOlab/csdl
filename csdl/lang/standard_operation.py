@@ -10,8 +10,6 @@ class StandardOperation(Operation):
         super().__init__(*args, **kwargs)
         self.literals = dict()
         self.compute_string = ''
-        self.properties = dict()
-        self.properties['elementwise'] = False
 
     def define_compute_strings(self):
         raise NotImplementedError(

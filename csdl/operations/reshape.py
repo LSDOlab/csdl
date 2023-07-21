@@ -7,3 +7,4 @@ class reshape(StandardOperation):
         self.nouts = 1
         self.nargs = 1
         super().__init__(*args, **kwargs)
+        self.properties['linear'] = True
