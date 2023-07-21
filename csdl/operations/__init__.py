@@ -39,4 +39,6 @@ from csdl.operations.average import average
 from csdl.operations.min import min
 from csdl.operations.max import max
 from csdl.operations.quatrotvec import quatrotvec
+from csdl.operations.bessel import bessel
+from csdl.operations.hankel import hankel
 from csdl.operations.sparsematmat import sparsematmat
