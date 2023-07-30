@@ -116,16 +116,22 @@ def merge_graphs(
     main model. User declared promotions and connections are assumed to
     be valid.
     """
-    child_model_nodes = get_model_nodes(graph)
+    # OLD:
+    # child_model_nodes = get_model_nodes(graph)
+    
+    # NEW:
+    child_model_nodes = graph.model_nodes
 
     # create a flattened copy of the graph for each model node
     graph.remove_nodes_from(child_model_nodes)
+    graph.model_nodes = set()
     for mn in copy(child_model_nodes):
         
         # compose is slower than manually adding edges
         # graph = compose(graph, mn.graph)
         graph.add_edges_from(mn.graph.edges())
         graph.add_nodes_from(mn.graph.nodes())
+        graph.model_nodes = mn.graph.model_nodes
 
         graph = merge_graphs(
             graph,
@@ -221,12 +227,23 @@ def merge_automatically_connected_nodes(graph: DiGraph):
         [prepend_namespace(x.namespace, x.name) for x in targets])
 
     unique_targets: Dict[str, VariableNode] = dict()
+    
+    # for name in target_names:
+    #     for target in targets:
+    #         if name not in unique_targets.keys():
+    #             if prepend_namespace(target.namespace,
+    #                                  target.name) == name:
+    #                 unique_targets[name] = target
+    #                 call += 1
+
+    for target in targets:
+        target.tgt_prepended = prepend_namespace(target.namespace, target.name)
     for name in target_names:
         for target in targets:
-            if name not in unique_targets.keys():
-                if prepend_namespace(target.namespace,
-                                     target.name) == name:
-                    unique_targets[name] = target
+            # tgt_prepended = prepend_namespace(target.namespace, target.name)
+            if target.tgt_prepended == name:
+                unique_targets[name] = target
+                break
 
     # gather all targets and then remove unique targets
     for tgt in unique_targets.values():
@@ -234,7 +251,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
 
     redundant_targets: Dict[str, Set[VariableNode]] = dict()
     for tgt in targets:
-        name = prepend_namespace(tgt.namespace, tgt.name)
+        name = tgt.tgt_prepended
         try:
             redundant_targets[name].add(tgt)
         except:
@@ -264,7 +281,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
                     self_loops=False,
                     copy=False,
                 )
-
+    
     # # merge nodes from unique sources to unique targets; these are
     # # connections formed automatically by promotions
     for k, src in sources.items():
@@ -386,7 +403,7 @@ def construct_flat_graph(
         unpromoted_to_promoted,
     )
     merge_automatically_connected_nodes(graph)
-    # merge connections within flat graph
+
 
     graph_meta = merge_connections(
         GraphWithMetadata(graph),

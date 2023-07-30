@@ -283,8 +283,10 @@ class GraphRepresentation:
                 v.namespace = '.'.join(
                     self.unpromoted_to_promoted[name].rsplit('.')[:-1])
 
+        graph_in = first_graph.copy()
+        graph_in.model_nodes = first_graph.model_nodes
         graph_meta = construct_flat_graph(
-            first_graph.copy(),
+            graph_in,
             connections,
             self.promoted_to_unpromoted,
             self.unpromoted_to_promoted,
@@ -328,21 +330,21 @@ class GraphRepresentation:
         #     Nodes sorted in order of execution, using the unflattened graph
         #     """
 
-        self._variable_nodes: List[VariableNode] = get_var_nodes(
-            self.flat_graph)
-        self._operation_nodes: List[
-            OperationNode] = get_operation_nodes(self.flat_graph)
-        self._std_operation_nodes: List[OperationNode] = [
-            op for op in self._operation_nodes
-            if not isinstance(op.op, (CustomExplicitOperation,
-                                      CustomImplicitOperation))
-        ]
-        self.A = adjacency_matrix(self.flat_graph,
-                                  nodelist=self.flat_sorted_nodes)
-        self._density = self.A.nnz / np.prod(self.A.shape)
-        self._longest_path = dag_longest_path(self.flat_graph)
-        self._mem = 0  #self.compute_best_case_memory_footprint()
-        self._critical_path_length = self.compute_critical_path_length()
+        # self._variable_nodes: List[VariableNode] = get_var_nodes(
+        #     self.flat_graph)
+        # self._operation_nodes: List[
+        #     OperationNode] = get_operation_nodes(self.flat_graph)
+        # self._std_operation_nodes: List[OperationNode] = [
+        #     op for op in self._operation_nodes
+        #     if not isinstance(op.op, (CustomExplicitOperation,
+        #                               CustomImplicitOperation))
+        # ]
+        # self.A = adjacency_matrix(self.flat_graph,
+        #                           nodelist=self.flat_sorted_nodes)
+        # self._density = self.A.nnz / np.prod(self.A.shape)
+        # self._longest_path = dag_longest_path(self.flat_graph)
+        # self._mem = 0  #self.compute_best_case_memory_footprint()
+        # self._critical_path_length = self.compute_critical_path_length()
 
         implicit_operation_nodes = get_implicit_operation_nodes(
             self.flat_graph)

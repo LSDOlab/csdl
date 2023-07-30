@@ -30,9 +30,11 @@ def get_src_nodes(var_nodes: List[VariableNode]) -> List[VariableNode]:
 
 
 def get_model_nodes(graph: DiGraph) -> List[ModelNode]:
-    return list(
-        filter(lambda x: isinstance(x, ModelNode), graph.nodes()))
 
+    # don't think it reall makes a difference on this one or the one below.
+    return list(filter(lambda x: isinstance(x, ModelNode), graph.nodes))
+
+    # return list(filter(lambda x: isinstance(x, ModelNode), graph.nodes()))
 
 def get_input_nodes(
         var_nodes: List[VariableNode]) -> List[VariableNode]:

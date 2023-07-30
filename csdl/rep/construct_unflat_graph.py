@@ -159,18 +159,36 @@ def add_edge_to_graph(
     x <------
 
     """
-
     if isinstance(predecessor_instance, OperationNode):
+        # NEW: honestly not sure if this is correct
+        # If this operation does not have the attribute out_left:
+        if not hasattr(predecessor_instance, 'out_left'):
+            predecessor_instance.out_left = list(predecessor_instance.op.outs)
+            # print(predecessor_instance.out_left)
+        # print(len(predecessor_instance.out_left), type(list(predecessor_instance.out_left)[0]))
+        if nodes[node_name].var in set(predecessor_instance.out_left):
+            predecessor_instance.out_left.remove(nodes[node_name].var)
+            # predecessor_instance.out_left.pop()
+        else:
+            return
 
-        # add edges for multi-output operations
-        if len(predecessor_instance.op.outs) > 1:
-            for successor in predecessor_instance.op.outs:
+        if len(predecessor_instance.out_left) > 1:
+            for successor in (predecessor_instance.out_left):
                 _construct_graph_this_level(
                     graph,
                     nodes,
                     successor,
                 )
-
+        
+        # OLD:
+        # # add edges for multi-output operations
+        # if len(predecessor_instance.op.outs) > 1:
+        #     for successor in predecessor_instance.op.outs:
+        #         _construct_graph_this_level(
+        #             graph,
+        #             nodes,
+        #             successor,
+        #         )
 
 def construct_graphs_all_models(
     inputs: List[Input],
@@ -189,6 +207,8 @@ def construct_graphs_all_models(
                            ModelNode]] = dict()
     graph = DiGraph()
 
+    graph.model_nodes = set()
+
     # add models to graph for this model
     for s in subgraphs:
         if s.name not in nodes.keys():
@@ -200,6 +220,7 @@ def construct_graphs_all_models(
                 s.submodel.registered_outputs,
                 s.submodel.subgraphs,
             )
+            graph.model_nodes.add(mn)
 
     # add variables and operations to the graph for this model
 
