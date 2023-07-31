@@ -117,21 +117,21 @@ def merge_graphs(
     be valid.
     """
     # OLD:
-    # child_model_nodes = get_model_nodes(graph)
+    child_model_nodes = get_model_nodes(graph)
     
     # NEW:
-    child_model_nodes = graph.model_nodes
+    # child_model_nodes = graph.model_nodes
 
     # create a flattened copy of the graph for each model node
     graph.remove_nodes_from(child_model_nodes)
-    graph.model_nodes = set()
+    # graph.model_nodes = set()
     for mn in copy(child_model_nodes):
         
         # compose is slower than manually adding edges
         # graph = compose(graph, mn.graph)
         graph.add_edges_from(mn.graph.edges())
         graph.add_nodes_from(mn.graph.nodes())
-        graph.model_nodes = mn.graph.model_nodes
+        # graph.model_nodes = mn.graph.model_nodes
 
         graph = merge_graphs(
             graph,

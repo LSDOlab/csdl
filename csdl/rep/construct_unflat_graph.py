@@ -207,7 +207,7 @@ def construct_graphs_all_models(
                            ModelNode]] = dict()
     graph = DiGraph()
 
-    graph.model_nodes = set()
+    # graph.model_nodes = set()
 
     # add models to graph for this model
     for s in subgraphs:
@@ -220,7 +220,7 @@ def construct_graphs_all_models(
                 s.submodel.registered_outputs,
                 s.submodel.subgraphs,
             )
-            graph.model_nodes.add(mn)
+            # graph.model_nodes.add(mn)
 
     # add variables and operations to the graph for this model
 

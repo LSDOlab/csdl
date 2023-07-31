@@ -283,10 +283,10 @@ class GraphRepresentation:
                 v.namespace = '.'.join(
                     self.unpromoted_to_promoted[name].rsplit('.')[:-1])
 
-        graph_in = first_graph.copy()
-        graph_in.model_nodes = first_graph.model_nodes
+        # graph_in = first_graph.copy()
+        # graph_in.model_nodes = first_graph.model_nodes
         graph_meta = construct_flat_graph(
-            graph_in,
+            first_graph.copy(), #graph_in,
             connections,
             self.promoted_to_unpromoted,
             self.unpromoted_to_promoted,
