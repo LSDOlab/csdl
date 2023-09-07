@@ -44,5 +44,4 @@ from csdl.std.max import max
 from csdl.std.quatrotvec import quatrotvec
 from csdl.std.sparsematmat import sparsematmat
 from csdl.std.bessel import bessel
-from csdl.std.hankel import hankel
 from csdl.std.custom import custom
