@@ -25,7 +25,10 @@ def average(*operands: List[Variable], axes=None):
             raise TypeError(expr, " is not an Variable object")
 
     if axes == None:
-        shape = operands[0].shape
+        if len(operands) > 1:
+            shape = operands[0].shape
+        else:
+            shape = (1,)
     else:
         shape = tuple(np.delete(operands[0].shape, axes))
 
