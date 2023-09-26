@@ -118,7 +118,7 @@ def merge_graphs(
     """
     # OLD:
     child_model_nodes = get_model_nodes(graph)
-    
+
     # NEW:
     # child_model_nodes = graph.model_nodes
 
@@ -126,7 +126,7 @@ def merge_graphs(
     graph.remove_nodes_from(child_model_nodes)
     # graph.model_nodes = set()
     for mn in copy(child_model_nodes):
-        
+
         # compose is slower than manually adding edges
         # graph = compose(graph, mn.graph)
         graph.add_edges_from(mn.graph.edges())
@@ -227,7 +227,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
         [prepend_namespace(x.namespace, x.name) for x in targets])
 
     unique_targets: Dict[str, VariableNode] = dict()
-    
+
     # for name in target_names:
     #     for target in targets:
     #         if name not in unique_targets.keys():
@@ -281,7 +281,8 @@ def merge_automatically_connected_nodes(graph: DiGraph):
                     self_loops=False,
                     copy=False,
                 )
-    
+                tgt.var.rep_node = unique_targets[k]
+
     # # merge nodes from unique sources to unique targets; these are
     # # connections formed automatically by promotions
     for k, src in sources.items():
@@ -295,6 +296,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
                 self_loops=False,
                 copy=False,
             )
+            unique_targets[k].var.rep_node = src
 
 
 # CONNECTIONS
@@ -389,6 +391,7 @@ def merge_user_connected_nodes(
             self_loops=False,
             copy=False,
         )
+        tgt_nodes_map[b].var.rep_node = src_nodes_map[a]
 
 
 def construct_flat_graph(
@@ -403,7 +406,6 @@ def construct_flat_graph(
         unpromoted_to_promoted,
     )
     merge_automatically_connected_nodes(graph)
-
 
     graph_meta = merge_connections(
         GraphWithMetadata(graph),

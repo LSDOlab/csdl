@@ -32,6 +32,8 @@ def _construct_graph_this_level(
     if isinstance(node, Variable):
         if node.name not in nodes.keys():
             nodes[node.name] = VariableNode(node)
+        elif nodes[node.name].var is not node:
+            node.rep_node = nodes[node.name]
     elif isinstance(node, Operation):
         if node.name not in nodes.keys():
             if isinstance(node, ImplicitOperation):
@@ -179,7 +181,7 @@ def add_edge_to_graph(
                     nodes,
                     successor,
                 )
-        
+
         # OLD:
         # # add edges for multi-output operations
         # if len(predecessor_instance.op.outs) > 1:
@@ -189,6 +191,7 @@ def add_edge_to_graph(
         #             nodes,
         #             successor,
         #         )
+
 
 def construct_graphs_all_models(
     inputs: List[Input],
@@ -235,10 +238,74 @@ def construct_graphs_all_models(
     #         graph.add_node(nodes[inp.name])
 
     # add nodes that outputs depend on for this model
-    for r in registered_outputs:
-        _construct_graph_this_level(graph, nodes, r)
+    # for r in registered_outputs:
+    #     _construct_graph_this_level(graph, nodes, r)
+
+    construct_graph_this_model(graph, nodes, registered_outputs)
 
     return graph
+
+
+def construct_graph_this_model(graph, nodes, registered_outputs):
+    # Takes an initialized graph of the
+
+    # Create search queue
+    bfs_queue = [r for r in registered_outputs]
+    queued_nodes = set(bfs_queue)
+
+    # iteratively add variables
+    while bfs_queue:
+
+        # Node to add to graph
+        # This node should only be in the queue once.
+        csdl_node = bfs_queue.pop()
+        graph_node = get_graph_node(nodes, csdl_node)
+
+        # Add an edge for all predecessors of current node
+        for predecessor_node in csdl_node.dependencies:
+
+            # Add edge
+            predecessor_graph_node = get_graph_node(nodes, predecessor_node)
+            graph.add_edge(predecessor_graph_node, graph_node)
+
+            # Process next node
+            if predecessor_node in queued_nodes:
+                continue
+            bfs_queue.append(predecessor_node)
+            queued_nodes.add(predecessor_node)
+
+        # Add an edge for all successors of operation
+        if isinstance(csdl_node, Operation):
+            for successor_node in csdl_node.outs:
+
+                # Add edge
+                successor_graph_node = get_graph_node(nodes, successor_node)
+                graph.add_edge(graph_node, successor_graph_node)
+
+                # Process next node
+                if successor_node in queued_nodes:
+                    continue
+                bfs_queue.append(successor_node)
+                queued_nodes.add(successor_node)
+
+    return
+
+
+def get_graph_node(nodes, csdl_node):
+    # Create new operation/variable node
+    if isinstance(csdl_node, Variable):
+        if csdl_node.name not in nodes.keys():
+            nodes[csdl_node.name] = VariableNode(csdl_node)
+        elif nodes[csdl_node.name].var is not csdl_node:
+            csdl_node.rep_node = nodes[csdl_node.name]
+    elif isinstance(csdl_node, Operation):
+        if csdl_node.name not in nodes.keys():
+            if isinstance(csdl_node, ImplicitOperation):
+                nodes[csdl_node.name] = ImplicitOperationNode(csdl_node)
+            else:
+                nodes[csdl_node.name] = OperationNode(csdl_node)
+
+    return nodes[csdl_node.name]
 
 
 def find_cycles_among_models(

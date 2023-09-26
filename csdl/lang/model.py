@@ -50,9 +50,19 @@ class Model:
         self.defined = False
         self.subgraphs: List[Subgraph] = []
         self.variables_promoted_from_children: List[Variable] = []
+
         self.inputs: List[Input] = []
+        self.inputs_set: Set[Input] = set()
+        self.input_names_set: Set[Input] = set()
+
         self.declared_variables: List[DeclaredVariable] = []
+        self.declared_variables_set: Set[DeclaredVariable] = set()
+        self.declared_variable_names_set: Set[DeclaredVariable] = set()
+
         self.registered_outputs: List[Output] = []
+        self.registered_outputs_set: Set[Output] = set()
+        self.registered_output_names_set: Set[Output] = set()
+
         self.objective: Dict[str, Any] = dict()
         self.constraints: Dict[str, Dict[str, Any]] = dict()
         self.design_variables: Dict[str, Dict[str, Any]] = dict()
@@ -377,6 +387,7 @@ class Model:
             distributed=distributed,
         )
         self.declared_variables.append(v)
+        self.declared_variable_names_set.add(v.name)
         return v
 
     def create_input(
@@ -421,6 +432,7 @@ class Model:
             distributed=distributed,
         )
         self.inputs.append(i)
+        self.input_names_set.add(i.name)
         return i
 
     def create_output(
@@ -513,25 +525,29 @@ class Model:
                 'Can only register Output object as an output. Received type {}.'
                 .format(type(var)))
         else:
-            if var in self.registered_outputs:
+            if var in self.registered_outputs_set:
+            # if var in self.registered_outputs:
                 raise ValueError(
                     "Cannot register output twice; attempting to register "
                     "{} as {}.".format(var.name, name))
-            if name in [r.name for r in self.registered_outputs]:
+            # if name in [r.name for r in self.registered_outputs]:
+            if name in self.registered_output_names_set:
                 raise ValueError(
                     "Cannot register two outputs with the same name; attempting to register two outputs with name {}."
                     .format(name))
-            if name in [r.name for r in self.inputs]:
+            if name in self.input_names_set:
                 raise ValueError(
                     "Cannot register output with the same name as an input; attempting to register output named {} with same name as an input."
                     .format(name))
-            if name in [r.name for r in self.declared_variables]:
+            if name in self.declared_variable_names_set:
                 raise ValueError(
                     "Cannot register output with the same name as a declared variable; attempting to register output named {} with same name as a declared variable."
                     .format(name))
 
             var.name = name
             self.registered_outputs.append(var)
+            self.registered_outputs_set.add(var)
+            self.registered_output_names_set.add(var.name)
         if not hasattr(var, 'val'):
             var.val = np.ones(var.shape)
         return var
@@ -981,8 +997,8 @@ class Model:
         expose: List[str] = [],
     ) -> Tuple[Dict[str, Output], Dict[str, DeclaredVariable], Dict[
             str, List[DeclaredVariable]], Dict[
-                str, List[DeclaredVariable]], Set[str],
-               GraphRepresentation, Dict[str, Output]]:
+            str, List[DeclaredVariable]], Set[str],
+            GraphRepresentation, Dict[str, Output]]:
         if not isinstance(model, Model):
             raise TypeError("{} is not a Model".format(model))
 

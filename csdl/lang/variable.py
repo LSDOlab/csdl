@@ -54,6 +54,8 @@ class Variable(Node):
         self.distributed = distributed
         self.secondary_name: str = self.name
 
+        self.rep_node = None
+
     def __pos__(self):
         return self
 

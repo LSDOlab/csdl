@@ -2,6 +2,7 @@ from csdl.rep.ir_node import IRNode
 from csdl.lang.variable import Variable
 from typing import Set
 
+
 class VariableNode(IRNode):
 
     def __init__(self, var: Variable):
@@ -17,3 +18,5 @@ class VariableNode(IRNode):
 
         # set of VariableNodes that are merged due to promotions
         self.declared_to: Set[VariableNode] = set()
+
+        self.var.rep_node = self

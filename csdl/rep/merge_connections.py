@@ -208,6 +208,7 @@ def merge_connections(
             self_loops=False,
             copy=False,
         )
+        tgt_node.var.rep_node = src_node
 
         # 5) Update mapping of connected targets --> source
         container.connected_tgt_nodes_to_source_nodes[

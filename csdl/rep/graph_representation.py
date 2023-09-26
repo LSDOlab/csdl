@@ -103,6 +103,7 @@ def generate_unpromoted_promoted_maps(model: 'Model') -> Dict[str, str]:
         model.promoted_to_unpromoted)
     return model.unpromoted_to_promoted
 
+
 def structure_user_declared_connections(
     connections: Dict[str, Tuple[dict, List[Tuple[str, str]]]],
     model: 'Model',
@@ -177,11 +178,11 @@ class GraphRepresentation:
                 model.promoted_to_unpromoted,
                 model.unpromoted_to_promoted,
             ),
-             find_promoted_name(
-                 prepend_namespace(c, b),
-                 model.promoted_to_unpromoted,
-                 model.unpromoted_to_promoted,
-             )) for (a, b, c) in connections
+                find_promoted_name(
+                prepend_namespace(c, b),
+                model.promoted_to_unpromoted,
+                model.unpromoted_to_promoted,
+            )) for (a, b, c) in connections
         ]
         # remove duplicate connections
         self.connections = list(dict.fromkeys(self.connections))
@@ -219,7 +220,7 @@ class GraphRepresentation:
                 model.promoted_to_unpromoted,
                 model.unpromoted_to_promoted,
                 design_variables=dict()
-            )
+        )
         """
         Design variables of the optimization problem, if an optimization
         problem is defined
@@ -239,7 +240,7 @@ class GraphRepresentation:
                                    model.promoted_to_unpromoted,
                                    model.unpromoted_to_promoted,
                                    constraints=dict(),
-                               )
+        )
         """
         Constraints of the optimization problem, if a constrained
         optimization problem is defined
@@ -286,7 +287,7 @@ class GraphRepresentation:
         # graph_in = first_graph.copy()
         # graph_in.model_nodes = first_graph.model_nodes
         graph_meta = construct_flat_graph(
-            first_graph.copy(), #graph_in,
+            first_graph.copy(),  # graph_in,
             connections,
             self.promoted_to_unpromoted,
             self.unpromoted_to_promoted,
@@ -348,8 +349,8 @@ class GraphRepresentation:
 
         implicit_operation_nodes = get_implicit_operation_nodes(
             self.flat_graph)
-        for op in implicit_operation_nodes:
-            op.rep = GraphRepresentation(op.op._model)
+        # for op in implicit_operation_nodes:
+        # op.rep = GraphRepresentation(op.op._model)
 
         # from csdl.opt.combine_operations import combine_operations
         # combine_operations(self)
@@ -416,7 +417,7 @@ Percent Reduction in Computation Time with Full Parallelization: {100*(1 - self.
                 vectorized=vectorized) for x in [
                     x for x in self.flat_sorted_nodes
                     if isinstance(x, OperationNode)
-                ] if isinstance(x, (ImplicitOperationNode))
+            ] if isinstance(x, (ImplicitOperationNode))
         ]
         if len(x) == 0:
             self._mem = explicit
