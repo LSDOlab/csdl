@@ -161,6 +161,7 @@ class GraphRepresentation:
 
     def __init__(self, model: 'Model', unflat: bool = True):
         self.model_TEMP = model
+        check_compilation = False # True to perform common debuggin checks
         self.name = type(model).__name__
         define_models_recursively(model)
         _, _, _, _ = resolve_promotions(model)
@@ -191,28 +192,47 @@ class GraphRepresentation:
             str, str] = model.unpromoted_to_promoted
         self.promoted_to_unpromoted: Dict[
             str, Set[str]] = model.promoted_to_unpromoted
-        # check that each value in promoted_to_unpromoted is a key in
-        # unpromoted_to_promoted
-        for k in self.promoted_to_unpromoted.keys():
-            if k not in self.unpromoted_to_promoted.values():
-                raise KeyError(
-                    "Promotion maps not found for variable {}. This indicates an error in the compiler implementation, not the user's model."
-                    .format(k))
-
-        # Properties of promoted_to_unpromoted/unpromoted_to_promoted
-        # -- All values in p2u to are unique
-        # -- All keys in p2u are values in u2p
-        # -- All keys in u2p are values in p2u
-        # -- # of values in p2u == # of keys in u2p
-
-        # check that each unpromoted name in promoted_to_unpromoted is a
-        # key in unpromoted_to_promoted
-        for k, v in self.promoted_to_unpromoted.items():
-            for vv in v:
-                if vv not in self.unpromoted_to_promoted.keys():
+        
+        if check_compilation:
+            # check that each value in promoted_to_unpromoted is a key in
+            # unpromoted_to_promoted
+            for k in self.promoted_to_unpromoted.keys():
+                if k not in self.unpromoted_to_promoted.values():
                     raise KeyError(
                         "Promotion maps not found for variable {}. This indicates an error in the compiler implementation, not the user's model."
                         .format(k))
+
+            # Properties of promoted_to_unpromoted/unpromoted_to_promoted
+            # -- All values in p2u to are unique
+            # -- All keys in p2u are values in u2p
+            # -- All keys in u2p are values in p2u
+            # -- # of values in p2u == # of keys in u2p
+
+            # check that each unpromoted name in promoted_to_unpromoted is a
+            # key in unpromoted_to_promoted
+            for k, v in self.promoted_to_unpromoted.items():
+                for vv in v:
+                    if vv not in self.unpromoted_to_promoted.keys():
+                        raise KeyError(
+                            "Promotion maps not found for variable {}. This indicates an error in the compiler implementation, not the user's model."
+                            .format(k))
+                    
+            # check that there are no duplicate unpromoted names
+            from collections import Counter
+            from functools import reduce
+            unpromoted_name_sets = list(
+                self.promoted_to_unpromoted.values())
+            all_unpromoted_names = reduce(
+                lambda x, y: x + y, [list(s) for s in unpromoted_name_sets])
+            c = Counter(all_unpromoted_names)
+            duplicate_unpromoted_names = [
+                item for item, count in c.items() if count > 1
+            ]
+            if len(duplicate_unpromoted_names) > 0:
+                raise KeyError(
+                    "Found duplicate unpromoted names {}. This indicates an error in the compiler implementation, not the user's model."
+                    .format(duplicate_unpromoted_names))
+
         # collect information about optimization problem
         self.design_variables: Dict[str, Dict[
             str, Any]] = collect_design_variables(
@@ -245,22 +265,6 @@ class GraphRepresentation:
         Constraints of the optimization problem, if a constrained
         optimization problem is defined
         """
-        # check that there are no duplicate unpromoted names
-        from collections import Counter
-        from functools import reduce
-        unpromoted_name_sets = list(
-            self.promoted_to_unpromoted.values())
-        all_unpromoted_names = reduce(
-            lambda x, y: x + y, [list(s) for s in unpromoted_name_sets])
-        c = Counter(all_unpromoted_names)
-        duplicate_unpromoted_names = [
-            item for item, count in c.items() if count > 1
-        ]
-        if len(duplicate_unpromoted_names) > 0:
-            raise KeyError(
-                "Found duplicate unpromoted names {}. This indicates an error in the compiler implementation, not the user's model."
-                .format(duplicate_unpromoted_names))
-
         # TODO: check that there are never multiple sources connected to
         # a single target
         """
@@ -272,6 +276,7 @@ class GraphRepresentation:
         first_graph: DiGraph = construct_graphs_all_models(
             model.inputs,
             model.registered_outputs,
+            model.declared_variables,
             model.subgraphs,
         )
 
@@ -284,10 +289,10 @@ class GraphRepresentation:
                 v.namespace = '.'.join(
                     self.unpromoted_to_promoted[name].rsplit('.')[:-1])
 
-        # graph_in = first_graph.copy()
-        # graph_in.model_nodes = first_graph.model_nodes
+        graph_in = first_graph.copy()
+        graph_in.model_nodes = first_graph.model_nodes
         graph_meta = construct_flat_graph(
-            first_graph.copy(),  # graph_in,
+            graph_in,  # first_graph.copy(),
             connections,
             self.promoted_to_unpromoted,
             self.unpromoted_to_promoted,

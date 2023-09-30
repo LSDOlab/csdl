@@ -117,21 +117,21 @@ def merge_graphs(
     be valid.
     """
     # OLD:
-    child_model_nodes = get_model_nodes(graph)
+    # child_model_nodes = get_model_nodes(graph)
 
     # NEW:
-    # child_model_nodes = graph.model_nodes
+    child_model_nodes = graph.model_nodes
 
     # create a flattened copy of the graph for each model node
     graph.remove_nodes_from(child_model_nodes)
-    # graph.model_nodes = set()
+    graph.model_nodes = set()
     for mn in copy(child_model_nodes):
 
         # compose is slower than manually adding edges
         # graph = compose(graph, mn.graph)
         graph.add_edges_from(mn.graph.edges())
         graph.add_nodes_from(mn.graph.nodes())
-        # graph.model_nodes = mn.graph.model_nodes
+        graph.model_nodes = mn.graph.model_nodes
 
         graph = merge_graphs(
             graph,
@@ -228,6 +228,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
 
     unique_targets: Dict[str, VariableNode] = dict()
 
+    # Victors old code
     # for name in target_names:
     #     for target in targets:
     #         if name not in unique_targets.keys():
@@ -236,14 +237,32 @@ def merge_automatically_connected_nodes(graph: DiGraph):
     #                 unique_targets[name] = target
     #                 call += 1
 
+    # TC2 updated code
+    # import time
+    # start = time.time()
+    # for target in targets:
+    #     target.tgt_prepended = prepend_namespace(target.namespace, target.name)
+    # for name in target_names:
+    #     for target in targets:
+    #         # tgt_prepended = prepend_namespace(target.namespace, target.name)
+    #         if target.tgt_prepended == name:
+    #             unique_targets[name] = target
+    #             break
+    # print(f'TIME ({len(target_names)} x {len(target_names)}):', time.time() - start)
+
+    # v0.1 updated code
     for target in targets:
         target.tgt_prepended = prepend_namespace(target.namespace, target.name)
-    for name in target_names:
-        for target in targets:
-            # tgt_prepended = prepend_namespace(target.namespace, target.name)
-            if target.tgt_prepended == name:
-                unique_targets[name] = target
-                break
+
+        # Uncomment to check if declared variable values are being overwritten
+        # import numpy as np
+        # if target.tgt_prepended in unique_targets:
+        #     if np.linalg.norm(target.var.val) != np.linalg.norm(unique_targets[target.tgt_prepended].var.val):
+        #         print('WARNING:',target.tgt_prepended, target.var.val, unique_targets[target.tgt_prepended].var.val)
+            # raise ValueError('Error?')
+
+        if target.tgt_prepended not in unique_targets.keys():
+            unique_targets[target.tgt_prepended] = target
 
     # gather all targets and then remove unique targets
     for tgt in unique_targets.values():
@@ -252,10 +271,18 @@ def merge_automatically_connected_nodes(graph: DiGraph):
     redundant_targets: Dict[str, Set[VariableNode]] = dict()
     for tgt in targets:
         name = tgt.tgt_prepended
-        try:
-            redundant_targets[name].add(tgt)
-        except:
+
+        # Instead of try/except
+        if name not in redundant_targets.keys():
             redundant_targets[name] = {tgt}
+        else:
+            redundant_targets[name].add(tgt)
+        
+        # OLD:
+        # try:
+        #     redundant_targets[name].add(tgt)
+        # except:
+        #     redundant_targets[name] = {tgt}
 
     # merge nodes corresponding to locally defined and promoted nodes so
     # that each variable is represented by exactly one node; merge only
@@ -281,7 +308,8 @@ def merge_automatically_connected_nodes(graph: DiGraph):
                     self_loops=False,
                     copy=False,
                 )
-                tgt.var.rep_node = unique_targets[k]
+                # tgt.var.rep_node = unique_targets[k]
+                tgt.var.add_IR_mapping(unique_targets[k])
 
     # # merge nodes from unique sources to unique targets; these are
     # # connections formed automatically by promotions
@@ -296,7 +324,8 @@ def merge_automatically_connected_nodes(graph: DiGraph):
                 self_loops=False,
                 copy=False,
             )
-            unique_targets[k].var.rep_node = src
+            # unique_targets[k].var.rep_node = src
+            unique_targets[k].var.add_IR_mapping(src)
 
 
 # CONNECTIONS
@@ -391,7 +420,8 @@ def merge_user_connected_nodes(
             self_loops=False,
             copy=False,
         )
-        tgt_nodes_map[b].var.rep_node = src_nodes_map[a]
+        # tgt_nodes_map[b].var.rep_node = src_nodes_map[a]
+        tgt_nodes_map[b].var.add_IR_mapping(src_nodes_map[a])
 
 
 def construct_flat_graph(

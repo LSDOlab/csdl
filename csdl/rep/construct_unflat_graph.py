@@ -33,7 +33,9 @@ def _construct_graph_this_level(
         if node.name not in nodes.keys():
             nodes[node.name] = VariableNode(node)
         elif nodes[node.name].var is not node:
-            node.rep_node = nodes[node.name]
+            # node.rep_node = nodes[node.name]
+            node.rep_node.add_IR_mapping(nodes[node.name])
+
     elif isinstance(node, Operation):
         if node.name not in nodes.keys():
             if isinstance(node, ImplicitOperation):
@@ -196,6 +198,7 @@ def add_edge_to_graph(
 def construct_graphs_all_models(
     inputs: List[Input],
     registered_outputs: List[Output],
+    declared_variables: List[Variable],
     subgraphs: List[Subgraph],
 ) -> DiGraph:
     """
@@ -210,7 +213,7 @@ def construct_graphs_all_models(
                            ModelNode]] = dict()
     graph = DiGraph()
 
-    # graph.model_nodes = set()
+    graph.model_nodes = set()
 
     # add models to graph for this model
     for s in subgraphs:
@@ -221,9 +224,10 @@ def construct_graphs_all_models(
             mn.graph = construct_graphs_all_models(
                 s.submodel.inputs,
                 s.submodel.registered_outputs,
+                s.submodel.declared_variables,
                 s.submodel.subgraphs,
             )
-            # graph.model_nodes.add(mn)
+            graph.model_nodes.add(mn)
 
     # add variables and operations to the graph for this model
 
@@ -237,20 +241,22 @@ def construct_graphs_all_models(
     #     if nodes[inp.name] not in graph.nodes():
     #         graph.add_node(nodes[inp.name])
 
+    # OLD:
     # add nodes that outputs depend on for this model
     # for r in registered_outputs:
     #     _construct_graph_this_level(graph, nodes, r)
 
-    construct_graph_this_model(graph, nodes, registered_outputs)
+    # NEW: Unused declared variables should now be added to the graph
+    construct_graph_this_model(graph, nodes, registered_outputs + declared_variables)
 
     return graph
 
 
-def construct_graph_this_model(graph, nodes, registered_outputs):
+def construct_graph_this_model(graph, nodes, leaves):
     # Takes an initialized graph of the
 
     # Create search queue
-    bfs_queue = [r for r in registered_outputs]
+    bfs_queue = [leaf_node for leaf_node in leaves]
     queued_nodes = set(bfs_queue)
 
     # iteratively add variables
@@ -297,7 +303,8 @@ def get_graph_node(nodes, csdl_node):
         if csdl_node.name not in nodes.keys():
             nodes[csdl_node.name] = VariableNode(csdl_node)
         elif nodes[csdl_node.name].var is not csdl_node:
-            csdl_node.rep_node = nodes[csdl_node.name]
+            # csdl_node.rep_node = nodes[csdl_node.name]
+            csdl_node.add_IR_mapping(nodes[csdl_node.name])
     elif isinstance(csdl_node, Operation):
         if csdl_node.name not in nodes.keys():
             if isinstance(csdl_node, ImplicitOperation):

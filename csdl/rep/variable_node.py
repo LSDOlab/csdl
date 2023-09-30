@@ -19,4 +19,4 @@ class VariableNode(IRNode):
         # set of VariableNodes that are merged due to promotions
         self.declared_to: Set[VariableNode] = set()
 
-        self.var.rep_node = self
+        self.var.add_IR_mapping(self)

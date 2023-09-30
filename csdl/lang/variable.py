@@ -45,7 +45,7 @@ class Variable(Node):
             self.name: str = self._id
         else:
             self.name: str = name
-        self.shape, _ = get_shape_val(shape, val)
+        self.shape, _ = get_shape_val(shape, val, no_val=True)
         self.units = units
         self.desc = desc
         self.tags = tags
@@ -55,6 +55,23 @@ class Variable(Node):
         self.secondary_name: str = self.name
 
         self.rep_node = None
+        self.rep_nodes = None
+
+    def add_IR_mapping(self, ir_node:"VariableNode"):
+        """
+        Used when building the IR.
+        Maps this Variable to IR VariableNode(s).
+        """
+
+        # Single node
+        self.rep_node = {ir_node}
+
+        # Multiple nodes
+        if self.rep_nodes is None:
+            self.rep_nodes = set()
+        self.rep_nodes.add(ir_node)
+        # self.rep_node = {ir_node}
+
 
     def __pos__(self):
         return self
