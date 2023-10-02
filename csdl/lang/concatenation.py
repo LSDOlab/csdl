@@ -21,15 +21,6 @@ class Concatenation(Output):
         shape: Tuple[int] = (1, ),
         units=None,
         desc='',
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
-        res_units=None,
-        lower=None,
-        upper=None,
-        ref=1.0,
-        ref0=0.0,
-        res_ref=1.0,
         *args,
         **kwargs,
     ):
@@ -48,17 +39,7 @@ class Concatenation(Output):
         super().__init__(name, *args, **kwargs)
         self.shape, self.val = get_shape_val(shape, val)
         self.units = units
-        self.res_units = res_units
         self.desc = desc
-        self.lower = lower
-        self.upper = upper
-        self.ref = ref
-        self.ref0 = ref0
-        self.res_ref = res_ref
-        self.tags = tags
-        self.tags = tags
-        self.shape_by_conn = shape_by_conn
-        self.copy_shape = copy_shape
 
         self.defined: bool = False
         self._tgt_indices: Dict[str, Tuple[Tuple[int],

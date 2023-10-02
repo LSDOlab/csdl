@@ -33,10 +33,6 @@ class Variable(Node):
         shape=(1, ),
         units: Union[str, None] = None,
         desc: str = '',
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
-        distributed=None,
         *args,
         **kwargs,
     ):
@@ -48,10 +44,6 @@ class Variable(Node):
         self.shape, _ = get_shape_val(shape, val, no_val=True)
         self.units = units
         self.desc = desc
-        self.tags = tags
-        self.shape_by_conn = shape_by_conn
-        self.copy_shape = copy_shape
-        self.distributed = distributed
         self.secondary_name: str = self.name
 
         self.rep_node = None

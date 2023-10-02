@@ -199,10 +199,6 @@ class Model:
             shape=var.shape,
             units=var.units,
             desc=var.desc,
-            tags=var.tags,
-            shape_by_conn=var.shape_by_conn,
-            copy_shape=var.copy_shape,
-            distributed=var.distributed,
             op=op,
         )
         self.register_output(out.name, out)
@@ -210,14 +206,8 @@ class Model:
     def add_objective(
         self,
         name,
-        ref=None,
-        ref0=None,
-        index=None,
         units=None,
-        adder=None,
         scaler=None,
-        parallel_deriv_color=None,
-        cache_linear_solution=False,
     ):
         """
         Declare the objective for the optimization problem. Objective
@@ -229,14 +219,8 @@ class Model:
             )
         self.objective = dict(
             name=name,
-            ref=ref,
-            ref0=ref0,
-            index=index,
             units=units,
-            adder=adder,
             scaler=scaler,
-            parallel_deriv_color=parallel_deriv_color,
-            cache_linear_solution=cache_linear_solution,
         )
 
     def add_design_variable(
@@ -244,14 +228,8 @@ class Model:
         dv_name,
         lower=None,
         upper=None,
-        ref=None,
-        ref0=None,
-        indices=None,
-        adder=None,
         scaler=None,
         units=None,
-        parallel_deriv_color=None,
-        cache_linear_solution=False,
     ):
         """
         Add a design variable to the optimization problem. The design
@@ -268,14 +246,8 @@ class Model:
         self.design_variables[dv_name] = dict(
             lower=lower,
             upper=upper,
-            ref=ref,
-            ref0=ref0,
-            indices=indices,
-            adder=adder,
             scaler=scaler,
             units=units,
-            parallel_deriv_color=parallel_deriv_color,
-            cache_linear_solution=cache_linear_solution,
         )
 
     def add_constraint(
@@ -284,15 +256,8 @@ class Model:
         lower=None,
         upper=None,
         equals=None,
-        ref=None,
-        ref0=None,
-        adder=None,
         scaler=None,
         units=None,
-        indices=None,
-        linear=False,
-        parallel_deriv_color=None,
-        cache_linear_solution=False,
     ):
         """
         Add a constraint to the optimization problem.
@@ -314,15 +279,8 @@ class Model:
                 lower=lower,
                 upper=upper,
                 equals=equals,
-                ref=ref,
-                ref0=ref0,
-                adder=adder,
                 scaler=scaler,
                 units=units,
-                indices=indices,
-                linear=linear,
-                parallel_deriv_color=parallel_deriv_color,
-                cache_linear_solution=cache_linear_solution,
             )
 
     def connect(self, a: str, b: str):
@@ -340,14 +298,8 @@ class Model:
         name: str,
         val=1.0,
         shape=(1, ),
-        src_indices=None,
-        flat_src_indices=None,
         units=None,
         desc='',
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
-        distributed=None,
     ) -> DeclaredVariable:
         """
         Declare an input to use in an expression.
@@ -377,14 +329,8 @@ class Model:
             name,
             val=check_default_val_type(val),
             shape=shape,
-            src_indices=src_indices,
-            flat_src_indices=flat_src_indices,
             units=units,
             desc=desc,
-            tags=tags,
-            shape_by_conn=shape_by_conn,
-            copy_shape=copy_shape,
-            distributed=distributed,
         )
         self.declared_variables.append(v)
         self.declared_variable_names_set.add(v.name)
@@ -397,10 +343,6 @@ class Model:
         shape=(1, ),
         units=None,
         desc='',
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
-        distributed=None,
     ) -> Input:
         """
         Create an input to the main model, whose value remains constant
@@ -426,10 +368,6 @@ class Model:
             shape=shape,
             units=units,
             desc=desc,
-            tags=tags,
-            shape_by_conn=shape_by_conn,
-            copy_shape=copy_shape,
-            distributed=distributed,
         )
         self.inputs.append(i)
         self.input_names_set.add(i.name)
@@ -441,17 +379,7 @@ class Model:
         val=1.0,
         shape=(1, ),
         units=None,
-        res_units=None,
         desc='',
-        lower=None,
-        upper=None,
-        ref=1.0,
-        ref0=0.0,
-        res_ref=1.0,
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
-        distributed=None,
     ) -> Concatenation:
         """
         Create a value that is computed explicitly, either through
@@ -483,16 +411,6 @@ class Model:
             shape=shape,
             units=units,
             desc=desc,
-            tags=tags,
-            shape_by_conn=shape_by_conn,
-            copy_shape=copy_shape,
-            res_units=res_units,
-            lower=lower,
-            upper=upper,
-            ref=ref,
-            ref0=ref0,
-            res_ref=res_ref,
-            distributed=distributed,
         )
         self.register_output(name, c)
         return c
@@ -1217,10 +1135,6 @@ class Model:
                 shape=e.shape,
                 units=e.units,
                 desc=e.desc,
-                tags=e.tags,
-                shape_by_conn=e.shape_by_conn,
-                copy_shape=e.copy_shape,
-                distributed=e.distributed,
                 op=op,
             )
             self.register_output(e.name, out)
