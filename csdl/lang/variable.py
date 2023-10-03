@@ -26,6 +26,8 @@ def slice_to_tuple(key: slice, size: int) -> tuple:
 
 class Variable(Node):
 
+    __array_priority__ = 1000
+
     def __init__(
         self,
         name: str,
@@ -165,11 +167,11 @@ class Variable(Node):
             op = power_combination(self, other, coeff=1, powers=[1, -1])
         elif isinstance(other, (Number, np.ndarray)):
             # TODO: check for near-zero values too
-            if other == 0 or (isinstance(other, np.ndarray)
-                              and np.any(other)):
-                raise ZeroDivisionError(
-                    "Dividing by zero-valued compile time constant is guaranteed to cause a divide by zero error at runtime"
-                )
+            # if other == 0 or (isinstance(other, np.ndarray)
+            #                   and np.any(other)):
+            #     raise ZeroDivisionError(
+            #         "Dividing by zero-valued compile time constant is guaranteed to cause a divide by zero error at runtime"
+            #     )
             op = power_combination(self, coeff=1 / other, powers=1)
         else:
             raise TypeError(
@@ -207,22 +209,23 @@ class Variable(Node):
         return op.outs[0]
 
     def __radd__(self, other):
-        from csdl.operations.linear_combination import linear_combination
-        from csdl.lang.output import Output
-        if isinstance(other, (Number, np.ndarray)):
-            op = linear_combination(self, constant=other, coeffs=1)
-        else:
-            raise TypeError(
-                "Cannot add {} to an object other than number, NumPy ndarray, or Variable"
-                .format(repr(self)))
-        op.outs = [
-            Output(
-                None,
-                op=op,
-                shape=op.dependencies[0].shape,
-            )
-        ]
-        return op.outs[0]
+        return self.__add__(other)
+        # from csdl.operations.linear_combination import linear_combination
+        # from csdl.lang.output import Output
+        # if isinstance(other, (Number, np.ndarray)):
+        #     op = linear_combination(self, constant=other, coeffs=1)
+        # else:
+        #     raise TypeError(
+        #         "Cannot add {} to an object other than number, NumPy ndarray, or Variable"
+        #         .format(repr(self)))
+        # op.outs = [
+        #     Output(
+        #         None,
+        #         op=op,
+        #         shape=op.dependencies[0].shape,
+        #     )
+        # ]
+        # return op.outs[0]
 
     def __rsub__(self, other):
         from csdl.operations.linear_combination import linear_combination
@@ -230,9 +233,11 @@ class Variable(Node):
         if isinstance(other, (int, float)):
             op = linear_combination(self, constant=other, coeffs=-1)
         elif isinstance(other, np.ndarray):
-            raise NotImplementedError(
-                "Subtraction from NumPy ndarray not yet implemented."
-                "Instead, change \'a - b\' to \'-(b - a)\'")
+            op = linear_combination(self, constant=other, coeffs=-1)
+
+            # raise NotImplementedError(
+            #     "Subtraction from NumPy ndarray not yet implemented."
+            #     "Instead, change \'a - b\' to \'-(b - a)\'")
         else:
             raise TypeError(
                 "Cannot add {} to an object other than number, NumPy ndarray, or Variable"
@@ -247,57 +252,60 @@ class Variable(Node):
         return op.outs[0]
 
     def __rmul__(self, other):
-        from csdl.operations.power_combination import power_combination
-        from csdl.lang.output import Output
-        if isinstance(other, (Number, np.ndarray)):
-            if isinstance(other, Number):
-                op = power_combination(
-                    self,
-                    coeff=other,
-                    powers=1,
-                )
-            elif isinstance(other, np.ndarray):
-                # TODO: I think this should be notimplementederror
-                if self.shape != other.shape:
-                    raise ValueError("Shapes do not match")
-                op = power_combination(
-                    self,
-                    out_shapes=[other.shape],
-                    coeff=other,
-                    powers=1,
-                )
-        else:
-            raise TypeError(
-                "Cannot multiply {} by an object other than number, NumPy ndarray, or Variable"
-                .format(repr(self)))
-        op.outs = [
-            Output(
-                None,
-                op=op,
-                shape=op.dependencies[0].shape,
-            )
-        ]
-        return op.outs[0]
+        return self.__mul__(other)
+        # from csdl.operations.power_combination import power_combination
+        # from csdl.lang.output import Output
+        # if isinstance(other, (Number, np.ndarray)):
+        #     if isinstance(other, Number):
+        #         op = power_combination(
+        #             self,
+        #             coeff=other,
+        #             powers=1,
+        #         )
+        #     elif isinstance(other, np.ndarray):
+        #         # TODO: I think this should be notimplementederror
+        #         if self.shape != other.shape:
+        #             raise ValueError("Shapes do not match")
+        #         op = power_combination(
+        #             self,
+        #             out_shapes=[other.shape],
+        #             coeff=other,
+        #             powers=1,
+        #         )
+        # else:
+        #     raise TypeError(
+        #         "Cannot multiply {} by an object other than number, NumPy ndarray, or Variable"
+        #         .format(repr(self)))
+        # op.outs = [
+        #     Output(
+        #         None,
+        #         op=op,
+        #         shape=op.dependencies[0].shape,
+        #     )
+        # ]
+        # return op.outs[0]
 
     def __rtruediv__(self, other):
         from csdl.operations.power_combination import power_combination
         from csdl.lang.output import Output
         if isinstance(other, np.ndarray):
-            raise NotImplementedError(
-                "Dividing NumPy ndarray by Variable object not yet supported."
-                "Instead, change \'a/b\' to \'b*a**(-1)\'")
+            op = power_combination(self, coeff=other, powers=-1)
+
+            # raise NotImplementedError(
+            #     "Dividing NumPy ndarray by Variable object not yet supported."
+            #     "Instead, change \'a/b\' to \'b*a**(-1)\'")
         # TODO: check for near-zero values too
         # if np.any(self.val == 0):
         #     raise ZeroDivisionError(
         #         "Dividing by default zero-valued Variable is guaranteed to cause a divide by zero error at runtime"
         #     )
-        if isinstance(other, Number):
+        elif isinstance(other, Number):
             # TODO: check for near-zero values too
-            if other == 0 or (isinstance(other, np.ndarray)
-                              and np.any(other)):
-                raise ZeroDivisionError(
-                    "Dividing by zero-valued compile time constant is guaranteed to cause a divide by zero error at runtime"
-                )
+            # if other == 0 or (isinstance(other, np.ndarray)
+            #                   and np.any(other)):
+            #     raise ZeroDivisionError(
+            #         "Dividing by zero-valued compile time constant is guaranteed to cause a divide by zero error at runtime"
+            #     )
             op = power_combination(self, coeff=other, powers=-1)
         else:
             raise TypeError(
