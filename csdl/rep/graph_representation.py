@@ -159,7 +159,12 @@ class GraphRepresentation:
     encode hierarchy without the use of subgraph nodes.
     """
 
-    def __init__(self, model: 'Model', unflat: bool = True):
+    def __init__(
+            self,
+            model: 'Model',
+            analytics: bool = False,
+            name: str = '',
+        ):
         self.model_TEMP = model
         check_compilation = False # True to perform common debuggin checks
         self.name = type(model).__name__
@@ -296,6 +301,7 @@ class GraphRepresentation:
             connections,
             self.promoted_to_unpromoted,
             self.unpromoted_to_promoted,
+            analytics = analytics,
         )
         self.flat_graph: DiGraph = graph_meta.graph
         self.connected_tgt_nodes_to_source_nodes = graph_meta.connected_tgt_nodes_to_source_nodes

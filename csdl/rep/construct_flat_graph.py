@@ -13,13 +13,11 @@ from csdl.lang.custom_operation import CustomOperation
 from csdl.lang.input import Input
 from csdl.lang.output import Output
 from csdl.rep.model_node import ModelNode
-from csdl.rep.variable_node import VariableNode
 from csdl.rep.get_nodes import get_model_nodes, get_src_nodes, get_tgt_nodes, get_var_nodes
 from csdl.utils.prepend_namespace import prepend_namespace
 from typing import Tuple, Set
 from networkx import DiGraph, compose, contracted_nodes
 
-from csdl.rep.variable_node import VariableNode
 from copy import copy
 from collections import Counter
 from typing import Dict, Union, List
@@ -109,7 +107,9 @@ def merge_graphs(
     graph: DiGraph,
     promoted_to_unpromoted: Dict[str, Set[str]],
     unpromoted_to_promoted: Dict[str, str],
+    hierarchy: List[str],
     namespace: str = '',
+    analytics_filename = None,
 ):
     """
     Copy nodes and edges from graphs in submodels into the graph for the
@@ -133,12 +133,27 @@ def merge_graphs(
         graph.add_nodes_from(mn.graph.nodes())
         graph.model_nodes = mn.graph.model_nodes
 
-        graph = merge_graphs(
-            graph,
-            promoted_to_unpromoted,
-            unpromoted_to_promoted,
-            namespace=prepend_namespace(namespace, mn.name),
-        )
+        # if analytics_filename is not None:
+        #     len_hierarchy = len(hierarchy)
+        #     prepend = '	'*len_hierarchy
+        #     prepend_model =  prepend+ '-'
+        #     prepend_var = prepend+'	' + '*'
+        #     with open(analytics_filename, 'a') as f:
+        #         f.write(f'{prepend_model}{mn.name}\n')
+        #         for node in mn.graph.nodes:
+        #             if isinstance(node, VariableNode):
+        #                 if node.name == node.var._id:
+        #                     continue
+        #                 f.write(f'{prepend_var}{hierarchy + [mn.name]}{prepend_namespace(node.namespace, node.name)}\n')
+
+        # graph = merge_graphs(
+        #     graph,
+        #     promoted_to_unpromoted,
+        #     unpromoted_to_promoted,
+        #     hierarchy = hierarchy + [mn.name],
+        #     namespace=prepend_namespace(namespace, mn.name),
+        #     analytics_filename = analytics_filename,
+        # )
 
         # all variables in child graph
         child_vars: List[VariableNode] = get_var_nodes(mn.graph)
@@ -202,6 +217,115 @@ def merge_graphs(
                 previous_op = pred_list[0].op
                 if not isinstance(previous_op, CustomOperation):
                     raise KeyError(f'{unpromoted_name} not found. Currently processing model {mn.name}.')
+        
+        if analytics_filename is not None:
+            write_hierarchy_info_to_file(
+                analytics_filename,
+                hierarchy,
+                mn.name,
+                mn.graph,
+            )
+        # if analytics_filename is not None:
+        #     h_w_model = hierarchy + [mn.name]
+        #     len_hierarchy = len(hierarchy)
+        #     spaces = '   '
+        #     promote_marker = '---'
+        #     promote_marker_f = '|--'
+
+        #     prepend = spaces*len_hierarchy
+        #     prepend_model =  prepend+ '| '
+        #     postpend_model =  ''
+        #     prepend_var_full = prepend+spaces + '*'
+        #     with open(analytics_filename, 'a') as f:
+        #         f.write(f'{prepend_model}{mn.name}{postpend_model}\n')
+        #         for node in mn.graph.nodes:
+        #             if isinstance(node, VariableNode):
+        #                 if node.name == node.var._id:
+        #                     continue
+                        
+        #                 # OLD:
+        #                 # split_namespace = ['']+ node.namespace.split('.')
+        #                 # prepend_var = ''
+        #                 # first_p_model = False
+        #                 # for model_level, model_name in enumerate(h_w_model):
+                        
+        #                 #     if model_level >= len(split_namespace)-1:
+        #                 #         if not first_p_model:
+        #                 #             # promote_marker_f = promote_marker
+        #                 #             # promote_marker_f[0] = '|'
+        #                 #             prepend_var += promote_marker_f
+        #                 #         else:
+        #                 #             prepend_var += promote_marker
+        #                 #         first_p_model = True
+        #                 #         continue
+        #                 #     else:
+        #                 #         if split_namespace[model_level] != model_name:
+        #                 #             raise ValueError(f'Namespace mismatch: {split_namespace[model_level]} != {model_name}')
+        #                 #         else:
+        #                 #             prepend_var += spaces
+
+        #                 split_namespace = ['']+ node.namespace.split('.')
+        #                 postpend_var = ''
+        #                 num_pros = len_hierarchy
+        #                 for model_level, model_name in enumerate(h_w_model):
+        #                     if model_level >= len(split_namespace)-1:
+        #                         postpend_var += str(num_pros)
+        #                     else:
+        #                         if split_namespace[model_level] != model_name:
+        #                             raise ValueError(f'Namespace mismatch: {split_namespace[model_level]} != {model_name}')
+        #                         else:
+        #                             postpend_var += '.'
+        #                     num_pros-=1
+
+        #                 if isinstance(node.var, DeclaredVariable):
+        #                     var_type = 'dec'
+        #                 elif isinstance(node.var, Input):
+        #                     var_type = 'in '
+        #                 elif isinstance(node.var, Output):
+        #                     var_type = 'out'
+        #                 else:
+        #                     raise ValueError(f'Unknown variable type: {node.var}')
+        #                 # f.write(f'{prepend_var}*{node.name}\n')
+        #                 # main_string = f'{prepend_var_full}{node.name}'
+        #                 main_string = f'{prepend_var_full}{node.name}'
+        #                 pad_string1 = ' '*(max(90 - len(main_string), 5))+ '  '
+
+        #                 main_string2 = f'{pad_string1}{var_type}/{postpend_var}'
+        #                 pad_string2 = ' '*(max(120 - len(main_string2)-len(main_string), 5))+ '  '
+
+        #                 main_string3 = f'{pad_string2}p:{prepend_namespace(node.namespace, node.name)} \t(up:{prepend_namespace(node.unpromoted_namespace, node.name)})'
+        #                 f.write(main_string)
+        #                 f.write(main_string2)
+        #                 f.write(f'{main_string3}\n')
+        #                 # f.write(f'{pad_string1}{var_type}/{postpend_var}{prepend_namespace(node.namespace, node.name)} \t(unpromoted:   {prepend_namespace(node.unpromoted_namespace, node.name)})\n')
+                        
+        #                 # temp = prepend+spaces + '    '
+        #                 # f.write(f'{temp}{var_type}\n')
+
+        #                 # prepend_var = prepend+spaces + '*'
+        #                 # f.write(f'{prepend_var}{h_w_model}{prepend_namespace(node.namespace, node.name)}\n')
+                        
+
+        #                 # split_namespace = node.namespace.split('.')
+        #                 # if split_namespace == ['']:
+        #                 #     continue
+                        
+        #                 # h_level = len(split_namespace)
+        #                 # # split_namespace = split_namespace[1:]
+
+        #                 # if h_w_model[0:h_level] != split_namespace:
+        #                 #     raise ValueError(f'Namespace mismatch: {h_w_model[0:h_level]} != {split_namespace}')
+        #                 # else:
+        #                 #     print(h_w_model[0:h_level],split_namespace)
+        
+        graph = merge_graphs(
+            graph,
+            promoted_to_unpromoted,
+            unpromoted_to_promoted,
+            hierarchy = hierarchy + [mn.name],
+            namespace=prepend_namespace(namespace, mn.name),
+            analytics_filename = analytics_filename,
+        )
     return graph
 
 
@@ -429,12 +553,82 @@ def construct_flat_graph(
     connections,
     promoted_to_unpromoted,
     unpromoted_to_promoted,
+    analytics: bool = False,
+    rep_name = ''
 ) -> GraphWithMetadata:
+    
+    if analytics:
+        # Analytics directory
+        import os
+        name_prepend = ''
+        if rep_name != '':
+            name_prepend = f'_{rep_name}'
+        directory_name = f'MODEL_SUMMARY{name_prepend}'
+        model_summary_filename = f'{directory_name}/HIERARCHY.txt'
+        model_guide_filename = f'{directory_name}/guide.txt'
+
+        if not os.path.exists(directory_name):
+            os.makedirs(directory_name)
+
+        with open(model_guide_filename, 'w') as f:
+            f.write("""
+HIERARCHY.txt outlines the defined model hierarchy and all defined variables in the model.
+Each row is a variable (*) or model (|). If a variable is created in a model, it is indented under that model and lists (in order to the right)
+the variable type (declared/registered output/created input), the promotion level, the shape, the promoted name, and the unpromoted name.
+
+example:
+
+    # Base model
+    model = csdl.Model()
+
+    # First level model
+    model1 = csdl.Model()
+    model.add(model1, 'ModelA', promotes = [])
+
+    # Second level model
+    model2 = csdl.Model()
+    model2.create_input('x', val=3)
+    model1.add(model2, 'ModelB', promotes = ['x'])
+    # model1.declare_variable('x')
+
+    # declare variable
+    x = model.declare_variable('ModelA.x')
+    model.register_output('y', x*2)
+
+looks like:
+| <SYSTEM LEVEL>
+   *y                                                                                       out/./(1,)                         p:y 	(up:y)
+   *ModelA.x                                                                                dec/./(1,)                         p:ModelA.x 	(up:ModelA.x)
+   | ModelA
+      | ModelB
+         *x                                                                                 in /.10/(1,)                       p:ModelA.x 	(up:ModelA.ModelB.x)
+
+
+We can see that the promoted name "ModelA.x" (right of 'p:') is listed twice, meaning they get promoted to the same variable.""")
+
+        with open(model_summary_filename, 'w') as f:
+            f.write('')
+        
+
+
+        # mn_temp = 
+        write_hierarchy_info_to_file(
+            model_summary_filename,
+            None,
+            '<SYSTEM LEVEL>',
+            graph,
+        )
+    else:
+        model_summary_filename = None
+
     graph = merge_graphs(
         graph,
         promoted_to_unpromoted,
         unpromoted_to_promoted,
+        hierarchy = [''],
+        analytics_filename = model_summary_filename,
     )
+
     merge_automatically_connected_nodes(graph)
 
     graph_meta = merge_connections(
@@ -445,3 +639,107 @@ def construct_flat_graph(
     )
 
     return graph_meta
+
+
+def write_hierarchy_info_to_file(
+        fname,
+        hierarchy,
+        mn_name,
+        mn_graph,
+    ):
+
+    if hierarchy == None:
+        h_w_model = ['']
+        len_hierarchy = 0
+    else:
+        h_w_model = hierarchy + [mn_name]
+        len_hierarchy = len(hierarchy)
+    spaces = '   '
+    promote_marker = '---'
+    promote_marker_f = '|--'
+
+    prepend = spaces*len_hierarchy
+    prepend_model =  prepend+ '| '
+    postpend_model =  ''
+    prepend_var_full = prepend+spaces + '*'
+    with open(fname, 'a') as f:
+        f.write(f'{prepend_model}{mn_name}{postpend_model}\n')
+        for node in mn_graph.nodes:
+            if isinstance(node, VariableNode):
+                if node.name == node.var._id:
+                    continue
+                
+                # OLD:
+                # split_namespace = ['']+ node.namespace.split('.')
+                # prepend_var = ''
+                # first_p_model = False
+                # for model_level, model_name in enumerate(h_w_model):
+                
+                #     if model_level >= len(split_namespace)-1:
+                #         if not first_p_model:
+                #             # promote_marker_f = promote_marker
+                #             # promote_marker_f[0] = '|'
+                #             prepend_var += promote_marker_f
+                #         else:
+                #             prepend_var += promote_marker
+                #         first_p_model = True
+                #         continue
+                #     else:
+                #         if split_namespace[model_level] != model_name:
+                #             raise ValueError(f'Namespace mismatch: {split_namespace[model_level]} != {model_name}')
+                #         else:
+                #             prepend_var += spaces
+
+                split_namespace = ['']+ node.namespace.split('.')
+                postpend_var = ''
+                num_pros = len_hierarchy
+                for model_level, model_name in enumerate(h_w_model):
+                    if model_level >= len(split_namespace)-1:
+                        postpend_var += str(num_pros)
+                    else:
+                        if split_namespace[model_level] != model_name:
+                            raise ValueError(f'Namespace mismatch: {split_namespace[model_level]} != {model_name}')
+                        else:
+                            postpend_var += '.'
+                    num_pros-=1
+
+                if isinstance(node.var, DeclaredVariable):
+                    var_type = 'dec'
+                elif isinstance(node.var, Input):
+                    var_type = 'in '
+                elif isinstance(node.var, Output):
+                    var_type = 'out'
+                else:
+                    raise ValueError(f'Unknown variable type: {node.var}')
+                # f.write(f'{prepend_var}*{node.name}\n')
+                # main_string = f'{prepend_var_full}{node.name}'
+                main_string = f'{prepend_var_full}{node.name}'
+                pad_string1 = ' '*(max(90 - len(main_string), 5))+ '  '
+
+                main_string2 = f'{pad_string1}{var_type}/{postpend_var}/{node.var.shape}'
+                pad_string2 = ' '*(max(125 - len(main_string2)-len(main_string), 5))+ '  '
+
+                main_string3 = f'{pad_string2}p:{prepend_namespace(node.namespace, node.name)} \t(up:{prepend_namespace(node.unpromoted_namespace, node.name)})'
+                f.write(main_string)
+                f.write(main_string2)
+                f.write(f'{main_string3}\n')
+                # f.write(f'{pad_string1}{var_type}/{postpend_var}{prepend_namespace(node.namespace, node.name)} \t(unpromoted:   {prepend_namespace(node.unpromoted_namespace, node.name)})\n')
+                
+                # temp = prepend+spaces + '    '
+                # f.write(f'{temp}{var_type}\n')
+
+                # prepend_var = prepend+spaces + '*'
+                # f.write(f'{prepend_var}{h_w_model}{prepend_namespace(node.namespace, node.name)}\n')
+                
+
+                # split_namespace = node.namespace.split('.')
+                # if split_namespace == ['']:
+                #     continue
+                
+                # h_level = len(split_namespace)
+                # # split_namespace = split_namespace[1:]
+
+                # if h_w_model[0:h_level] != split_namespace:
+                #     raise ValueError(f'Namespace mismatch: {h_w_model[0:h_level]} != {split_namespace}')
+                # else:
+                #     print(h_w_model[0:h_level],split_namespace)
