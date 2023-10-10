@@ -163,7 +163,7 @@ class GraphRepresentation:
             self,
             model: 'Model',
             analytics: bool = False,
-            name: str = '',
+            rep_name: str = '',
         ):
         self.model_TEMP = model
         check_compilation = False # True to perform common debuggin checks
@@ -302,6 +302,7 @@ class GraphRepresentation:
             self.promoted_to_unpromoted,
             self.unpromoted_to_promoted,
             analytics = analytics,
+            rep_name = rep_name,
         )
         self.flat_graph: DiGraph = graph_meta.graph
         self.connected_tgt_nodes_to_source_nodes = graph_meta.connected_tgt_nodes_to_source_nodes
