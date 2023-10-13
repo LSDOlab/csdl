@@ -27,6 +27,7 @@ def slice_to_tuple(key: slice, size: int) -> tuple:
 class Variable(Node):
 
     __array_priority__ = 1000
+    _unique_id_num = 0
 
     def __init__(
         self,
@@ -50,6 +51,16 @@ class Variable(Node):
 
         self.rep_node = None
         self.rep_nodes = None
+
+        self.unique_id_num = Variable._unique_id_num
+        Variable._unique_id_num += 1
+
+        # UNCOMMENT TO DEBUG
+        # from mpi4py import MPI
+        # comm = MPI.COMM_WORLD
+        # rank = comm.rank
+        # print(rank, self.unique_id_num, self.name)
+        # comm.barrier()
 
     def add_IR_mapping(self, ir_node:"VariableNode"):
         """
