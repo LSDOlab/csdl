@@ -527,6 +527,7 @@ class Model:
         brackets: Dict[str,
                        Tuple[Union[int, float, np.ndarray, Variable],
                              Union[int, float, np.ndarray, Variable]]],
+        use_vjps: bool,
         *arguments: Variable,
         expose: List[str] = [],
     ):
@@ -702,6 +703,7 @@ class Model:
             exp_in_map,
             exposed_variables,
             exposed_residuals,
+            use_vjps,
             *arguments,
             expose=expose,
             brackets=new_brackets,
@@ -719,6 +721,7 @@ class Model:
     def _implicit_operation(
         self,
         states: Dict[str, Dict[str, Any]],
+        use_vjps:bool,
         *arguments: Variable,
         residuals: List[str],
         model: 'Model',
@@ -891,6 +894,7 @@ class Model:
             exp_in_map,
             exposed_variables,
             exposed_residuals,
+            use_vjps,
             *arguments,
             expose=expose,
             defaults=new_default_values,
@@ -1150,8 +1154,21 @@ class Model:
         else:
             return outs[0]
 
-    def create_implicit_operation(self, model: 'Model'):
-        return ImplicitOperationFactory(self, model)
+    def create_implicit_operation(self, model: 'Model', use_vjps: bool = False):
+        """
+        Create an implicit operation, i.e, an operation that solves a residual.
+
+        Parameters
+        ==========
+        model: Model
+            Model to use to define residual
+        use_vjps: bool
+            Whether to use VJPs to compute derivatives of residuals wrt inputs and exposed outputs wrt states.
+        """
+        if not isinstance(use_vjps, (bool, int)):
+            raise TypeError("use_vjps must be a True or False")
+        use_vjps = False
+        return ImplicitOperationFactory(self, model, use_vjps)
 
     def __enter__(self):
         return self

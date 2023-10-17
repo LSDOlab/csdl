@@ -17,7 +17,7 @@ from collections import OrderedDict
 
 class ImplicitOperationFactory(object):
 
-    def __init__(self, parent: 'Model', model: 'Model'):
+    def __init__(self, parent: 'Model', model: 'Model', use_vjps: bool):
         self.parent: 'Model' = parent
         self.model: 'Model' = model
         self.residuals: List[str] = []
@@ -28,6 +28,7 @@ class ImplicitOperationFactory(object):
                                        Union[int, float, np.ndarray,
                                              Variable]]] = dict()
         self.states: OrderedDict[str, dict] = OrderedDict()
+        self.use_vjps: bool = use_vjps
 
     def declare_state(
         self,
@@ -77,12 +78,14 @@ class ImplicitOperationFactory(object):
                 self.residuals,
                 self.model,
                 self.brackets,
+                self.use_vjps,
                 *arguments,
                 expose=expose,
             )
         else:
             return self.parent._implicit_operation(
                 self.states,
+                self.use_vjps,
                 *arguments,
                 residuals=self.residuals,
                 model=self.model,
