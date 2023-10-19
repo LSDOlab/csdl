@@ -296,7 +296,7 @@ class Model:
     def declare_variable(
         self,
         name: str,
-        val=1.0,
+        val=None,
         shape=(1, ),
         units=None,
         desc='',
@@ -325,6 +325,11 @@ class Model:
         DocInput
             An object to use in expressions
         """
+        default_val = False
+        if val is None:
+            val = 1.0
+            default_val = True
+
         v = DeclaredVariable(
             name,
             val=check_default_val_type(val),
@@ -332,6 +337,9 @@ class Model:
             units=units,
             desc=desc,
         )
+
+        v.default_val = default_val
+
         self.declared_variables.append(v)
         self.declared_variable_names_set.add(v.name)
         return v

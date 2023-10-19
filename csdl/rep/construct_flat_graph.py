@@ -387,6 +387,16 @@ def merge_automatically_connected_nodes(graph: DiGraph):
 
         if target.tgt_prepended not in unique_targets.keys():
             unique_targets[target.tgt_prepended] = target
+        else:
+            num_models_from_root_new = target.unpromoted_namespace.count('.')
+            num_models_from_root_current = unique_targets[target.tgt_prepended].unpromoted_namespace.count('.')
+
+            # For variables merged from promotions, we use the variable node defined at model closest to the root
+            if num_models_from_root_new < num_models_from_root_current:
+                unique_targets[target.tgt_prepended] = target
+            elif num_models_from_root_current == num_models_from_root_new:
+                if target.var.default_val == False:
+                    unique_targets[target.tgt_prepended] = target
 
     # gather all targets and then remove unique targets
     for tgt in unique_targets.values():

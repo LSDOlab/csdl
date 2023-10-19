@@ -52,6 +52,7 @@ class Variable(Node):
         self.rep_node = None
         self.rep_nodes = None
 
+        self.default_val = None
         self.unique_id_num = Variable._unique_id_num
         Variable._unique_id_num += 1
 
