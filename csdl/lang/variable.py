@@ -45,6 +45,7 @@ class Variable(Node):
         else:
             self.name: str = name
         self.shape, _ = get_shape_val(shape, val, no_val=True)
+        self.size = np.prod(self.shape)
         self.units = units
         self.desc = desc
         self.secondary_name: str = self.name
@@ -265,37 +266,7 @@ class Variable(Node):
 
     def __rmul__(self, other):
         return self.__mul__(other)
-        # from csdl.operations.power_combination import power_combination
-        # from csdl.lang.output import Output
-        # if isinstance(other, (Number, np.ndarray)):
-        #     if isinstance(other, Number):
-        #         op = power_combination(
-        #             self,
-        #             coeff=other,
-        #             powers=1,
-        #         )
-        #     elif isinstance(other, np.ndarray):
-        #         # TODO: I think this should be notimplementederror
-        #         if self.shape != other.shape:
-        #             raise ValueError("Shapes do not match")
-        #         op = power_combination(
-        #             self,
-        #             out_shapes=[other.shape],
-        #             coeff=other,
-        #             powers=1,
-        #         )
-        # else:
-        #     raise TypeError(
-        #         "Cannot multiply {} by an object other than number, NumPy ndarray, or Variable"
-        #         .format(repr(self)))
-        # op.outs = [
-        #     Output(
-        #         None,
-        #         op=op,
-        #         shape=op.dependencies[0].shape,
-        #     )
-        # ]
-        # return op.outs[0]
+
 
     def __rtruediv__(self, other):
         from csdl.operations.power_combination import power_combination
@@ -443,3 +414,10 @@ class Variable(Node):
         #     self.dependencies.append(dependency)
         # # else:
         # #     raise ValueError(dependency.name, 'is duplicate')
+
+    def flatten(self):
+        '''
+        Returns a flattened version of itself.
+        '''
+        from csdl.std.reshape import flatten
+        return flatten(self)

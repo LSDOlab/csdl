@@ -158,7 +158,6 @@ class GraphRepresentation:
     hierarchy. An intermediate representation may also be flattened to
     encode hierarchy without the use of subgraph nodes.
     """
-
     def __init__(
             self,
             model: 'Model',

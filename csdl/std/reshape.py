@@ -32,3 +32,17 @@ def reshape(var: Variable, new_shape: tuple):
     #         out.add_dependency_node(op)
 
     return op.outs[0]
+
+
+def flatten(var: Variable):
+    '''
+    This function flattens the input into a 1D array.
+
+    **Parameters**
+
+    var: Variable
+        The Variable which you want to flatten
+    '''
+    if not isinstance(var, Variable):
+        raise TypeError(var, " is not an Variable object")
+    return reshape(var, (var.size,))

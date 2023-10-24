@@ -35,7 +35,7 @@ from csdl.std.dot import dot
 from csdl.std.cross import cross
 from csdl.std.rotmat import rotmat
 from csdl.std.expand import expand
-from csdl.std.reshape import reshape
+from csdl.std.reshape import reshape, flatten
 from csdl.std.reorder_axes import reorder_axes
 from csdl.std.sum import sum
 from csdl.std.average import average

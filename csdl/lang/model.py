@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Set, Tuple, Union
 from copy import copy
 from csdl.utils.typehints import Shape
 from csdl.utils.get_shape_val import get_shape_val
+from csdl.utils.check_banned_chars import check_banned_chars
 
 from csdl.rep.graph_representation import GraphRepresentation
 from csdl.lang.implicit_operation import ImplicitOperation
@@ -370,6 +371,7 @@ class Model:
         Input
             An object to use in expressions
         """
+        check_banned_chars(name)
         i = Input(
             name,
             val=check_default_val_type(val),
@@ -413,6 +415,8 @@ class Model:
         Concatenation
             An object to use in expressions
         """
+        check_banned_chars(name)
+
         c = Concatenation(
             name,
             val=check_default_val_type(val),
@@ -446,6 +450,8 @@ class Model:
 
             Variable that defines output (same object as argument)
         """
+        check_banned_chars(name)
+
         if not isinstance(var, Output):
             raise TypeError(
                 'Can only register Output object as an output. Received type {}.'
@@ -506,6 +512,9 @@ class Model:
         Model
             Submodel added by user
         """
+        if name is not None:
+            check_banned_chars(name)
+
         if not isinstance(submodel, Model):  # type: ignore
             raise TypeError("{} of type {} is not a Model".format(submodel, type(submodel)))
         # if issubclass(Model, type(submodel)):
