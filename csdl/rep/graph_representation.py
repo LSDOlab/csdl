@@ -293,7 +293,7 @@ class GraphRepresentation:
                 v.namespace = '.'.join(
                     self.unpromoted_to_promoted[name].rsplit('.')[:-1])
 
-        graph_in = first_graph.copy()
+        graph_in = first_graph
         graph_in.model_nodes = first_graph.model_nodes
         graph_meta = construct_flat_graph(
             graph_in,  # first_graph.copy(),
@@ -303,6 +303,8 @@ class GraphRepresentation:
             analytics = analytics,
             rep_name = rep_name,
         )
+        del first_graph
+
         self.flat_graph: DiGraph = graph_meta.graph
         self.connected_tgt_nodes_to_source_nodes = graph_meta.connected_tgt_nodes_to_source_nodes
         self.promoted_to_node = graph_meta.promoted_to_node

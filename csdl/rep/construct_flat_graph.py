@@ -15,6 +15,7 @@ from csdl.lang.output import Output
 from csdl.rep.model_node import ModelNode
 from csdl.rep.get_nodes import get_model_nodes, get_src_nodes, get_tgt_nodes, get_var_nodes
 from csdl.utils.prepend_namespace import prepend_namespace
+from csdl.utils.format_number import format_number
 from typing import Tuple, Set
 from networkx import DiGraph, compose, contracted_nodes
 
@@ -225,99 +226,7 @@ def merge_graphs(
                 mn.name,
                 mn.graph,
             )
-        # if analytics_filename is not None:
-        #     h_w_model = hierarchy + [mn.name]
-        #     len_hierarchy = len(hierarchy)
-        #     spaces = '   '
-        #     promote_marker = '---'
-        #     promote_marker_f = '|--'
 
-        #     prepend = spaces*len_hierarchy
-        #     prepend_model =  prepend+ '| '
-        #     postpend_model =  ''
-        #     prepend_var_full = prepend+spaces + '*'
-        #     with open(analytics_filename, 'a') as f:
-        #         f.write(f'{prepend_model}{mn.name}{postpend_model}\n')
-        #         for node in mn.graph.nodes:
-        #             if isinstance(node, VariableNode):
-        #                 if node.name == node.var._id:
-        #                     continue
-                        
-        #                 # OLD:
-        #                 # split_namespace = ['']+ node.namespace.split('.')
-        #                 # prepend_var = ''
-        #                 # first_p_model = False
-        #                 # for model_level, model_name in enumerate(h_w_model):
-                        
-        #                 #     if model_level >= len(split_namespace)-1:
-        #                 #         if not first_p_model:
-        #                 #             # promote_marker_f = promote_marker
-        #                 #             # promote_marker_f[0] = '|'
-        #                 #             prepend_var += promote_marker_f
-        #                 #         else:
-        #                 #             prepend_var += promote_marker
-        #                 #         first_p_model = True
-        #                 #         continue
-        #                 #     else:
-        #                 #         if split_namespace[model_level] != model_name:
-        #                 #             raise ValueError(f'Namespace mismatch: {split_namespace[model_level]} != {model_name}')
-        #                 #         else:
-        #                 #             prepend_var += spaces
-
-        #                 split_namespace = ['']+ node.namespace.split('.')
-        #                 postpend_var = ''
-        #                 num_pros = len_hierarchy
-        #                 for model_level, model_name in enumerate(h_w_model):
-        #                     if model_level >= len(split_namespace)-1:
-        #                         postpend_var += str(num_pros)
-        #                     else:
-        #                         if split_namespace[model_level] != model_name:
-        #                             raise ValueError(f'Namespace mismatch: {split_namespace[model_level]} != {model_name}')
-        #                         else:
-        #                             postpend_var += '.'
-        #                     num_pros-=1
-
-        #                 if isinstance(node.var, DeclaredVariable):
-        #                     var_type = 'dec'
-        #                 elif isinstance(node.var, Input):
-        #                     var_type = 'in '
-        #                 elif isinstance(node.var, Output):
-        #                     var_type = 'out'
-        #                 else:
-        #                     raise ValueError(f'Unknown variable type: {node.var}')
-        #                 # f.write(f'{prepend_var}*{node.name}\n')
-        #                 # main_string = f'{prepend_var_full}{node.name}'
-        #                 main_string = f'{prepend_var_full}{node.name}'
-        #                 pad_string1 = ' '*(max(90 - len(main_string), 5))+ '  '
-
-        #                 main_string2 = f'{pad_string1}{var_type}/{postpend_var}'
-        #                 pad_string2 = ' '*(max(120 - len(main_string2)-len(main_string), 5))+ '  '
-
-        #                 main_string3 = f'{pad_string2}p:{prepend_namespace(node.namespace, node.name)} \t(up:{prepend_namespace(node.unpromoted_namespace, node.name)})'
-        #                 f.write(main_string)
-        #                 f.write(main_string2)
-        #                 f.write(f'{main_string3}\n')
-        #                 # f.write(f'{pad_string1}{var_type}/{postpend_var}{prepend_namespace(node.namespace, node.name)} \t(unpromoted:   {prepend_namespace(node.unpromoted_namespace, node.name)})\n')
-                        
-        #                 # temp = prepend+spaces + '    '
-        #                 # f.write(f'{temp}{var_type}\n')
-
-        #                 # prepend_var = prepend+spaces + '*'
-        #                 # f.write(f'{prepend_var}{h_w_model}{prepend_namespace(node.namespace, node.name)}\n')
-                        
-
-        #                 # split_namespace = node.namespace.split('.')
-        #                 # if split_namespace == ['']:
-        #                 #     continue
-                        
-        #                 # h_level = len(split_namespace)
-        #                 # # split_namespace = split_namespace[1:]
-
-        #                 # if h_w_model[0:h_level] != split_namespace:
-        #                 #     raise ValueError(f'Namespace mismatch: {h_w_model[0:h_level]} != {split_namespace}')
-        #                 # else:
-        #                 #     print(h_w_model[0:h_level],split_namespace)
-        
         graph = merge_graphs(
             graph,
             promoted_to_unpromoted,
@@ -326,6 +235,9 @@ def merge_graphs(
             namespace=prepend_namespace(namespace, mn.name),
             analytics_filename = analytics_filename,
         )
+
+        mn.graph.remove_nodes_from(child_vars)
+        mn.graph = None
     return graph
 
 
@@ -451,6 +363,7 @@ def merge_automatically_connected_nodes(graph: DiGraph):
         if k in unique_targets.keys():
             src.declared_to.add(unique_targets[k])
             src.declared_to.update(unique_targets[k].declared_to)
+            unique_targets[k].declared_to = set()
             contracted_nodes(
                 graph,
                 src,
@@ -574,47 +487,18 @@ def construct_flat_graph(
         if rep_name != '':
             name_prepend = f'_{rep_name}'
         directory_name = f'MODEL_SUMMARY{name_prepend}'
-        model_summary_filename = f'{directory_name}/HIERARCHY.txt'
-        model_guide_filename = f'{directory_name}/guide.txt'
+        directory_name_model = f'{directory_name}/frontend'
+        model_summary_filename = f'{directory_name_model}/hierarchy.txt'
+        model_connections_filename = f'{directory_name_model}/promotions_connections.txt'
+        model_guide_filename = f'{directory_name_model}/guide.txt'
 
         if not os.path.exists(directory_name):
             os.makedirs(directory_name)
+        if not os.path.exists(directory_name_model):
+            os.makedirs(directory_name_model)
 
         with open(model_guide_filename, 'w') as f:
-            f.write("""
-HIERARCHY.txt outlines the defined model hierarchy and all defined variables in the model.
-Each row is a variable (*) or model (|). If a variable is created in a model, it is indented under that model and lists (in order to the right)
-the variable type (declared/registered output/created input), the promotion level, the shape, the promoted name, and the unpromoted name.
-
-example:
-
-    # Base model
-    model = csdl.Model()
-
-    # First level model
-    model1 = csdl.Model()
-    model.add(model1, 'ModelA', promotes = [])
-
-    # Second level model
-    model2 = csdl.Model()
-    model2.create_input('x', val=3)
-    model1.add(model2, 'ModelB', promotes = ['x'])
-    # model1.declare_variable('x')
-
-    # declare variable
-    x = model.declare_variable('ModelA.x')
-    model.register_output('y', x*2)
-
-looks like:
-| <SYSTEM LEVEL>
-   *y                                                                                       out/./(1,)                         p:y 	(up:y)
-   *ModelA.x                                                                                dec/./(1,)                         p:ModelA.x 	(up:ModelA.x)
-   | ModelA
-      | ModelB
-         *x                                                                                 in /.10/(1,)                       p:ModelA.x 	(up:ModelA.ModelB.x)
-
-
-We can see that the promoted name "ModelA.x" (right of 'p:') is listed twice, meaning they get promoted to the same variable.""")
+            f.write(guide_string)
 
         with open(model_summary_filename, 'w') as f:
             f.write('')
@@ -647,6 +531,26 @@ We can see that the promoted name "ModelA.x" (right of 'p:') is listed twice, me
         promoted_to_unpromoted,
         unpromoted_to_promoted,
     )
+
+    if analytics:
+        with open(model_connections_filename, 'w') as f:
+            for var_node in graph_meta.graph.nodes:
+                # ignore if node is an operation or has no connections
+                if not isinstance(var_node, VariableNode):
+                    continue
+                
+                if len(var_node.connected_to) == 0 and len(var_node.declared_to) == 0:
+                    continue
+                
+                if isinstance(var_node.var, DeclaredVariable):
+                    f.write('WARNING: Declared variable not promoted/connected to input/output\n')
+
+                write_connection_and_promotions_to_file(
+                    f,
+                    0,
+                    var_node,
+                )
+                f.write('\n')
 
     return graph_meta
 
@@ -713,43 +617,181 @@ def write_hierarchy_info_to_file(
                             postpend_var += '.'
                     num_pros-=1
 
-                if isinstance(node.var, DeclaredVariable):
-                    var_type = 'dec'
-                elif isinstance(node.var, Input):
-                    var_type = 'in '
-                elif isinstance(node.var, Output):
-                    var_type = 'out'
+                var_type = get_var_type(node.var)
+
+                import numpy as np
+                if hasattr(node.var, 'val'):
+                    if var_type == 'dec':
+                        if node.var.default_val == False:
+                            avg_node_val = np.average(node.var.val)
+                            avg_node_str = format_number(avg_node_val)
+                            avg_node_val_str = f'{avg_node_str}'
+                        else:
+                            avg_node_val_str = f'default'
+                    elif var_type == 'in':
+                        avg_node_val = np.average(node.var.val)
+                        avg_node_str = format_number(avg_node_val)
+                        avg_node_val_str = f'{avg_node_str}'
+                    else:
+                        avg_node_val_str = ''
                 else:
-                    raise ValueError(f'Unknown variable type: {node.var}')
-                # f.write(f'{prepend_var}*{node.name}\n')
-                # main_string = f'{prepend_var_full}{node.name}'
+                    avg_node_val_str = ''
+
                 main_string = f'{prepend_var_full}{node.name}'
-                pad_string1 = ' '*(max(90 - len(main_string), 5))+ '  '
+                string_columns = [
+                    (100,5,f'{var_type}'),
+                    (105,0,f'/{postpend_var}'),
+                    (112,0,f'/{node.var.shape}'.replace(' ', '')),
+                    (123,0,f'/{avg_node_val_str}'),
+                    (143,0,f'id:{node.var.unique_id_num}'),
+                    (154,0,f'p:{prepend_namespace(node.namespace, node.name)} \t(u:{prepend_namespace(node.unpromoted_namespace, node.name)})'),
+                ]
+                inline_str = main_string
+                for min_start, max_pad, next_string in string_columns:
+                    inline_str = pad_string_inline(
+                        inline_str,
+                        min_start,
+                        next_string,
+                        max_pad = max_pad,
+                    )
+                f.write(inline_str)
+                f.write('\n')
 
-                main_string2 = f'{pad_string1}{var_type}/{postpend_var}/{node.var.shape}'
-                pad_string2 = ' '*(max(125 - len(main_string2)-len(main_string), 5))+ '  '
+def pad_string_inline(
+        prefix_string,
+        min_start,
+        next_string,
+        max_pad = 5,
+    ):
+    pad_string = ' '*(max(min_start - len(prefix_string), max_pad))
+    return f'{prefix_string}{pad_string}{next_string}'
 
-                main_string3 = f'{pad_string2}p:{prepend_namespace(node.namespace, node.name)} \t(up:{prepend_namespace(node.unpromoted_namespace, node.name)})'
-                f.write(main_string)
-                f.write(main_string2)
-                f.write(f'{main_string3}\n')
-                # f.write(f'{pad_string1}{var_type}/{postpend_var}{prepend_namespace(node.namespace, node.name)} \t(unpromoted:   {prepend_namespace(node.unpromoted_namespace, node.name)})\n')
-                
-                # temp = prepend+spaces + '    '
-                # f.write(f'{temp}{var_type}\n')
+def write_connection_and_promotions_to_file(
+        file,
+        prefix_padding,
+        node,
+        merge_type = 'source',
+    ):
+    var = node.var
+    var_type = get_var_type(var)
+    # write node to file
+    if merge_type == 'source':
+        padding = ''
+    else:
+        padding = '    '*(prefix_padding-1)
+        if merge_type == 'connection':
+            padding += ' <=c='
+        elif merge_type == 'promotion':
+            padding += ' <---'
 
-                # prepend_var = prepend+spaces + '*'
-                # f.write(f'{prepend_var}{h_w_model}{prepend_namespace(node.namespace, node.name)}\n')
-                
+    lp = len(padding)
+    string_columns = [
+        (lp,0,f'(id:{var.unique_id_num})'),
+        (22,0,f'{merge_type}'),
+        (33,0,f'{var_type}'),
+        (40,0,f'{prepend_namespace(node.unpromoted_namespace, node.name)}'),
+    ]
+    write_string = padding
+    for min_start, max_pad, next_string in string_columns:
+        write_string = pad_string_inline(
+            write_string,
+            min_start,
+            next_string,
+            max_pad = max_pad,
+        )
 
-                # split_namespace = node.namespace.split('.')
-                # if split_namespace == ['']:
-                #     continue
-                
-                # h_level = len(split_namespace)
-                # # split_namespace = split_namespace[1:]
+    file.write(write_string)
+    file.write('\n')
 
-                # if h_w_model[0:h_level] != split_namespace:
-                #     raise ValueError(f'Namespace mismatch: {h_w_model[0:h_level]} != {split_namespace}')
-                # else:
-                #     print(h_w_model[0:h_level],split_namespace)
+    # Recurion procedure
+    if len(node.connected_to) == 0 and len(node.declared_to) == 0:
+        return
+    else:
+        for node_inner in node.connected_to:
+            write_connection_and_promotions_to_file(
+                file,
+                prefix_padding + 1,
+                node_inner,
+                merge_type = 'connection',
+            )
+        for node_inner in node.declared_to:
+            write_connection_and_promotions_to_file(
+                file,
+                prefix_padding + 1,
+                node_inner,
+                merge_type = 'promotion',
+            )
+
+def get_var_type(var):
+    if isinstance(var, DeclaredVariable):
+        var_type = 'dec'
+    elif isinstance(var, Input):
+        var_type = 'in'
+    elif isinstance(var, Output):
+        var_type = 'out'
+    else:
+        raise ValueError(f'Unknown variable type: {var}')
+    return var_type
+
+guide_string = """
+hierarchy.txt outlines the defined model hierarchy and all defined variables in the model.
+Each row is a variable (*) or model (|). If a variable is created in a model, it is indented under that model and lists (in order to the right)
+the variable type (declared/registered output/created input), the promotion level, the shape, any given values, the id, the promoted name, and the unpromoted name. For more details:
+                    
+   | <A>
+      *<B>                                                                                         <C>   /<D>    /<E>      /<F>              id:<G>       p:<H> 	(u:<I>)                                                                 in /.10/(1,)                       p:ModelA.x 	(up:ModelA.ModelB.x)
+
+A: Model name
+B: Name of a variable created in model A
+C: Variable type (dec = declared, reg = registered output, in = created input)
+D: Promotion level (ex: ...10 means variable B is promoted to the 4th level where A is the 5th model from the root)
+E: Shape of variable B
+F: The average user-given value of variable B. Only shown if the variable is an input or declared variable.          
+G: The unique id number of variable B.
+H: The promoted name of variable B.
+I: The unpromoted name of variable B.
+
+example:
+
+    # Base model
+    model = csdl.Model()
+
+    # First level model
+    model1 = csdl.Model()
+    model.add(model1, 'ModelA', promotes = [])
+
+    # Second level model
+    model2 = csdl.Model()
+    model2.create_input('x0', val=3)
+    model1.add(model2, 'ModelB', promotes = ['x0'])
+    model1.create_input('x1', val=2)
+
+    # declare variable
+    x0 = model.declare_variable('ModelA.x0')
+    x1 = model.declare_variable('x1')
+    model.connect('ModelA.x1', 'x1')
+    model.register_output('y', x0**2 + x1**2)
+                    
+has a hierarchy.txt that looks like:
+| <SYSTEM LEVEL>
+   *y                                                                                               out  /.     /(1,)      /                   id:6       p:y 	(u:y)
+   *x1                                                                                              dec  /.     /(1,)      /default            id:3       p:x1 	(u:x1)
+   *ModelA.x0                                                                                       dec  /.     /(1,)      /default            id:2       p:ModelA.x0 	(u:ModelA.x0)
+   | ModelA
+      *x1                                                                                           in   /.0    /(1,)      /2.000              id:1       p:ModelA.x1 	(u:ModelA.x1)
+      | ModelB
+         *x0                                                                                        in   /.10   /(1,)      /3.000              id:0       p:ModelA.x0 	(u:ModelA.ModelB.x0)
+
+We can see that the promoted name "ModelA.x0" (right of 'p:') is listed twice, meaning they get promoted to the same variable.
+                    
+promotions_connections.txt contains all variables merged due to promotions and connections. For the above example, it looks like:
+                    
+(id:1)                source     in     ModelA.x1
+ <=c=(id:3)           connection dec    x1
+
+(id:0)                source     in     ModelA.ModelB.x0
+ <---(id:2)           promotion  dec    ModelA.x0
+
+We can see that the promotion of "ModelA.x0" as before is listed here, and the connection of "ModelA.x1" to "x1" is also listed here.
+                    
+"""
