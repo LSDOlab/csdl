@@ -8,6 +8,7 @@ from csdl.operations.arcsin import arcsin
 from csdl.operations.arccos import arccos
 from csdl.operations.arctan import arctan
 from csdl.operations.arcsinh import arcsinh
+from csdl.operations.eigenvalues import eigenvalues
 from csdl.operations.arccosh import arccosh
 from csdl.operations.arctanh import arctanh
 from csdl.operations.exp import exp

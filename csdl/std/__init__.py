@@ -5,6 +5,7 @@ from csdl.std.sinh import sinh
 from csdl.std.cosh import cosh
 from csdl.std.tanh import tanh
 from csdl.std.arcsin import arcsin
+from csdl.std.eigenvalues import eigenvalues
 from csdl.std.arccos import arccos
 from csdl.std.arctan import arctan
 from csdl.std.arsinh import arsinh
