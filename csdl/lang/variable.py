@@ -422,9 +422,16 @@ class Variable(Node):
         from csdl.std.reshape import flatten
         return flatten(self)
     
-    def reshape(self, new_shape: tuple):
+    def reshape(self, *args):
         '''
         Returns a reshaped version of itself.
         '''
+        if len(args) == 1:
+            if isinstance(args[0], tuple):
+                new_shape = args[0]
+            else:
+                new_shape = (args[0], )
+        else:
+            new_shape = tuple(args)
         from csdl.std.reshape import reshape
         return reshape(self, new_shape)

@@ -18,6 +18,11 @@ def reshape(var: Variable, new_shape: tuple):
     '''
     if not isinstance(var, Variable):
         raise TypeError(var, " is not an Variable object")
+    
+    for dim in new_shape:
+        if not isinstance(dim, (int, np.integer)):
+            raise TypeError(dim, f" of type {type(dim)} is not an int")
+
     if np.prod(var.shape) != np.prod(new_shape):
         raise ValueError(
             "Cannot reshape variable of shape {} into shape {}".format(
