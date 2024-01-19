@@ -9,8 +9,9 @@ from networkx import DiGraph, topological_sort
 
 from csdl.rep.get_nodes import get_input_nodes, get_var_nodes
 from csdl.utils.prepend_namespace import prepend_namespace
-from networkx import draw_networkx
+from networkx import draw_networkx, draw
 from networkx import DiGraph, ancestors, simple_cycles
+import matplotlib.pyplot as plt
 
 
 def put_inputs_first(graph: DiGraph, sorted_nodes: List[IRNode]):

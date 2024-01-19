@@ -1,5 +1,4 @@
 from contextlib import contextmanager
-from re import X
 from typing import Any, Dict, List, Set, Tuple, Union
 from copy import copy
 from csdl.utils.typehints import Shape
@@ -7,7 +6,6 @@ from csdl.utils.typehints import Shape
 from csdl.rep.graph_representation import GraphRepresentation
 from csdl.lang.implicit_operation import ImplicitOperation
 from csdl.lang.bracketed_search_operation import BracketedSearchOperation
-from csdl.lang.node import Node
 from csdl.lang.variable import Variable
 from csdl.lang.declared_variable import DeclaredVariable
 from csdl.lang.input import Input
@@ -22,13 +20,11 @@ from csdl.utils.parameters import Parameters
 from csdl.utils.collect_terminals import collect_terminals
 from csdl.utils.check_default_val_type import check_default_val_type
 from csdl.utils.check_constraint_value_type import check_constraint_value_type
+from csdl.std.custom import custom
 from warnings import warn
 import numpy as np
-try:
-    from csdl.operations.passthrough import passthrough
-except ImportError:
-    pass
-from collections import OrderedDict
+from csdl.lang.custom_explicit_operation import CustomExplicitOperation
+import importlib
 
 # TODO: if defined, raise error on each user facing method
 
@@ -587,6 +583,257 @@ class Model:
 
         return submodel
 
+    def _hybrid_bracketed_search(
+        self,
+        states: Dict[str, Dict[str, Any]],
+        name: str,
+        residuals: List[str],
+        implicit_model: 'Model',
+        brackets: Dict[str,
+                       Tuple[Union[int, float, np.ndarray, Variable],
+                             Union[int, float, np.ndarray, Variable]]],
+        *arguments: Variable,
+        expose: List[str] = [],
+        backend: str = '',
+    ):
+        """
+        Create an implicit operation whose residuals are defined by a
+        `Model`.
+        An implicit operation is an operation that solves an equation
+        $f(x,y)=0$ for $y$, given some value of $x$.
+        CSDL solves $f(x,y)=0$ by defining a residual $r=f(x,y)$ and
+        updating $y$ until $r$ converges to zero.
+
+        **Parameters**
+
+        `arguments: List[Variable]`
+
+        > List of variables to use as arguments for the implicit
+        > operation.
+        > Variables must have the same name as a declared variable
+        > within the `model`'s class definition.
+
+        :::note
+        The declared variable _must_ be declared within `model`
+        _and not_ promoted from a child submodel.
+        :::
+
+        `states: List[str]`
+
+        > Names of states to compute using the implicit operation.
+        > The order of the names of these states corresponds to the
+        > order of the output variables returned by
+        > `implicit_operation`.
+        > The order of the names in `states` must also match the order
+        > of the names of the residuals associated with each state in
+        > `residuals`.
+
+        :::note
+        The declared variable _must_ be declared within `model`
+        _and not_ promoted from a child submodel.
+        :::
+
+        `residuals: List[str]`
+
+        > The residuals associated with the states.
+        > The name of each residual must match the name of a
+        > registered output in `model`.
+
+        :::note
+        The registered output _must_ be registered within `model`
+        _and not_ promoted from a child submodel.
+        :::
+
+        `model: Model`
+
+        > The `Model` object to use to define the residuals.
+        > Residuals may be defined via functional composition and/or
+        > hierarchical composition.
+
+        :::note
+        _Any_ `Model` object may be used to define residuals for an
+        implicit operation
+        :::
+
+        `nonlinear_solver: NonlinearSolver`
+
+        > The nonlinear solver to use to converge the residuals
+
+        `linear_solver: LinearSolver`
+
+        > The linear solver to use to solve the linear system
+
+        `expose: List[str]`
+
+        > List of intermediate variables inside `model` that are
+        > required for computing residuals to which it is desirable
+        > to have access outside of the implicit operation.
+        > For example, if a trajectory is computed using time marching
+        > and a residual is computed from the final state of the
+        > trajectory, it may be desirable to plot that trajectory
+        > after the conclusion of a simulation, e.g. after an
+        > iteration during an optimization process.
+
+        :::note
+        The variable names in `expose` may be any name within the
+        model hierarchy defined in `model`, but the variable names
+        in `expose` are neither declared variables, nor registered
+        outputs in `model`, although they may be declared
+        variables/registered outputs in a submodel (i.e. they are
+        neither states nor residuals in the, implicit operation).
+        :::
+
+        **Returns**
+
+        `Tuple[Ouput]`
+
+        > Variables to use in this `Model`.
+        > The variables are named according to `states` and `expose`,
+        > and are returned in the same order in which they are
+        > declared.
+        > For example, if `states=['a', 'b', 'c']` and
+        > `expose=['d', 'e', 'f']`, then the outputs
+        > `a, b, c, d, e, f` in
+        > `a, b, c, d, e, f = self.implcit_output(...)`
+        > will be named
+        > `'a', 'b', 'c', 'd', 'e', 'f'`, respectively.
+        > This enables use of exposed intermediate variables (in
+        > addition to the states computed by converging the
+        > residuals) from `model` in this `Model`.
+        > Unused outputs will be ignored, so
+        > `a, b, c = self.implcit_output(...)`
+        > will make the variables declared in `expose` available for
+        > recording/analysis and promotion/connection, but they will
+        > be unused by this `Model`.
+        > Note that these variables are already registered as outputs
+        > in this `Model`, so there is no need to call
+        > `Model.register_output` for any of these variables.
+        """
+        state_names = list(states.keys())
+        (
+            out_res_map,
+            res_out_map,
+            out_in_map,
+            exp_in_map,
+            exposed_residuals,
+            rep,
+            exposed_variables,
+        ) = self._generate_maps_for_implicit_operation(
+            implicit_model,
+            arguments,
+            state_names,
+            residuals,
+            expose,
+        )
+
+        # store brackets that are not CSDL variables as numpy arrays
+        new_brackets: Dict[str, Tuple[Union[np.ndarray, Variable],
+                                      Union[np.ndarray,
+                                            Variable]]] = dict()
+        # use this to check which states the user has failed to assign a
+        # bracket
+        states_without_brackets = copy(state_names)
+        for k, v in brackets.items():
+            if k not in state_names:
+                raise ValueError(
+                    "No state {} for specified bracket {}".format(k, v))
+            if k in states_without_brackets:
+                states_without_brackets.remove(k)
+
+            if len(v) != 2:
+                raise ValueError(
+                    "Bracket {} for state {} is not a tuple of two values or Variable objects."
+                    .format(v, k))
+
+            (a, b) = v
+            a = _to_array(a)
+            b = _to_array(b)
+            if a.shape != b.shape:
+                raise ValueError(
+                    "Bracket values for {} are not the same shape; {} != {}"
+                    .format(k, a.shape, b.shape))
+            new_brackets[k] = (a, b)
+
+        if len(states_without_brackets) > 0:
+            raise ValueError(
+                "The following states are missing brackets: {}".format(
+                    states_without_brackets))
+        implicit_op = HybridBracketedSearchOperation(
+            'implicit',
+            name,
+            implicit_model,
+            rep,
+            out_res_map,
+            res_out_map,
+            out_in_map,
+            dict(),
+            dict(),
+            set(),
+            *arguments,
+            expose=[],
+            brackets=new_brackets,
+            backend=backend,
+            # TODO: add tol
+        )
+
+        # KLUDGE: The autogenerated code from python_csdl_backend can't
+        # access some information from the Simulator object within the
+        # implicit operation, so we need to make an explicit operation;
+        # there's no reason future back ends or future updates to
+        # python_csdl_backend will need this explicit operation
+
+        # returns (in order): hybrid states, residuals, exposed variables
+        print(arguments)
+        arguments_implicit = []
+        for arg in arguments:
+            arguments_implicit.append(arg)
+        for bracket in new_brackets.values():
+            if isinstance(bracket[0], Variable):
+                arguments_implicit.append(bracket[0])
+            if isinstance(bracket[1], Variable):
+                arguments_implicit.append(bracket[1])
+        arguments_implicit = tuple(arguments_implicit)
+        # exit()
+        # arguments_implicit
+
+        # these are the implicit states
+        hybrid_states = custom(*arguments_implicit, op=implicit_op)
+        outs: Tuple[Output, ...] = hybrid_states if isinstance(
+            hybrid_states, tuple) else (hybrid_states, )
+        for out in outs:
+            self.register_output(out.name, out)
+
+        explicit_op = HybridBracketedSearchOperation(
+            'explicit',
+            name,
+            implicit_model,
+            rep,
+            out_res_map,
+            res_out_map,
+            out_in_map,
+            exp_in_map,
+            exposed_variables,
+            exposed_residuals,
+            *(list(arguments) + list(outs)),
+            expose=expose,
+            brackets=new_brackets,
+            backend=backend,
+            # TODO: add tol
+        )
+
+        # these are the residuals and exposed variables
+        explicit_outputs = custom(
+            *(list(arguments) + list(outs)),
+            op=explicit_op,
+        )
+
+        exp_outs = explicit_outputs if isinstance(
+            explicit_outputs, tuple) else (explicit_outputs, )
+        for out in exp_outs:
+            self.register_output(out.name, out)
+
+        return tuple(list(outs) + list(exp_outs))
+
     def _bracketed_search(
         self,
         states: Dict[str, Dict[str, Any]],
@@ -783,6 +1030,245 @@ class Model:
             expose,
             states,
         )
+
+    def _hybrid_implicit_operation(
+        self,
+        states: Dict[str, Dict[str, Any]],
+        name: str,
+        *arguments: Variable,
+        residuals: List[str],
+        model: 'Model',
+        nonlinear_solver: NonlinearSolver,
+        linear_solver: Union[LinearSolver, None] = None,
+        expose: List[str] = [],
+        defaults: Dict[str, Union[int, float, np.ndarray]] = dict(),
+        backend: str = '',
+    ) -> Union[Output, Tuple[Output, ...]]:
+        """
+        Create an implicit operation whose residuals are defined by a
+        `Model`.
+        An implicit operation is an operation that solves an equation
+        $f(x,y)=0$ for $y$, given some value of $x$.
+        CSDL solves $f(x,y)=0$ by defining a residual $r=f(x,y)$ and
+        updating $y$ until $r$ converges to zero.
+
+        **Parameters**
+
+        `arguments: List[Variable]`
+
+            List of variables to use as arguments for the implicit
+            operation.
+            Variables must have the same name as a declared variable
+            within the `model`'s class definition.
+
+            :::note
+            The declared variable _must_ be declared within `model`
+            _and not_ promoted from a child submodel.
+            :::
+
+        `states: List[str]`
+
+            Names of states to compute using the implicit operation.
+            The order of the names of these states corresponds to the
+            order of the output variables returned by
+            `implicit_operation`.
+            The order of the names in `states` must also match the order
+            of the names of the residuals associated with each state in
+            `residuals`.
+
+            :::note
+            The declared variable _must_ be declared within `model`
+            _and not_ promoted from a child submodel.
+            :::
+
+        `residuals: List[str]`
+
+            The residuals associated with the states.
+            The name of each residual must match the name of a
+            registered output in `model`.
+
+            :::note
+            The registered output _must_ be registered within `model`
+            _and not_ promoted from a child submodel.
+            :::
+
+        `model: Model`
+
+            The `Model` object to use to define the residuals.
+            Residuals may be defined via functional composition and/or
+            hierarchical composition.
+
+            :::note
+            _Any_ `Model` object may be used to define residuals for an
+            implicit operation
+            :::
+
+        `nonlinear_solver: NonlinearSolver`
+
+            The nonlinear solver to use to converge the residuals
+
+        `linear_solver: LinearSolver`
+
+            The linear solver to use to solve the linear system
+
+        `expose: List[str]`
+
+            List of intermediate variables inside `model` that are
+            required for computing residuals to which it is desirable
+            to have access outside of the implicit operation.
+
+            For example, if a trajectory is computed using time marching
+            and a residual is computed from the final state of the
+            trajectory, it may be desirable to plot that trajectory
+            after the conclusion of a simulation, e.g. after an
+            iteration during an optimization process.
+
+            :::note
+            The variable names in `expose` may be any name within the
+            model hierarchy defined in `model`, but the variable names
+            in `expose` are neither declared variables, nor registered
+            outputs in `model`, although they may be declared
+            variables/registered outputs in a submodel (i.e. they are
+            neither states nor residuals in the, implicit operation).
+            :::
+
+        **Returns**
+
+        `Tuple[Ouput]`
+
+            Variables to use in this `Model`.
+            The variables are named according to `states` and `expose`,
+            and are returned in the same order in which they are
+            declared.
+            For example, if `states=['a', 'b', 'c']` and
+            `expose=['d', 'e', 'f']`, then the outputs
+            `a, b, c, d, e, f` in
+            `a, b, c, d, e, f = self.implcit_output(...)`
+            will be named
+            `'a', 'b', 'c', 'd', 'e', 'f'`, respectively.
+            This enables use of exposed intermediate variables (in
+            addition to the states computed by converging the
+            residuals) from `model` in this `Model`.
+            Unused outputs will be ignored, so
+            `a, b, c = self.implcit_output(...)`
+            will make the variables declared in `expose` available for
+            recording/analysis and promotion/connection, but they will
+            be unused by this `Model`.
+            Note that these variables are already registered as outputs
+            in this `Model`, so there is no need to call
+            `Model.register_output` for any of these variables.
+        """
+        state_names = list(states.keys())
+        (
+            out_res_map,
+            res_out_map,
+            out_in_map,
+            exp_in_map,
+            exposed_residuals,
+            rep,
+            exposed_variables,
+        ) = self._generate_maps_for_implicit_operation(
+            model,
+            arguments,
+            state_names,
+            residuals,
+            expose,
+        )
+
+        # store default values as numpy arrays
+        new_default_values: Dict[str, np.ndarray] = dict()
+        for k, v in defaults.items():
+            if k not in state_names:
+                raise ValueError(
+                    "No state {} for specified default value {}".format(
+                        k, v))
+            if not isinstance(v, (int, float, np.ndarray)):
+                raise ValueError(
+                    "Default value for state {} is not an int, float, or ndarray"
+                    .format(k))
+            if isinstance(v, np.ndarray):
+                f = list(
+                    filter(lambda x: x.name == k,
+                           model.registered_outputs))
+                if len(f) > 0:
+                    if f[0].shape != v.shape:
+                        raise ValueError(
+                            "Shape of value must match shape of state {}; {} != {}"
+                            .format(k, f[0].shape, v.shape))
+                new_default_values[k] = np.array(v) * np.ones(
+                    f[0].shape)
+
+        # create operation to solve residuals, establish dependencies on
+        # arguments
+        # NEED BRACKETS
+        implicit_op = HybridImplicitOperation(
+            'implicit',
+            name,
+            model,
+            rep,
+            out_res_map,
+            res_out_map,
+            out_in_map,
+            dict(),
+            dict(),
+            set(),
+            *arguments,
+            expose=[],
+            defaults=new_default_values,
+            nonlinear_solver=nonlinear_solver,
+            linear_solver=linear_solver,
+            backend=backend,
+        )
+
+        # KLUDGE: The autogenerated code from python_csdl_backend can't
+        # access some information from the Simulator object within the
+        # implicit operation, so we need to make an explicit operation;
+        # there's no reason future back ends or future updates to
+        # python_csdl_backend will need this explicit operation
+
+        # returns (in order): hybrid states, residuals, exposed variables
+
+        # these are the implicit states
+        hybrid_states = custom(*arguments, op=implicit_op)
+        outs: Tuple[Output, ...] = hybrid_states if isinstance(
+            hybrid_states, tuple) else (hybrid_states, )
+        for out in outs:
+            self.register_output(out.name, out)
+
+        # create operation to evaluate residuals, establish dependencies on arguments
+        explicit_op = HybridImplicitOperation(
+            'explicit',
+            name,
+            model,
+            rep,
+            out_res_map,
+            res_out_map,
+            out_in_map,
+            exp_in_map,
+            exposed_variables,
+            exposed_residuals,
+            *(list(arguments) + list(outs)),
+            expose=expose,
+            defaults=new_default_values,
+            nonlinear_solver=None,
+            linear_solver=None,
+            backend=backend,
+        )
+
+        # these are the residuals and exposed variables
+        explicit_outputs = custom(
+            *(list(arguments) + list(outs)),
+            op=explicit_op,
+        )
+        exp_outs: Tuple[Output, ...] = explicit_outputs if isinstance(
+            explicit_outputs , tuple) else (explicit_outputs, )
+        for out in exp_outs:
+            print(out.name)
+            self.register_output(out.name, out)
+
+        # a = list(explicit_outputs) if isinstance(
+        #     explicit_outputs, tuple) else list((explicit_outputs, ))
+        return tuple(list(outs) + list(exp_outs))
 
     def _implicit_operation(
         self,
@@ -1071,10 +1557,16 @@ class Model:
                 raise ValueError(
                     "The residual {} is not a registered output of the model used to define an implicit operation"
                     .format(residual_name))
-        exposed_variables: Dict[str, Output] = {
-            x.name: x
-            for x in model.registered_outputs if x.name in set(expose)
-        }
+        # preserve order of variable names provided by user when exposing variables
+        exposed_variables: Dict[str, Output] = dict()
+        # {
+        #     x.name: x
+        #     for x in model.registered_outputs if x.name in set(expose)
+        # }
+        for name in expose:
+            for x in model.registered_outputs:
+                if name == x.name:
+                    exposed_variables[name] = x
 
         # check that name of each exposed intermediate output matches
         # name of a registered output in internal model
@@ -1111,12 +1603,13 @@ class Model:
             # Collect inputs (terminal nodes) for this residual only; no
             # duplicates
             in_vars = list(
-                set(collect_terminals(
-                    set(),
-                    residual,
-                    residual,
-                    set(),
-                )))
+                set(
+                    collect_terminals(
+                        set(),
+                        residual,
+                        residual,
+                        set(),
+                    )))
 
             if state_name in state_names and state_name not in [
                     var.name for var in in_vars
@@ -1185,7 +1678,6 @@ class Model:
         # operation, and register outputs
         outs: List[Output] = []
 
-        # TODO: loop over exposed
         state_names = list(states.keys())
         for s, r in zip(state_names, residuals):
 
@@ -1231,8 +1723,10 @@ class Model:
         else:
             return outs[0]
 
-    def create_implicit_operation(self, model: 'Model'):
-        return ImplicitOperationFactory(self, model)
+    def create_implicit_operation(self,
+                                  model: 'Model',
+                                  name: str = None):
+        return ImplicitOperationFactory(self, model, name)
 
     def __enter__(self):
         return self
@@ -1274,3 +1768,345 @@ class InlineModel(Model):
     creating instances of Model base class
     """
     pass
+
+
+class M(Model):
+
+    def initialize(self):
+        self.parameters.declare('model', types=(Model))
+        self.parameters.declare('input_data', types=(list))
+        self.parameters.declare('out_res_map', types=(dict))
+        self.parameters.declare('nonlinear_solver',
+                                types=(NonlinearSolver))
+        self.parameters.declare('linear_solver', types=(LinearSolver))
+
+    def define(self):
+        model = self.parameters['model']
+        input_data = self.parameters['input_data']
+        out_res_map = self.parameters['out_res_map']
+        nonlinear_solver = self.parameters['nonlinear_solver']
+        linear_solver = self.parameters['linear_solver']
+        op = self.create_implicit_operation(model)
+        for output, residual in out_res_map.items():
+            op.declare_state(output, residual=residual.name)
+        op.nonlinear_solver = nonlinear_solver
+        op.linear_solver = linear_solver
+        inputs = [
+            self.declare_variable(input_name, shape=input_shape)
+            for (input_name, input_shape) in input_data
+        ]
+        outputs = op.apply(*inputs)
+
+
+class HybridImplicitOperation(CustomExplicitOperation):
+
+    def __init__(
+        self,
+        mode: str,
+        name: str,
+        model: 'Model',
+        rep: 'GraphRepresentation',
+        out_res_map: Dict[str, Output],
+        # allow Output types for exposed intermediate variables
+        res_out_map: Dict[str, DeclaredVariable],
+        out_in_map: Dict[str, List[DeclaredVariable]],
+        exp_in_map: Dict[str, List[DeclaredVariable]],
+        exposed_variables: Dict[str, Output],
+        # allow Output types for exposed intermediate variables
+        exposed_residuals: Set[str],
+        *args,
+        expose: List[str] = [],
+        defaults: Dict[str, np.ndarray] = dict(),
+        nonlinear_solver: Union[NonlinearSolver, None] = None,
+        linear_solver: Union[LinearSolver, None] = None,
+        backend: str = '',
+        **kwargs,
+    ):
+        self.rep = rep
+        self.nouts = len(out_res_map.keys())
+        in_vars: Set[DeclaredVariable] = set()
+        # for _, v in out_in_map.items():
+        #     in_vars = in_vars.union(set(v))
+        self.nargs = len(in_vars)
+        super().__init__(*args, **kwargs)
+        self.dependencies = []
+        self._model: Model = model
+        self.res_out_map: Dict[str, DeclaredVariable] = res_out_map
+        self.out_res_map: Dict[str, Output] = out_res_map
+        self.out_in_map: Dict[str, List[DeclaredVariable]] = out_in_map
+        self.exp_in_map: Dict[str, List[DeclaredVariable]] = exp_in_map
+        self.expose: List[str] = expose
+        self.exposed_residuals: Set[str] = exposed_residuals
+        self.nonlinear_solver: Union[NonlinearSolver,
+                                     None] = nonlinear_solver
+        self.linear_solver: Union[LinearSolver, None] = linear_solver
+        self.defaults = defaults
+        self.exposed_variables: Dict[str, Output] = exposed_variables
+
+        self.name: str = mode + '_' + name
+        self.mode: str = mode
+        self.model: 'Model' = model
+        self.backend: str = backend
+
+        # inputs are always inputs
+        # store input data in same order provided by user
+        self.input_data: List[Tuple[str, Tuple[int, ...]]] = []
+        for arg in args:
+            # KLUDGE: outputs are mapped to all declared variables
+            # that their residuals depend on, which includes the
+            # outputs themselves
+            if arg.name not in out_in_map.keys():
+                pair = (arg.name, arg.shape)
+                self.input_data.append(pair)
+
+        # store input data in same order provided by user
+        self.output_data: List[Tuple[str, Tuple[int, ...]]] = []
+        if self.mode == 'implicit':
+            # implicit outputs are outputs when converging residuals;
+            for residual_name, output in res_out_map.items():
+                pair = (output.name, output.shape)
+                self.output_data.append(pair)
+        if self.mode == 'explicit':
+            # implicit outputs are inputs when computing residuals
+            # explicitly
+            for residual_name, output in res_out_map.items():
+                pair = (output.name, output.shape)
+                self.input_data.append(pair)
+            for output_name, residual in out_res_map.items():
+                pair = (residual.name, residual.shape)
+                self.output_data.append(pair)
+            # exposed explicit outputs are included in ouputs when
+            # computing residuals explicitly, and excluded when
+            # computing states iteratively
+            for n, v in self.exposed_variables.items():
+                self.output_data.append((n, v.shape))
+
+        self._build_internal_simulator()
+
+    def _build_internal_simulator(self):
+        backend = importlib.import_module(self.backend)
+        if self.mode == 'explicit':
+            self.sim = backend.Simulator(self.rep, display_scripts = 1, analytics = 1)
+        elif self.mode == 'implicit':
+            # TODO: apply middle end optimizations to `rep`
+            rep = GraphRepresentation(
+                M(
+                    model=self.model,
+                    input_data=self.input_data,
+                    out_res_map=self.out_res_map,
+                    nonlinear_solver=self.nonlinear_solver,
+                    linear_solver=self.linear_solver,
+                ), )
+            self.sim = backend.Simulator(rep)
+
+    def define(self):
+        for (n, s) in self.input_data:
+            self.add_input(n, shape=s)
+
+        if self.mode == 'implicit':
+
+            # If there are CSDL variables as brackets, we need them to be inputs into the custom explicit operation.
+            if isinstance(self, HybridBracketedSearchOperation):
+                for bracket in self.brackets.values():
+                    if isinstance(bracket[0], Variable):
+                        self.add_input(bracket[0].name, shape = bracket[0].shape, val = bracket[0].val)
+                        # print('HBS INPUT', bracket[0].name, bracket[0].val)
+                    if isinstance(bracket[1], Variable):
+                        self.add_input(bracket[1].name, shape = bracket[1].shape, val = bracket[1].val)
+                        # print('HBS INPUT', bracket[1].name, bracket[1].val)
+                        # print(bracket[1].val)
+                    
+                    # exit('sdkjfnskjn')
+                
+            # new_brackets = dict()
+            # for k,v in brackets.items():
+            #     new_bracket = list(v)
+            #     if isinstance(v[0], Variable):
+            #         new_bracket[0] = self.declare_variable(v[0].name, shape=v[0].shape, val=v[0].val)
+            #     if isinstance(v[1], Variable):
+            #         new_bracket[1] = self.declare_variable(v[1].name, shape=v[1].shape, val=v[1].val)
+            #     new_brackets[k] = tuple(new_bracket)
+        for (n, s) in self.output_data:
+            print(self.mode, n,s)
+            self.add_output(n, shape=s)
+
+        if self.mode == 'explicit':
+            self.declare_derivatives('*', '*')
+
+    def compute(self, inputs, outputs):
+        for name in self.input_meta.keys():
+            self.sim[name] = inputs[name]
+
+
+        if self.mode == 'implicit':
+            # If there are CSDL variables as brackets, we need them to be inputs into the custom explicit operation.
+            if isinstance(self, HybridBracketedSearchOperation):
+                for bracket in self.brackets.values():
+                    if isinstance(bracket[0], Variable):
+                        self.sim[bracket[0].name] = inputs[bracket[0].name]
+                        # self.add_input(bracket[0].name, shape = bracket[0].shape, val = bracket[0].val)
+                        print(bracket[0].name, inputs[bracket[0].name])
+                    if isinstance(bracket[1], Variable):
+                        self.sim[bracket[1].name] = inputs[bracket[1].name]
+                        print(bracket[1].name, inputs[bracket[1].name])
+                        # self.add_input(bracket[1].name, shape = bracket[1].shape, val = bracket[1].val)
+
+        self.sim.run()
+
+        for name in self.output_meta.keys():
+            outputs[name] = self.sim[name]
+
+    def compute_derivatives(self, inputs, derivatives):
+        if self.mode == 'explicit':
+            input_names: List[str] = list(self.input_meta.keys())
+            output_names: List[str] = list(self.output_meta.keys())
+
+
+
+            self.totals = self.sim.compute_totals(output_names,
+                                                  input_names)
+
+            for of in output_names:
+                for wrt in input_names:
+                    derivatives[of, wrt] = self.totals[of, wrt]
+
+    # Some functions that may make things easier for back end developers
+    def inputs(self):
+        return {k: self.sim[k] for k in list(self.input_meta.keys())}
+
+    def outputs(self):
+        return {k: self.sim[k] for k in list(self.output_meta.keys())}
+
+    def partial_derivatives(self):
+        return self.totals
+
+    def residuals(self):
+        return self.residuals
+
+    def set_tolerance_and_guess(self, name:str, guess:np.ndarray, tol: float):
+        # self.nonlinear_solver.options['atol'] = tol
+        if self.mode == 'implicit':
+            self.sim.set_implicit_guess_and_tol(name, guess, tol)
+        else:
+            raise ValueError('Tolerances and initial guesses can be set only for the implicit part of hybrid operations')
+
+
+class N(Model):
+
+    def initialize(self):
+        self.parameters.declare('model', types=(Model))
+        self.parameters.declare('input_data', types=(list))
+        self.parameters.declare('out_res_map', types=(dict))
+        self.parameters.declare('linear_solver', types=(LinearSolver, type(None)))  # TODO: Add linear solver for implicit bracketed ops and hybrid bracketed
+        self.parameters.declare('brackets', types=(dict))
+
+    def define(self):
+        model = self.parameters['model']
+        input_data = self.parameters['input_data']
+        out_res_map = self.parameters['out_res_map']
+        linear_solver = self.parameters['linear_solver']
+        brackets = self.parameters['brackets']
+
+        new_brackets = dict()
+        # NEWCHANGE
+        for k,v in brackets.items():
+            new_bracket = list(v)
+            if isinstance(v[0], Variable):
+                new_bracket[0] = self.declare_variable(v[0].name, shape=v[0].shape, val=v[0].val)
+                print(v[0].val)
+            if isinstance(v[1], Variable):
+                new_bracket[1] = self.declare_variable(v[1].name, shape=v[1].shape, val=v[1].val)
+                print(v[1].val)
+            new_brackets[k] = tuple(new_bracket)
+        op = self.create_implicit_operation(model)
+        for output, residual in out_res_map.items():
+            op.declare_state(output,
+                             residual=residual.name,
+                             bracket=new_brackets[output])
+        op.linear_solver = linear_solver
+        inputs = [
+            self.declare_variable(input_name, shape=input_shape)
+            for (input_name, input_shape) in input_data
+        ]
+        outputs = op.apply(*inputs)
+
+
+class HybridBracketedSearchOperation(HybridImplicitOperation):
+    """
+    Class for solving implicit functions using a bracketed search
+    """
+
+    def __init__(
+        self,
+        mode: str,
+        name: str,
+        model: 'Model',
+        rep: 'GraphRepresentation',
+        out_res_map: Dict[str, Output],
+        # allow Output types for exposed intermediate variables
+        res_out_map: Dict[str, DeclaredVariable],
+        out_in_map: Dict[str, List[DeclaredVariable]],
+        exp_in_map: Dict[str, List[DeclaredVariable]],
+        exposed_variables: Dict[str, Output],
+        exposed_residuals: Set[str],
+        *args,
+        expose: List[str] = [],
+        brackets: Dict[str, Tuple[Union[np.ndarray, Variable],
+                                  Union[np.ndarray,
+                                        Variable]]] = dict(),
+        maxiter: int = 1000,
+        tol: float = 1e-7,
+        **kwargs,
+    ):
+        self.brackets: Dict[str, Tuple[Union[np.ndarray, Variable],
+                                       Union[np.ndarray,
+                                             Variable]]] = brackets
+        super().__init__(
+            mode,
+            name,
+            model,
+            rep,
+            out_res_map,
+            res_out_map,
+            out_in_map,
+            exp_in_map,
+            exposed_variables,
+            exposed_residuals,
+            *args,
+            expose=expose,
+            **kwargs,
+        )
+        in_vars: Set[DeclaredVariable] = set()
+        for _, v in out_in_map.items():
+            in_vars = in_vars.union(set(v))
+        self._model = model
+        # self.brackets: Dict[str, Tuple[Union[np.ndarray, Variable],
+        #                                Union[np.ndarray,
+        #                                      Variable]]] = brackets
+        self.maxiter: int = maxiter
+        self.tol: float = tol
+        # if mode == 'implicit':
+        #     for l, u in self.brackets.values():
+        #         if isinstance(l, Variable):
+        #             self.add_dependency_node(l)
+        #         if isinstance(u, Variable):
+        #             self.add_dependency_node(u)
+
+    def _build_internal_simulator(self):
+        # exec(f'from {self.backend} import Simulator')
+        backend = importlib.import_module(self.backend)
+        
+        if self.mode == 'explicit':
+            self.sim = backend.Simulator(self.rep)
+        elif self.mode == 'implicit':
+            # TODO: apply middle end optimizations to `rep`
+            rep = GraphRepresentation(
+                N(
+                    model=self.model,
+                    input_data=self.input_data,
+                    out_res_map=self.out_res_map,
+                    linear_solver=self.linear_solver,
+                    brackets=self.brackets,
+                ), )
+            # rep.visualize_graph()
+            self.sim = backend.Simulator(rep)
