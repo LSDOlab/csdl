@@ -25,6 +25,10 @@ class Operation(Node):
 
         self.outs: Tuple[Output, ...] = ()
 
+        self.properties = dict()
+        self.properties['elementwise'] = False
+        self.properties['linear'] = False
+
     # TODO: this isn't very clean; op should never be None
     def add_dependency_node(self, dependency: 'Variable'):
         from csdl.lang.variable import Variable

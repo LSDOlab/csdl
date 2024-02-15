@@ -1,11 +1,17 @@
 from csdl.lang.standard_operation import StandardOperation
-
+from csdl.lang.variable import Variable
 
 class exp_a(StandardOperation):
 
-    def __init__(self, *args, a=None, **kwargs):
+    def __init__(self, var, a=None, **kwargs):
         self.nouts = 1
         self.nargs = 1
+
+        args = [var]
+        if isinstance(a, Variable):
+            args.append(a)
+            self.nargs = 2
+
         super().__init__(*args, **kwargs)
         self.properties['elementwise'] = True
         self.literals['a'] = a

@@ -8,3 +8,4 @@ class sparsematmat(StandardOperation):
         super().__init__(*args, **kwargs)
         self.properties['iterative'] = False
         self.literals['sparse_mat'] = sparse_mat
+        self.properties['linear'] = True

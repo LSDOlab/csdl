@@ -3,6 +3,8 @@ from re import X
 from typing import Any, Dict, List, Set, Tuple, Union
 from copy import copy
 from csdl.utils.typehints import Shape
+from csdl.utils.get_shape_val import get_shape_val
+from csdl.utils.check_banned_chars import check_banned_chars
 
 from csdl.rep.graph_representation import GraphRepresentation
 from csdl.lang.implicit_operation import ImplicitOperation
@@ -49,9 +51,19 @@ class Model:
         self.defined = False
         self.subgraphs: List[Subgraph] = []
         self.variables_promoted_from_children: List[Variable] = []
+
         self.inputs: List[Input] = []
+        self.inputs_set: Set[Input] = set()
+        self.input_names_set: Set[Input] = set()
+
         self.declared_variables: List[DeclaredVariable] = []
+        self.declared_variables_set: Set[DeclaredVariable] = set()
+        self.declared_variable_names_set: Set[DeclaredVariable] = set()
+
         self.registered_outputs: List[Output] = []
+        self.registered_outputs_set: Set[Output] = set()
+        self.registered_output_names_set: Set[Output] = set()
+
         self.objective: Dict[str, Any] = dict()
         self.constraints: Dict[str, Dict[str, Any]] = dict()
         self.design_variables: Dict[str, Dict[str, Any]] = dict()
@@ -184,14 +196,10 @@ class Model:
         op = print_var(var)
         out = Output(
             var.name + '_print',
-            val=var.val,
+            # val=var.val,
             shape=var.shape,
             units=var.units,
             desc=var.desc,
-            tags=var.tags,
-            shape_by_conn=var.shape_by_conn,
-            copy_shape=var.copy_shape,
-            distributed=var.distributed,
             op=op,
         )
         self.register_output(out.name, out)
@@ -199,14 +207,8 @@ class Model:
     def add_objective(
         self,
         name,
-        ref=None,
-        ref0=None,
-        index=None,
         units=None,
-        adder=None,
         scaler=None,
-        parallel_deriv_color=None,
-        cache_linear_solution=False,
     ):
         """
         Declare the objective for the optimization problem. Objective
@@ -218,14 +220,8 @@ class Model:
             )
         self.objective = dict(
             name=name,
-            ref=ref,
-            ref0=ref0,
-            index=index,
             units=units,
-            adder=adder,
             scaler=scaler,
-            parallel_deriv_color=parallel_deriv_color,
-            cache_linear_solution=cache_linear_solution,
         )
 
     def add_design_variable(
@@ -233,14 +229,8 @@ class Model:
         dv_name,
         lower=None,
         upper=None,
-        ref=None,
-        ref0=None,
-        indices=None,
-        adder=None,
         scaler=None,
         units=None,
-        parallel_deriv_color=None,
-        cache_linear_solution=False,
     ):
         """
         Add a design variable to the optimization problem. The design
@@ -257,14 +247,8 @@ class Model:
         self.design_variables[dv_name] = dict(
             lower=lower,
             upper=upper,
-            ref=ref,
-            ref0=ref0,
-            indices=indices,
-            adder=adder,
             scaler=scaler,
             units=units,
-            parallel_deriv_color=parallel_deriv_color,
-            cache_linear_solution=cache_linear_solution,
         )
 
     def add_constraint(
@@ -273,15 +257,8 @@ class Model:
         lower=None,
         upper=None,
         equals=None,
-        ref=None,
-        ref0=None,
-        adder=None,
         scaler=None,
         units=None,
-        indices=None,
-        linear=False,
-        parallel_deriv_color=None,
-        cache_linear_solution=False,
     ):
         """
         Add a constraint to the optimization problem.
@@ -303,15 +280,8 @@ class Model:
                 lower=lower,
                 upper=upper,
                 equals=equals,
-                ref=ref,
-                ref0=ref0,
-                adder=adder,
                 scaler=scaler,
                 units=units,
-                indices=indices,
-                linear=linear,
-                parallel_deriv_color=parallel_deriv_color,
-                cache_linear_solution=cache_linear_solution,
             )
 
     def connect(self, a: str, b: str):
@@ -327,16 +297,10 @@ class Model:
     def declare_variable(
         self,
         name: str,
-        val=1.0,
+        val=None,
         shape=(1, ),
-        src_indices=None,
-        flat_src_indices=None,
         units=None,
         desc='',
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
-        distributed=None,
     ) -> DeclaredVariable:
         """
         Declare an input to use in an expression.
@@ -362,20 +326,23 @@ class Model:
         DocInput
             An object to use in expressions
         """
+        default_val = False
+        if val is None:
+            val = 1.0
+            default_val = True
+
         v = DeclaredVariable(
             name,
             val=check_default_val_type(val),
             shape=shape,
-            src_indices=src_indices,
-            flat_src_indices=flat_src_indices,
             units=units,
             desc=desc,
-            tags=tags,
-            shape_by_conn=shape_by_conn,
-            copy_shape=copy_shape,
-            distributed=distributed,
         )
+
+        v.default_val = default_val
+
         self.declared_variables.append(v)
+        self.declared_variable_names_set.add(v.name)
         return v
 
     def create_input(
@@ -385,10 +352,6 @@ class Model:
         shape=(1, ),
         units=None,
         desc='',
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
-        distributed=None,
     ) -> Input:
         """
         Create an input to the main model, whose value remains constant
@@ -408,18 +371,16 @@ class Model:
         Input
             An object to use in expressions
         """
+        check_banned_chars(name)
         i = Input(
             name,
             val=check_default_val_type(val),
             shape=shape,
             units=units,
             desc=desc,
-            tags=tags,
-            shape_by_conn=shape_by_conn,
-            copy_shape=copy_shape,
-            distributed=distributed,
         )
         self.inputs.append(i)
+        self.input_names_set.add(i.name)
         return i
 
     def create_output(
@@ -428,17 +389,7 @@ class Model:
         val=1.0,
         shape=(1, ),
         units=None,
-        res_units=None,
         desc='',
-        lower=None,
-        upper=None,
-        ref=1.0,
-        ref0=0.0,
-        res_ref=1.0,
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
-        distributed=None,
     ) -> Concatenation:
         """
         Create a value that is computed explicitly, either through
@@ -464,22 +415,14 @@ class Model:
         Concatenation
             An object to use in expressions
         """
+        check_banned_chars(name)
+
         c = Concatenation(
             name=name,
             val=check_default_val_type(val),
             shape=shape,
             units=units,
             desc=desc,
-            tags=tags,
-            shape_by_conn=shape_by_conn,
-            copy_shape=copy_shape,
-            res_units=res_units,
-            lower=lower,
-            upper=upper,
-            ref=ref,
-            ref0=ref0,
-            res_ref=res_ref,
-            distributed=distributed,
         )
         self.register_output(name, c)
         return c
@@ -507,30 +450,38 @@ class Model:
 
             Variable that defines output (same object as argument)
         """
+        check_banned_chars(name)
+
         if not isinstance(var, Output):
             raise TypeError(
                 'Can only register Output object as an output. Received type {}.'
                 .format(type(var)))
         else:
-            if var in self.registered_outputs:
+            if var in self.registered_outputs_set:
+            # if var in self.registered_outputs:
                 raise ValueError(
                     "Cannot register output twice; attempting to register "
                     "{} as {}.".format(var.name, name))
-            if name in [r.name for r in self.registered_outputs]:
+            # if name in [r.name for r in self.registered_outputs]:
+            if name in self.registered_output_names_set:
                 raise ValueError(
                     "Cannot register two outputs with the same name; attempting to register two outputs with name {}."
                     .format(name))
-            if name in [r.name for r in self.inputs]:
+            if name in self.input_names_set:
                 raise ValueError(
                     "Cannot register output with the same name as an input; attempting to register output named {} with same name as an input."
                     .format(name))
-            if name in [r.name for r in self.declared_variables]:
+            if name in self.declared_variable_names_set:
                 raise ValueError(
                     "Cannot register output with the same name as a declared variable; attempting to register output named {} with same name as a declared variable."
                     .format(name))
 
             var.name = name
             self.registered_outputs.append(var)
+            self.registered_outputs_set.add(var)
+            self.registered_output_names_set.add(var.name)
+        if not hasattr(var, 'val'):
+            var.val = np.ones(var.shape)
         return var
 
     def add(
@@ -561,8 +512,11 @@ class Model:
         Model
             Submodel added by user
         """
+        if name is not None:
+            check_banned_chars(name)
+
         if not isinstance(submodel, Model):  # type: ignore
-            raise TypeError("{} is not a Model".format(submodel))
+            raise TypeError("{} of type {} is not a Model".format(submodel, type(submodel)))
         # if issubclass(Model, type(submodel)):
         #     raise DeprecationWarning("Adding a submodel that is an instance of the Model base class will not be allowed in future versions of CSDL. Use with self.create_submodel(\'<name>\') as <obj>` instead.")
         if name in [s.name for s in self.subgraphs]:
@@ -595,6 +549,7 @@ class Model:
         brackets: Dict[str,
                        Tuple[Union[int, float, np.ndarray, Variable],
                              Union[int, float, np.ndarray, Variable]]],
+        use_vjps: bool,
         *arguments: Variable,
         expose: List[str] = [],
     ):
@@ -770,6 +725,7 @@ class Model:
             exp_in_map,
             exposed_variables,
             exposed_residuals,
+            use_vjps,
             *arguments,
             expose=expose,
             brackets=new_brackets,
@@ -787,6 +743,7 @@ class Model:
     def _implicit_operation(
         self,
         states: Dict[str, Dict[str, Any]],
+        use_vjps:bool,
         *arguments: Variable,
         residuals: List[str],
         model: 'Model',
@@ -959,6 +916,7 @@ class Model:
             exp_in_map,
             exposed_variables,
             exposed_residuals,
+            use_vjps,
             *arguments,
             expose=expose,
             defaults=new_default_values,
@@ -983,8 +941,8 @@ class Model:
         expose: List[str] = [],
     ) -> Tuple[Dict[str, Output], Dict[str, DeclaredVariable], Dict[
             str, List[DeclaredVariable]], Dict[
-                str, List[DeclaredVariable]], Set[str],
-               GraphRepresentation, Dict[str, Output]]:
+            str, List[DeclaredVariable]], Set[str],
+            GraphRepresentation, Dict[str, Output]]:
         if not isinstance(model, Model):
             raise TypeError("{} is not a Model".format(model))
 
@@ -1050,6 +1008,9 @@ class Model:
                 raise ValueError(
                     "The argumet {} has shape {}, which does not match the shape {} of the declared variable of the model used to define an implicit operation"
                     .format(arg.name, arg.shape, var.shape))
+            # arg.val = np.ones(arg.shape)
+            if not hasattr(arg, 'val'):
+                arg.val = np.ones(arg.shape)
             var.val = arg.val
 
         # check that name of each state matches name of a declared
@@ -1199,6 +1160,7 @@ class Model:
                 **states[s],
                 op=op,
             )
+            out.shape, out.val = get_shape_val(internal_var.shape, states[s]['val'])
             self.register_output(s, out)
             outs.append(out)
 
@@ -1206,16 +1168,15 @@ class Model:
         se = set(expose)
         ex = filter(lambda x: x.name in se, model.registered_outputs)
         for e in ex:
+            if not hasattr(e, 'val'):
+                e.val = np.ones(e.shape)
+
             out = Output(
                 e.name,
                 val=e.val,
                 shape=e.shape,
                 units=e.units,
                 desc=e.desc,
-                tags=e.tags,
-                shape_by_conn=e.shape_by_conn,
-                copy_shape=e.copy_shape,
-                distributed=e.distributed,
                 op=op,
             )
             self.register_output(e.name, out)
@@ -1231,8 +1192,21 @@ class Model:
         else:
             return outs[0]
 
-    def create_implicit_operation(self, model: 'Model'):
-        return ImplicitOperationFactory(self, model)
+    def create_implicit_operation(self, model: 'Model', use_vjps: bool = False):
+        """
+        Create an implicit operation, i.e, an operation that solves a residual.
+
+        Parameters
+        ==========
+        model: Model
+            Model to use to define residual
+        use_vjps: bool
+            Whether to use VJPs to compute derivatives of residuals wrt inputs and exposed outputs wrt states.
+        """
+        if not isinstance(use_vjps, (bool, int)):
+            raise TypeError("use_vjps must be a True or False")
+        use_vjps = False
+        return ImplicitOperationFactory(self, model, use_vjps)
 
     def __enter__(self):
         return self

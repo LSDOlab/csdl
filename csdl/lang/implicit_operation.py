@@ -34,6 +34,7 @@ class ImplicitOperation(Operation):
         exposed_variables: Dict[str, Output],
         # allow Output types for exposed intermediate variables
         exposed_residuals: Set[str],
+        use_vjps: bool,
         *args,
         expose: List[str] = [],
         defaults: Dict[str, np.ndarray] = dict(),
@@ -65,3 +66,4 @@ class ImplicitOperation(Operation):
         self.linear_solver: Union[LinearSolver, None] = linear_solver
         self.defaults = defaults
         self.exposed_variables: Dict[str, Output] = exposed_variables
+        self.use_vjps = use_vjps

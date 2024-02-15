@@ -17,7 +17,7 @@ from collections import OrderedDict
 
 class ImplicitOperationFactory(object):
 
-    def __init__(self, parent: 'Model', model: 'Model'):
+    def __init__(self, parent: 'Model', model: 'Model', use_vjps: bool):
         self.parent: 'Model' = parent
         self.model: 'Model' = model
         self.residuals: List[str] = []
@@ -28,6 +28,7 @@ class ImplicitOperationFactory(object):
                                        Union[int, float, np.ndarray,
                                              Variable]]] = dict()
         self.states: OrderedDict[str, dict] = OrderedDict()
+        self.use_vjps: bool = use_vjps
 
     def declare_state(
         self,
@@ -38,16 +39,6 @@ class ImplicitOperationFactory(object):
         val=1.0,
         units=None,
         desc='',
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
-        distributed=None,
-        res_units=None,
-        lower=None,
-        upper=None,
-        ref=1.0,
-        ref0=0.0,
-        res_ref=1.0,
         *,
         residual: str,
     ):
@@ -58,16 +49,6 @@ class ImplicitOperationFactory(object):
             val=check_default_val_type(val),
             units=units,
             desc=desc,
-            tags=tags,
-            shape_by_conn=shape_by_conn,
-            copy_shape=copy_shape,
-            distributed=distributed,
-            res_units=res_units,
-            lower=lower,
-            upper=upper,
-            ref=ref,
-            ref0=ref0,
-            res_ref=res_ref,
         )
 
     # TODO: what is defaults?
@@ -97,12 +78,14 @@ class ImplicitOperationFactory(object):
                 self.residuals,
                 self.model,
                 self.brackets,
+                self.use_vjps,
                 *arguments,
                 expose=expose,
             )
         else:
             return self.parent._implicit_operation(
                 self.states,
+                self.use_vjps,
                 *arguments,
                 residuals=self.residuals,
                 model=self.model,

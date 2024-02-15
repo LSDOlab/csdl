@@ -8,6 +8,7 @@ from csdl.operations.arcsin import arcsin
 from csdl.operations.arccos import arccos
 from csdl.operations.arctan import arctan
 from csdl.operations.arcsinh import arcsinh
+from csdl.operations.eigenvalues import eigenvalues
 from csdl.operations.arccosh import arccosh
 from csdl.operations.arctanh import arctanh
 from csdl.operations.exp import exp
@@ -40,5 +41,4 @@ from csdl.operations.min import min
 from csdl.operations.max import max
 from csdl.operations.quatrotvec import quatrotvec
 from csdl.operations.bessel import bessel
-from csdl.operations.hankel import hankel
 from csdl.operations.sparsematmat import sparsematmat

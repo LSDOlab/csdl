@@ -8,3 +8,4 @@ class sum(StandardOperation):
         self.nargs = None
         super().__init__(*args, **kwargs)
         self.literals['axes'] = axes
+        self.properties['linear'] = True

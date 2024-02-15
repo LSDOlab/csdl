@@ -16,7 +16,7 @@ class power_combination(StandardOperation):
         for dep in self.dependencies:
             if dep0.shape != dep.shape:
                 raise ValueError(
-                    "Shapes of inputs to linear_combination do not match"
+                    "Shapes of inputs to power_combination do not match"
                 )
         self.properties['elementwise'] = True
 

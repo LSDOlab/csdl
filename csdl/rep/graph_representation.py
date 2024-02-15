@@ -120,6 +120,7 @@ def generate_unpromoted_promoted_maps(model: 'Model') -> Dict[str, str]:
         model.promoted_to_unpromoted)
     return model.unpromoted_to_promoted
 
+
 def structure_user_declared_connections(
     connections: Dict[str, Tuple[dict, List[Tuple[str, str]]]],
     model: 'Model',
@@ -223,18 +224,14 @@ class GraphRepresentation:
     hierarchy. An intermediate representation may also be flattened to
     encode hierarchy without the use of subgraph nodes.
     """
-
-    def keys(self) -> Set[str]:
-        return set(self.promoted_to_unpromoted.keys()).union({
-            a
-            for (a, _) in self.connections
-        }).union({b
-                  for (_, b) in self.connections})
-
-    def items(self) -> List[Tuple[str, str]]:
-        [(key, self[key]) for key in self.keys()]
-
-    def __init__(self, model: 'Model', unflat: bool = True):
+    def __init__(
+            self,
+            model: 'Model',
+            analytics: bool = False,
+            rep_name: str = '',
+        ):
+        self.model_TEMP = model
+        check_compilation = False # True to perform common debuggin checks
         self.name = type(model).__name__
         define_models_recursively(model)
         _, _, _, _ = resolve_promotions(model)
@@ -252,11 +249,11 @@ class GraphRepresentation:
                 model.promoted_to_unpromoted,
                 model.unpromoted_to_promoted,
             ),
-             find_promoted_name(
-                 prepend_namespace(c, b),
-                 model.promoted_to_unpromoted,
-                 model.unpromoted_to_promoted,
-             )) for (a, b, c) in connections
+                find_promoted_name(
+                prepend_namespace(c, b),
+                model.promoted_to_unpromoted,
+                model.unpromoted_to_promoted,
+            )) for (a, b, c) in connections
         ]
         # remove duplicate connections
         self.connections = list(dict.fromkeys(self.connections))
@@ -265,28 +262,47 @@ class GraphRepresentation:
             str, str] = model.unpromoted_to_promoted
         self.promoted_to_unpromoted: Dict[
             str, Set[str]] = model.promoted_to_unpromoted
-        # check that each value in promoted_to_unpromoted is a key in
-        # unpromoted_to_promoted
-        for k in self.promoted_to_unpromoted.keys():
-            if k not in self.unpromoted_to_promoted.values():
-                raise KeyError(
-                    "Promotion maps not found for variable {}. This indicates an error in the compiler implementation, not the user's model."
-                    .format(k))
-
-        # Properties of promoted_to_unpromoted/unpromoted_to_promoted
-        # -- All values in p2u to are unique
-        # -- All keys in p2u are values in u2p
-        # -- All keys in u2p are values in p2u
-        # -- # of values in p2u == # of keys in u2p
-
-        # check that each unpromoted name in promoted_to_unpromoted is a
-        # key in unpromoted_to_promoted
-        for k, v in self.promoted_to_unpromoted.items():
-            for vv in v:
-                if vv not in self.unpromoted_to_promoted.keys():
+        
+        if check_compilation:
+            # check that each value in promoted_to_unpromoted is a key in
+            # unpromoted_to_promoted
+            for k in self.promoted_to_unpromoted.keys():
+                if k not in self.unpromoted_to_promoted.values():
                     raise KeyError(
                         "Promotion maps not found for variable {}. This indicates an error in the compiler implementation, not the user's model."
                         .format(k))
+
+            # Properties of promoted_to_unpromoted/unpromoted_to_promoted
+            # -- All values in p2u to are unique
+            # -- All keys in p2u are values in u2p
+            # -- All keys in u2p are values in p2u
+            # -- # of values in p2u == # of keys in u2p
+
+            # check that each unpromoted name in promoted_to_unpromoted is a
+            # key in unpromoted_to_promoted
+            for k, v in self.promoted_to_unpromoted.items():
+                for vv in v:
+                    if vv not in self.unpromoted_to_promoted.keys():
+                        raise KeyError(
+                            "Promotion maps not found for variable {}. This indicates an error in the compiler implementation, not the user's model."
+                            .format(k))
+                    
+            # check that there are no duplicate unpromoted names
+            from collections import Counter
+            from functools import reduce
+            unpromoted_name_sets = list(
+                self.promoted_to_unpromoted.values())
+            all_unpromoted_names = reduce(
+                lambda x, y: x + y, [list(s) for s in unpromoted_name_sets])
+            c = Counter(all_unpromoted_names)
+            duplicate_unpromoted_names = [
+                item for item, count in c.items() if count > 1
+            ]
+            if len(duplicate_unpromoted_names) > 0:
+                raise KeyError(
+                    "Found duplicate unpromoted names {}. This indicates an error in the compiler implementation, not the user's model."
+                    .format(duplicate_unpromoted_names))
+
         # collect information about optimization problem
         self.design_variables: Dict[str, Dict[
             str, Any]] = collect_design_variables(
@@ -294,7 +310,7 @@ class GraphRepresentation:
                 model.promoted_to_unpromoted,
                 model.unpromoted_to_promoted,
                 design_variables=dict()
-            )
+        )
         """
         Design variables of the optimization problem, if an optimization
         problem is defined
@@ -314,29 +330,11 @@ class GraphRepresentation:
                                    model.promoted_to_unpromoted,
                                    model.unpromoted_to_promoted,
                                    constraints=dict(),
-                               )
+        )
         """
         Constraints of the optimization problem, if a constrained
         optimization problem is defined
         """
-        # check that there are no duplicate unpromoted names
-        from collections import Counter
-        from functools import reduce
-        unpromoted_name_sets = list(
-            self.promoted_to_unpromoted.values())
-        all_unpromoted_names = reduce(
-            lambda x, y: x + y,
-            [list(s) for s in unpromoted_name_sets
-             ])  #if len(unpromoted_name_sets) > 0 else []
-        c = Counter(all_unpromoted_names)
-        duplicate_unpromoted_names = [
-            item for item, count in c.items() if count > 1
-        ]
-        if len(duplicate_unpromoted_names) > 0:
-            raise KeyError(
-                "Found duplicate unpromoted names {}. This indicates an error in the compiler implementation, not the user's model."
-                .format(duplicate_unpromoted_names))
-
         # TODO: check that there are never multiple sources connected to
         # a single target
         """
@@ -348,6 +346,7 @@ class GraphRepresentation:
         first_graph: DiGraph = construct_graphs_all_models(
             model.inputs,
             model.registered_outputs,
+            model.declared_variables,
             model.subgraphs,
         )
 
@@ -360,12 +359,18 @@ class GraphRepresentation:
                 v.namespace = '.'.join(
                     self.unpromoted_to_promoted[name].rsplit('.')[:-1])
 
+        graph_in = first_graph
+        graph_in.model_nodes = first_graph.model_nodes
         graph_meta = construct_flat_graph(
-            first_graph.copy(),
+            graph_in,  # first_graph.copy(),
             connections,
             self.promoted_to_unpromoted,
             self.unpromoted_to_promoted,
+            analytics = analytics,
+            rep_name = rep_name,
         )
+        del first_graph
+
         self.flat_graph: DiGraph = graph_meta.graph
         self.connected_tgt_nodes_to_source_nodes = graph_meta.connected_tgt_nodes_to_source_nodes
         self.promoted_to_node = graph_meta.promoted_to_node
@@ -405,30 +410,26 @@ class GraphRepresentation:
         #     Nodes sorted in order of execution, using the unflattened graph
         #     """
 
-        self._variable_nodes: List[VariableNode] = get_var_nodes(
-            self.flat_graph)
-        self._operation_nodes: List[
-            OperationNode] = get_operation_nodes(self.flat_graph)
-        self._std_operation_nodes: List[OperationNode] = [
-            op for op in self._operation_nodes
-            if not isinstance(op.op, (CustomExplicitOperation,
-                                      CustomImplicitOperation))
-        ]
-        self.A = adjacency_matrix(
-            self.flat_graph, nodelist=self.flat_sorted_nodes) if len(
-                self.flat_graph.nodes) > 0 else None
-        self._density = self.A.nnz / np.prod(self.A.shape) if len(
-            self.flat_graph.nodes) > 0 else None
-        self._longest_path = dag_longest_path(
-            self.flat_graph) if len(self.flat_graph.nodes) > 0 else None
-        self._mem = 0  #self.compute_best_case_memory_footprint()
-        # self._critical_path_length = self.compute_critical_path_length(
-        # ) if len(self.flat_graph.nodes) > 0 else None
+        # self._variable_nodes: List[VariableNode] = get_var_nodes(
+        #     self.flat_graph)
+        # self._operation_nodes: List[
+        #     OperationNode] = get_operation_nodes(self.flat_graph)
+        # self._std_operation_nodes: List[OperationNode] = [
+        #     op for op in self._operation_nodes
+        #     if not isinstance(op.op, (CustomExplicitOperation,
+        #                               CustomImplicitOperation))
+        # ]
+        # self.A = adjacency_matrix(self.flat_graph,
+        #                           nodelist=self.flat_sorted_nodes)
+        # self._density = self.A.nnz / np.prod(self.A.shape)
+        # self._longest_path = dag_longest_path(self.flat_graph)
+        # self._mem = 0  #self.compute_best_case_memory_footprint()
+        # self._critical_path_length = self.compute_critical_path_length()
 
         implicit_operation_nodes = get_implicit_operation_nodes(
             self.flat_graph)
-        for op in implicit_operation_nodes:
-            op.rep = GraphRepresentation(op.op._model)
+        # for op in implicit_operation_nodes:
+        # op.rep = GraphRepresentation(op.op._model)
 
         # from csdl.opt.combine_operations import combine_operations
         # combine_operations(self)
@@ -521,9 +522,10 @@ Percent Reduction in Computation Time with Full Parallelization: {100*(1 - self.
                 k,
             ) for k in range(len(self.flat_sorted_nodes)))
         x = [
-            x.rep.compute_best_case_beta_tmp() for x in [
-                x for x in self.flat_sorted_nodes
-                if isinstance(x, OperationNode)
+            x.rep.compute_best_case_memory_footprint(
+                vectorized=vectorized) for x in [
+                    x for x in self.flat_sorted_nodes
+                    if isinstance(x, OperationNode)
             ] if isinstance(x, (ImplicitOperationNode))
         ]
         if len(x) == 0:

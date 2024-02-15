@@ -87,13 +87,8 @@ class CustomOperation(Operation):
         name,
         val=1.0,
         shape=(1, ),
-        src_indices=None,
-        flat_src_indices=None,
         units=None,
         desc='',
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
     ):
         """
         Add an input to this operation.
@@ -130,13 +125,8 @@ class CustomOperation(Operation):
         self.input_meta[name] = dict()
         self.input_meta[name]['shape'], self.input_meta[name][
             'val'] = get_shape_val(shape, val)
-        self.input_meta[name]['src_indices'] = src_indices
-        self.input_meta[name]['flat_src_indices'] = flat_src_indices
         self.input_meta[name]['units'] = units
         self.input_meta[name]['desc'] = desc
-        self.input_meta[name]['tags'] = tags
-        self.input_meta[name]['shape_by_conn'] = shape_by_conn
-        self.input_meta[name]['copy_shape'] = copy_shape
         self.nargs += 1
 
     def add_output(
@@ -145,17 +135,7 @@ class CustomOperation(Operation):
         val=1.0,
         shape=(1, ),
         units=None,
-        res_units=None,
         desc='',
-        lower=None,
-        upper=None,
-        ref=1.0,
-        ref0=0.0,
-        res_ref=1.0,
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
-        distributed=None,
     ):
         """
         Add an output to this operation.
@@ -194,18 +174,7 @@ class CustomOperation(Operation):
         self.output_meta[name]['shape'], self.output_meta[name][
             'val'] = get_shape_val(shape, val)
         self.output_meta[name]['units'] = units
-        self.output_meta[name]['res_units'] = res_units
         self.output_meta[name]['desc'] = desc
-        self.output_meta[name]['lower'] = lower
-        self.output_meta[name]['upper'] = upper
-        self.output_meta[name]['ref'] = ref
-        self.output_meta[name]['ref0'] = ref0
-        self.output_meta[name]['res_ref'] = res_ref
-        self.output_meta[name]['tags'] = tags
-        self.output_meta[name]['tags'] = tags
-        self.output_meta[name]['shape_by_conn'] = shape_by_conn
-        self.output_meta[name]['copy_shape'] = copy_shape
-        self.output_meta[name]['distributed'] = distributed
         self.nouts += 1
 
     def declare_derivatives(

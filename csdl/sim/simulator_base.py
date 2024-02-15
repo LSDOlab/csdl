@@ -157,7 +157,6 @@ class SimulatorBase:
         raise KeyError(
             "{} not a user defined variable in this Simulator".format(
                 key))
-
     def run(self):
         """
         Method to run a simulation once. This method should be

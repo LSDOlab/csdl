@@ -26,6 +26,9 @@ def slice_to_tuple(key: slice, size: int) -> tuple:
 
 class Variable(Node):
 
+    __array_priority__ = 1000
+    _unique_id_num = 0
+
     def __init__(
         self,
         name: str,
@@ -33,23 +36,49 @@ class Variable(Node):
         shape=(1, ),
         units: Union[str, None] = None,
         desc: str = '',
-        tags=None,
-        shape_by_conn=False,
-        copy_shape=None,
-        distributed=None,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.name: str = self._id if name is None else  name
-        self.shape, self.val = get_shape_val(shape, val)
+        if name is None:
+            self.name: str = self._id
+        else:
+            self.name: str = name
+        self.shape, _ = get_shape_val(shape, val, no_val=True)
+        self.size = np.prod(self.shape)
         self.units = units
         self.desc = desc
-        self.tags = tags
-        self.shape_by_conn = shape_by_conn
-        self.copy_shape = copy_shape
-        self.distributed = distributed
         self.secondary_name: str = self.name
+
+        self.rep_node = None
+        self.rep_nodes = None
+
+        self.default_val = None
+        self.unique_id_num = Variable._unique_id_num
+        Variable._unique_id_num += 1
+
+        # UNCOMMENT TO DEBUG
+        # from mpi4py import MPI
+        # comm = MPI.COMM_WORLD
+        # rank = comm.rank
+        # print(rank, self.unique_id_num, self.name)
+        # comm.barrier()
+
+    def add_IR_mapping(self, ir_node:"VariableNode"):
+        """
+        Used when building the IR.
+        Maps this Variable to IR VariableNode(s).
+        """
+
+        # Single node
+        self.rep_node = {ir_node}
+
+        # Multiple nodes
+        if self.rep_nodes is None:
+            self.rep_nodes = set()
+        self.rep_nodes.add(ir_node)
+        # self.rep_node = {ir_node}
+
 
     def __pos__(self):
         return self
@@ -144,10 +173,10 @@ class Variable(Node):
         from csdl.lang.output import Output
         if isinstance(other, Variable):
             # TODO: check for near-zero values too
-            if np.any(other.val == 0):
-                raise ZeroDivisionError(
-                    "Dividing by default zero-valued Variable is guaranteed to cause a divide by zero error at runtime"
-                )
+            # if np.any(other.val == 0):
+            #     raise ZeroDivisionError(
+            #         "Dividing by default zero-valued Variable is guaranteed to cause a divide by zero error at runtime"
+            #     )
             op = power_combination(self, other, coeff=1, powers=[1, -1])
         elif isinstance(other, (Number, np.ndarray)):
             # TODO: check for near-zero values too
@@ -193,22 +222,23 @@ class Variable(Node):
         return op.outs[0]
 
     def __radd__(self, other):
-        from csdl.operations.linear_combination import linear_combination
-        from csdl.lang.output import Output
-        if isinstance(other, (Number, np.ndarray)):
-            op = linear_combination(self, constant=other, coeffs=1)
-        else:
-            raise TypeError(
-                "Cannot add {} to an object other than number, NumPy ndarray, or Variable"
-                .format(repr(self)))
-        op.outs = [
-            Output(
-                None,
-                op=op,
-                shape=op.dependencies[0].shape,
-            )
-        ]
-        return op.outs[0]
+        return self.__add__(other)
+        # from csdl.operations.linear_combination import linear_combination
+        # from csdl.lang.output import Output
+        # if isinstance(other, (Number, np.ndarray)):
+        #     op = linear_combination(self, constant=other, coeffs=1)
+        # else:
+        #     raise TypeError(
+        #         "Cannot add {} to an object other than number, NumPy ndarray, or Variable"
+        #         .format(repr(self)))
+        # op.outs = [
+        #     Output(
+        #         None,
+        #         op=op,
+        #         shape=op.dependencies[0].shape,
+        #     )
+        # ]
+        # return op.outs[0]
 
     def __rsub__(self, other):
         from csdl.operations.linear_combination import linear_combination
@@ -216,9 +246,11 @@ class Variable(Node):
         if isinstance(other, (int, float)):
             op = linear_combination(self, constant=other, coeffs=-1)
         elif isinstance(other, np.ndarray):
-            raise NotImplementedError(
-                "Subtraction from NumPy ndarray not yet implemented."
-                "Instead, change \'a - b\' to \'-(b - a)\'")
+            op = linear_combination(self, constant=other, coeffs=-1)
+
+            # raise NotImplementedError(
+            #     "Subtraction from NumPy ndarray not yet implemented."
+            #     "Instead, change \'a - b\' to \'-(b - a)\'")
         else:
             raise TypeError(
                 "Cannot add {} to an object other than number, NumPy ndarray, or Variable"
@@ -233,57 +265,30 @@ class Variable(Node):
         return op.outs[0]
 
     def __rmul__(self, other):
-        from csdl.operations.power_combination import power_combination
-        from csdl.lang.output import Output
-        if isinstance(other, (Number, np.ndarray)):
-            if isinstance(other, Number):
-                op = power_combination(
-                    self,
-                    coeff=other,
-                    powers=1,
-                )
-            elif isinstance(other, np.ndarray):
-                # TODO: I think this should be notimplementederror
-                if self.shape != other.shape:
-                    raise ValueError("Shapes do not match")
-                op = power_combination(
-                    self,
-                    out_shapes=[other.shape],
-                    coeff=other,
-                    powers=1,
-                )
-        else:
-            raise TypeError(
-                "Cannot multiply {} by an object other than number, NumPy ndarray, or Variable"
-                .format(repr(self)))
-        op.outs = [
-            Output(
-                None,
-                op=op,
-                shape=op.dependencies[0].shape,
-            )
-        ]
-        return op.outs[0]
+        return self.__mul__(other)
+
 
     def __rtruediv__(self, other):
         from csdl.operations.power_combination import power_combination
         from csdl.lang.output import Output
         if isinstance(other, np.ndarray):
-            raise NotImplementedError(
-                "Dividing NumPy ndarray by Variable object not yet supported."
-                "Instead, change \'a/b\' to \'b*a**(-1)\'")
+            op = power_combination(self, coeff=other, powers=-1)
+
+            # raise NotImplementedError(
+            #     "Dividing NumPy ndarray by Variable object not yet supported."
+            #     "Instead, change \'a/b\' to \'b*a**(-1)\'")
         # TODO: check for near-zero values too
-        if np.any(self.val == 0):
-            raise ZeroDivisionError(
-                "Dividing by default zero-valued Variable is guaranteed to cause a divide by zero error at runtime"
-            )
-        if isinstance(other, Number):
+        # if np.any(self.val == 0):
+        #     raise ZeroDivisionError(
+        #         "Dividing by default zero-valued Variable is guaranteed to cause a divide by zero error at runtime"
+        #     )
+        elif isinstance(other, Number):
             # TODO: check for near-zero values too
-            if other == 0 or (isinstance(other, np.ndarray)
-                              and np.any(other)):
-                raise ZeroDivisionError(
-                    "Dividing by zero-valued compile time constant is guaranteed to cause a divide by zero error at runtime"
-                )
+            # if other == 0 or (isinstance(other, np.ndarray)
+            #                   and np.any(other)):
+            #     raise ZeroDivisionError(
+            #         "Dividing by zero-valued compile time constant is guaranteed to cause a divide by zero error at runtime"
+            #     )
             op = power_combination(self, coeff=other, powers=-1)
         else:
             raise TypeError(
@@ -373,9 +378,13 @@ class Variable(Node):
 
         # Create and store expression to return
         # TODO: clean up _decomp member names
+        if not hasattr(self, 'val'):
+            self.val = np.ones(self.shape)
+        # self.val = np.ones(self.shape)
         val = self.val[tuple(
             [slice(s[0], s[1], s[2]) for s in list(key)])]
         out = Output(None, op=self._decomp, shape=val.shape, val=val)
+        out.val = val
         outs = list(self._decomp.outs)
         outs.append(out)
         self._decomp.outs = tuple(outs)
@@ -405,3 +414,24 @@ class Variable(Node):
         #     self.dependencies.append(dependency)
         # # else:
         # #     raise ValueError(dependency.name, 'is duplicate')
+
+    def flatten(self):
+        '''
+        Returns a flattened version of itself.
+        '''
+        from csdl.std.reshape import flatten
+        return flatten(self)
+    
+    def reshape(self, *args):
+        '''
+        Returns a reshaped version of itself.
+        '''
+        if len(args) == 1:
+            if isinstance(args[0], tuple):
+                new_shape = args[0]
+            else:
+                new_shape = (args[0], )
+        else:
+            new_shape = tuple(args)
+        from csdl.std.reshape import reshape
+        return reshape(self, new_shape)

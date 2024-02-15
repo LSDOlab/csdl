@@ -14,3 +14,4 @@ class passthrough(StandardOperation):
                 name, self.nargs))
         self.iterative = True
         self.properties['elementwise'] = True
+        self.properties['linear'] = True

@@ -9,3 +9,4 @@ class reorder_axes(StandardOperation):
         super().__init__(*args, **kwargs)
         self.literals['operation'] = operation
         self.literals['new_axes_locations'] = new_axes_locations
+        self.properties['linear'] = True

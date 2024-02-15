@@ -5,6 +5,7 @@ from csdl.std.sinh import sinh
 from csdl.std.cosh import cosh
 from csdl.std.tanh import tanh
 from csdl.std.arcsin import arcsin
+from csdl.std.eigenvalues import eigenvalues
 from csdl.std.arccos import arccos
 from csdl.std.arctan import arctan
 from csdl.std.arsinh import arsinh
@@ -35,7 +36,7 @@ from csdl.std.dot import dot
 from csdl.std.cross import cross
 from csdl.std.rotmat import rotmat
 from csdl.std.expand import expand
-from csdl.std.reshape import reshape
+from csdl.std.reshape import reshape, flatten
 from csdl.std.reorder_axes import reorder_axes
 from csdl.std.sum import sum
 from csdl.std.average import average
@@ -44,5 +45,5 @@ from csdl.std.max import max
 from csdl.std.quatrotvec import quatrotvec
 from csdl.std.sparsematmat import sparsematmat
 from csdl.std.bessel import bessel
-from csdl.std.hankel import hankel
 from csdl.std.custom import custom
+from csdl.std.solve_linear import solve

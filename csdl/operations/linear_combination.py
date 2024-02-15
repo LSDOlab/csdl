@@ -21,6 +21,7 @@ class linear_combination(StandardOperation):
 
         self.literals['constant'] = constant
         self.literals['coeffs'] = coeffs
+        self.properties['linear'] = True
 
     def define_compute_strings(self):
         out_name = self.outs[0].name
